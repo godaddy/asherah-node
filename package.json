@@ -1,0 +1,24 @@
+{
+  "name": "asherah",
+  "version": "1.0.20",
+  "description": "Asherah envelope encryption and key rotation library",
+  "main": "index.js",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jgowdy/asherah-cobhan.git"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Jeremiah Gowdy <jeremiah@gowdy.me>",
+  "license": "MIT",
+  "files": [
+    "binaries/*.so",
+    "binaries/*.dylib"
+  ],
+  "dependencies": {
+    "cobhan": "^1.0.15"
+  }
+}
