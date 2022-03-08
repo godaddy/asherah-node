@@ -29,7 +29,7 @@ export type DataRowRecord = {
 const libasherah = load_platform_library('node_modules/asherah/binaries', 'libasherah', {
     'Encrypt': ['int32', ['pointer', 'pointer', 'pointer', 'pointer', 'pointer', 'pointer', 'pointer']],
     'Decrypt': ['int32', ['pointer', 'pointer', 'pointer', 'int64', 'pointer', 'int64', 'pointer']],
-    'Setup': ['int32', ['pointer', 'pointer', 'pointer', 'pointer', 'pointer', 'pointer', 'int32', 'pointer', 'pointer', 'pointer', 'pointer', 'int32', 'int32', 'int32']],
+    'SetupJson': ['int32', ['pointer']]
 });
 
 export type AsherahConfig = {
@@ -49,27 +49,11 @@ export type AsherahConfig = {
     debugOutput: boolean
 }
 
-export function setup(config: AsherahConfig) {
-    const kmsTypeBuffer = string_to_cbuffer(config.kmsType)
-    const metastoreBuffer = string_to_cbuffer(config.metastore)
-    const rdbmsConnectionStringBuffer = string_to_cbuffer(config.rdbmsConnectionString)
-    const dynamoDbEndpointBuffer = string_to_cbuffer(config.dynamoDbEndpoint)
-    const dynamoDbRegionBuffer = string_to_cbuffer(config.dynamoDbRegion)
-    const dynamoDbTableNameBuffer = string_to_cbuffer(config.dynamoDbTableName)
-    const enableRegionSuffixInt = config.enableRegionSuffix ? 1 : 0
-    const serviceNameBuffer = string_to_cbuffer(config.serviceName)
-    const productIdBuffer = string_to_cbuffer(config.productId)
-    const preferredRegionBuffer = string_to_cbuffer(config.preferredRegion)
-    const regionMapBuffer = string_to_cbuffer(config.regionMap)
-    const verboseInt = config.verbose ? 1 : 0
-    const sessionCacheInt = config.sessionCache ? 1 : 0
-    const debugOutputInt = config.debugOutput ? 1 : 0
-
-    const result = libasherah.Setup(kmsTypeBuffer, metastoreBuffer, rdbmsConnectionStringBuffer, dynamoDbEndpointBuffer, dynamoDbRegionBuffer, dynamoDbTableNameBuffer,
-        enableRegionSuffixInt, serviceNameBuffer, productIdBuffer, preferredRegionBuffer, regionMapBuffer, verboseInt, sessionCacheInt, debugOutputInt);
-
+export function setupJson(config: AsherahConfig) {
+    const configJsonBuffer = string_to_cbuffer(JSON.stringify(config));
+    const result = libasherah.SetupJson(configJsonBuffer);
     if (result < 0) {
-        throw new Error('setup failed: ' + result);
+        throw new Error('setupJson failed: ' + result);
     }
 }
 
