@@ -49,7 +49,7 @@ export type AsherahConfig = {
     debugOutput: boolean
 }
 
-export function setupJson(config: AsherahConfig) {
+export function setup(config: AsherahConfig) {
     const configJsonBuffer = string_to_cbuffer(JSON.stringify(config));
     const result = libasherah.SetupJson(configJsonBuffer);
     if (result < 0) {
