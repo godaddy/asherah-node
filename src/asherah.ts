@@ -1,35 +1,5 @@
-import { allocate_cbuffer, buffer_to_cbuffer, buffer_to_int64, cbuffer_to_buffer, cbuffer_to_string, int64_to_buffer, json_to_cbuffer, load_platform_library, string_to_cbuffer } from 'cobhan';
+import { allocate_cbuffer, buffer_to_cbuffer, cbuffer_to_buffer, cbuffer_to_string, json_to_cbuffer, load_platform_library, string_to_cbuffer } from 'cobhan';
 import fs from 'fs';
-
-/** KeyMeta contains the ID and Created timestamp for an encryption key. */
-export type KeyMeta = {
-    /** Identifier of parent key */
-    ID: string,
-    /** Creation time of parent key (UTC Unit time 64bit) */
-    Created: string | number
-};
-
-/** EnvelopeKeyRecord represents an encrypted key and is the data structure used
-to persist the key in our key table. It also contains the meta data
-of the key used to encrypt it. */
-export type EnvelopeKeyRecord = {
-    /** Encrypted version of the key used to encrypt Data */
-    EncryptedKey: Buffer,
-    /** Creation time of Key (UTC Unix time 64bit) */
-    Created: string | number,
-    /** Metadata for the parent key used to envelope encrypt the EncryptedKey */
-    ParentKeyMeta: KeyMeta
-}
-
-/** DataRowRecord contains the encrypted key and provided data, as well as the information
-required to decrypt the key encryption key. This struct should be stored in your
-data persistence as it's required to decrypt data. */
-export type DataRowRecord = {
-    /** Encrypted version of the Data */
-    Data: Buffer,
-    /** Envelope encryption key record used to encrypt the Data */
-    Key: EnvelopeKeyRecord
-}
 
 export type AsherahConfig = {
     /** The name of this service (Required) */
@@ -73,9 +43,9 @@ export type AsherahConfig = {
 const binaries_path = find_binaries()
 
 const libasherah = load_platform_library(binaries_path, 'libasherah', {
-    'Encrypt': ['int32', ['pointer', 'pointer', 'pointer', 'pointer', 'pointer', 'pointer', 'pointer']],
-    'Decrypt': ['int32', ['pointer', 'pointer', 'pointer', 'int64', 'pointer', 'int64', 'pointer']],
     'SetupJson': ['int32', ['pointer']],
+    'EncryptToJson': ['int32', ['pointer', 'pointer', 'pointer']],
+    'DecryptFromJson': ['int32', ['pointer', 'pointer', 'pointer']],
     'Shutdown': ['void', []]
 });
 
@@ -101,51 +71,38 @@ export function shutdown() {
   libasherah.Shutdown();
 }
 
-export function decrypt(partitionId: string, dataRowRecord: DataRowRecord): Buffer {
-    const partitionIdBuffer = string_to_cbuffer(partitionId);
-    const encryptedDataBuffer = buffer_to_cbuffer(dataRowRecord.Data);
-    const encryptedKeyBuffer = buffer_to_cbuffer(dataRowRecord.Key.EncryptedKey);
-    const created = dataRowRecord.Key.Created;
-    const parentKeyIdBuffer = string_to_cbuffer(dataRowRecord.Key.ParentKeyMeta.ID);
-    const parentKeyCreated = dataRowRecord.Key.ParentKeyMeta.Created;
+export function decrypt(partitionId: string, dataRowRecord: string): Buffer {
+  const partitionIdBuffer = string_to_cbuffer(partitionId);
+  const jsonBuffer = string_to_cbuffer(dataRowRecord);
+  const outputDataBuffer = allocate_cbuffer(jsonBuffer.byteLength);
 
-    const outputDataBuffer = allocate_cbuffer(encryptedDataBuffer.length + 256);
+  const result = libasherah.DecryptFromJson(partitionIdBuffer, jsonBuffer, outputDataBuffer);
+  if (result < 0) {
+      throw new Error('decrypt failed: ' + result);
+  }
 
-    const result = libasherah.Decrypt(partitionIdBuffer, encryptedDataBuffer, encryptedKeyBuffer, created, parentKeyIdBuffer, parentKeyCreated, outputDataBuffer);
-    if (result < 0) {
-        throw new Error('decrypt failed: ' + result);
-    }
-
-    return cbuffer_to_buffer(outputDataBuffer);
+  return cbuffer_to_buffer(outputDataBuffer);
 }
 
-export function encrypt(partitionId: string, data: Buffer): DataRowRecord {
-    const partitionIdBuffer = string_to_cbuffer(partitionId);
-    const dataBuffer = buffer_to_cbuffer(data);
-    const outputEncryptedDataBuffer = allocate_cbuffer(data.length + 256);
-    const outputEncryptedKeyBuffer = allocate_cbuffer(256);
-    const outputCreatedBuffer = int64_to_buffer(0);
-    const outputParentKeyIdBuffer = allocate_cbuffer(256);
-    const outputParentKeyCreatedBuffer = int64_to_buffer(0);
+export function encrypt(partitionId: string, data: Buffer): string {
+  const json_overhead = 256;
+  const partitionIdBuffer = string_to_cbuffer(partitionId);
+  const dataBuffer = buffer_to_cbuffer(data);
+  const outputJsonBuffer = allocate_cbuffer(data.byteLength + json_overhead);
 
-    const result = libasherah.Encrypt(partitionIdBuffer, dataBuffer, outputEncryptedDataBuffer, outputEncryptedKeyBuffer,
-        outputCreatedBuffer, outputParentKeyIdBuffer, outputParentKeyCreatedBuffer);
+  const result = libasherah.EncryptToJson(partitionIdBuffer, dataBuffer, outputJsonBuffer)
 
-    if (result < 0) {
-        throw new Error('encrypt failed: ' + result);
-    }
-    const parentKeyId = cbuffer_to_string(outputParentKeyIdBuffer);
-    const dataRowRecord: DataRowRecord = {
-        Data: cbuffer_to_buffer(outputEncryptedDataBuffer),
-        Key: {
-            EncryptedKey: cbuffer_to_buffer(outputEncryptedKeyBuffer),
-            Created: buffer_to_int64(outputCreatedBuffer),
-            ParentKeyMeta: {
-                ID: parentKeyId,
-                Created: buffer_to_int64(outputParentKeyCreatedBuffer)
-            }
-        }
-    };
+  if (result < 0) {
+      throw new Error('encrypt failed: ' + result);
+  }
 
-    return dataRowRecord;
+  return cbuffer_to_string(outputJsonBuffer);
+}
+
+export function decrypt_string(partitionId: string, dataRowRecord: string): string {
+  return decrypt(partitionId, dataRowRecord).toString('utf8');
+}
+
+export function encrypt_string(partitionId: string, data: string): string {
+  return encrypt(partitionId, Buffer.from(data, 'utf8'))
 }

@@ -1,9 +1,10 @@
 import { assert } from 'chai';
-import { AsherahConfig, decrypt, encrypt, setup, shutdown } from '../src/asherah'
+import { AsherahConfig, decrypt, encrypt, encrypt_string, decrypt_string, setup, shutdown } from '../src/asherah'
 import crypto from 'crypto';
+import Benchmark = require('benchmark');
 
 describe('Asherah', function () {
-  it('Round Trip', function () {
+  it('Round Trip Buffers', function () {
     const config: AsherahConfig = {
       KMS: 'static',
       Metastore: 'memory',
@@ -41,7 +42,42 @@ describe('Asherah', function () {
 
     assert(input == output)
   });
-  it('Speed Test', function () {
+  it('Round Trip Strings', function () {
+    const config: AsherahConfig = {
+      KMS: 'static',
+      Metastore: 'memory',
+      ServiceName: 'TestService',
+      ProductID: 'TestProduct',
+      Verbose: true,
+      EnableSessionCaching: true,
+      ExpireAfter: null,
+      CheckInterval: null,
+      ConnectionString: null,
+      ReplicaReadConsistency: null,
+      DynamoDBEndpoint: null,
+      DynamoDBRegion: null,
+      DynamoDBTableName: null,
+      SessionCacheMaxSize: null,
+      SessionCacheDuration: null,
+      RegionMap: null,
+      PreferredRegion: null,
+      EnableRegionSuffix: null
+    };
+
+    setup(config)
+
+    const input = 'mysecretdata'
+
+    const encrypted = encrypt_string('partition', input);
+
+    const output = decrypt_string('partition', encrypted);
+
+    shutdown()
+
+    assert(input == output)
+  });
+  it('Benchmark RoundTrip', function() {
+    this.timeout(0);
     setup({
       KMS: 'static',
       Metastore: 'memory',
@@ -63,34 +99,92 @@ describe('Asherah', function () {
       EnableRegionSuffix: null
     });
 
-    let enc;
+    const suite = new Benchmark.Suite;
+    const input = Buffer.from(JSON.stringify({ key1: 'value1b', nested: { secret: crypto.randomBytes(1024).toString('base64') } }, ['nested.secret']))
+    suite.add('RoundTrip#String', function() {
+        const enc = encrypt('partition', input);
+        decrypt('partition', enc);
+    })
+    .on('complete', function() {
+      const fastest = suite.filter('fastest');
+      console.log('RoundTrip mean ' + (fastest.map('stats')[0]['mean'] * 1000).toFixed(3) + 'ms');
+    })
+    .run({ 'async': false });
 
-    // Warm up
-    for (let i = 0; i < 1000; i++) {
-      enc = encrypt('partition', Buffer.from(JSON.stringify({ key1: 'value1b', nested: { secret: crypto.randomBytes(1024).toString('base64') } }, ['nested.secret'])));
-      decrypt('partition', enc);
-    }
+    shutdown();
+  });
+  it('Benchmark Encrypt', function() {
+    this.timeout(0);
+    setup({
+      KMS: 'static',
+      Metastore: 'memory',
+      ServiceName: 'TestService',
+      ProductID: 'TestProduct',
+      Verbose: false,
+      EnableSessionCaching: true,
+      ExpireAfter: null,
+      CheckInterval: null,
+      ConnectionString: null,
+      ReplicaReadConsistency: null,
+      DynamoDBEndpoint: null,
+      DynamoDBRegion: null,
+      DynamoDBTableName: null,
+      SessionCacheMaxSize: null,
+      SessionCacheDuration: null,
+      RegionMap: null,
+      PreferredRegion: null,
+      EnableRegionSuffix: null
+    });
 
-    console.time('encrypt');
-    const enc1 = encrypt('partition', Buffer.from(JSON.stringify({ key1: 'value1a', secret1: 'secret1a', nested: { secret2: crypto.randomBytes(256).toString('base64') } }, ['secret1', 'nested.secret2'])));
-    console.timeEnd('encrypt');
-    console.time('decrypt');
-    decrypt('partition', enc1);
-    console.timeEnd('decrypt');
+    const suite = new Benchmark.Suite;
+    const input = Buffer.from(JSON.stringify({ key1: 'value1b', nested: { secret: crypto.randomBytes(1024).toString('base64') } }, ['nested.secret']))
+    suite.add('Encrypt#String', function() {
+        encrypt('partition', input);
+    })
+    .on('complete', function() {
+      const fastest = suite.filter('fastest');
+      console.log('Encrypt mean ' + (fastest.map('stats')[0]['mean'] * 1000).toFixed(3) + 'ms');
+    })
+    .run({ 'async': false });
 
-    console.time('encrypt');
-    const enc2 = encrypt('partition', Buffer.from(JSON.stringify({ key1: 'value1b', secret1: 'secret1b', nested: { secret2: crypto.randomBytes(256).toString('base64') } }, ['secret1', 'nested.secret2'])));
-    console.timeEnd('encrypt');
-    console.time('decrypt');
-    decrypt('partition', enc2);
-    console.timeEnd('decrypt');
+    shutdown();
+  });
+  it('Benchmark Decrypt', function() {
+    this.timeout(0);
+    setup({
+      KMS: 'static',
+      Metastore: 'memory',
+      ServiceName: 'TestService',
+      ProductID: 'TestProduct',
+      Verbose: false,
+      EnableSessionCaching: true,
+      ExpireAfter: null,
+      CheckInterval: null,
+      ConnectionString: null,
+      ReplicaReadConsistency: null,
+      DynamoDBEndpoint: null,
+      DynamoDBRegion: null,
+      DynamoDBTableName: null,
+      SessionCacheMaxSize: null,
+      SessionCacheDuration: null,
+      RegionMap: null,
+      PreferredRegion: null,
+      EnableRegionSuffix: null
+    });
 
-    console.time('encryptAndDecrypt x 1000 x 1KB');
-    for (let i = 0; i < 1000; i++) {
-      enc = encrypt('partition', Buffer.from(JSON.stringify({ key1: 'value1b', nested: { secret: crypto.randomBytes(1024).toString('base64') } }, ['nested.secret'])));
-      decrypt('partition', enc);
-    }
-    console.timeEnd('encryptAndDecrypt x 1000 x 1KB');
+    const suite = new Benchmark.Suite;
+    const input = Buffer.from(JSON.stringify({ key1: 'value1b', nested: { secret: crypto.randomBytes(1024).toString('base64') } }, ['nested.secret']))
+    const enc = encrypt('partition', input);
+    suite.add('Decrypt#String', function() {
+        decrypt('partition', enc);
+    })
+    .on('complete', function() {
+      const fastest = suite.filter('fastest');
+      console.log('Decrypt mean ' + (fastest.map('stats')[0]['mean'] * 1000).toFixed(3) + 'ms');
+    })
+    .run({ 'async': false });
+
+    shutdown();
   });
 });
 
