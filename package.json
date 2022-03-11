@@ -45,6 +45,6 @@
   },
   "types": "dist/asherah.d.ts",
   "dependencies": {
-    "cobhan": "^1.0.26"
+    "cobhan": "^1.0.27"
   }
 }
