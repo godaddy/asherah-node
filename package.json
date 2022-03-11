@@ -1,6 +1,6 @@
 {
   "name": "asherah",
-  "version": "1.0.37",
+  "version": "1.0.38",
   "description": "Asherah envelope encryption and key rotation library",
   "main": "dist/asherah.js",
   "repository": {
@@ -20,7 +20,7 @@
   "files": [
     "binaries/*.so",
     "binaries/*.dylib",
-    "dist/index.d.ts"
+    "dist/asherah.d.ts"
   ],
   "devDependencies": {
     "@types/benchmark": "^2.1.1",
