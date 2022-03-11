@@ -76,6 +76,8 @@ const libasherah = load_platform_library(binaries_path, 'libasherah', {
     'Encrypt': ['int32', ['pointer', 'pointer', 'pointer', 'pointer', 'pointer', 'pointer', 'pointer']],
     'Decrypt': ['int32', ['pointer', 'pointer', 'pointer', 'int64', 'pointer', 'int64', 'pointer']],
     'SetupJson': ['int32', ['pointer']],
+    'EncryptToJson': ['int32', ['pointer', 'pointer', 'pointer']],
+    'DecryptFromJson': ['int32', ['pointer', 'pointer', 'pointer']],
     'Shutdown': ['void', []]
 });
 
