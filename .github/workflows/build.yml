@@ -24,6 +24,7 @@ jobs:
     - name: Test
       run: npm test
     - name: Publish
+      if: github.ref == 'refs/heads/main'
       run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc && npm publish; rm .npmrc
       env:
         NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
