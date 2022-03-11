@@ -6,7 +6,7 @@ Example code:
 
 
 ```typescript
-import { AsherahConfig, decrypt, encrypt, setup, shutdown } from '../src/asherah'
+import { AsherahConfig, decrypt, encrypt, setup, shutdown } from 'asherah'
 
 const config: AsherahConfig = {
     KMS: 'static',
