@@ -1,4 +1,4 @@
-name: Asherah-Cobhan
+name: Asherah-Node
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build-linux:
+  build-npm-package:
     timeout-minutes: 15
     runs-on: ubuntu-latest
     container:
