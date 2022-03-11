@@ -18,7 +18,7 @@ jobs:
     - name: Install packages
       run: npm install
     - name: Download Asherah-Cobhan
-      run: ./download-libasherah.sh
+      run: scripts/download-libasherah.sh
     - name: Build
       run: npm run build
     - name: Test
