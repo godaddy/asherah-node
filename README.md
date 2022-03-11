@@ -5,23 +5,41 @@ This is a wrapper of the Asherah Go implementation using the Cobhan FFI library
 Example code: 
 
 
-```javascript
-import { setup, encrypt, decrypt } from 'asherah'
+```typescript
+import { AsherahConfig, decrypt, encrypt, setup, shutdown } from '../src/asherah'
 
-setup({
-  kmsType: 'static',
-  metastore: 'memory',
-  serviceName: 'TestService',
-  productId: 'TestProduct',
-  verbose: true,
-  sessionCache: true
-});
+const config: AsherahConfig = {
+    KMS: 'static',
+    Metastore: 'memory',
+    ServiceName: 'TestService',
+    ProductID: 'TestProduct',
+    Verbose: true,
+    EnableSessionCaching: true,
+    ExpireAfter: null,
+    CheckInterval: null,
+    ConnectionString: null,
+    ReplicaReadConsistency: null,
+    DynamoDBEndpoint: null,
+    DynamoDBRegion: null,
+    DynamoDBTableName: null,
+    SessionCacheMaxSize: null,
+    SessionCacheDuration: null,
+    RegionMap: null,
+    PreferredRegion: null,
+    EnableRegionSuffix: null
+  };
 
-const data = Buffer.from('mysecretdata', 'utf8');
+setup(config)
+
+const input = 'mysecretdata'
+
+const data = Buffer.from(input, 'utf8');
 
 const encrypted = encrypt('partition', data);
-console.log(encrypted);
 
 const decrypted = decrypt('partition', encrypted);
-console.log("Decrypted: " + decrypted.toString('utf8'));
+
+const output = decrypted.toString('utf8');
+
+shutdown()
 ```
