@@ -75,7 +75,8 @@ const binaries_path = find_binaries()
 const libasherah = load_platform_library(binaries_path, 'libasherah', {
     'Encrypt': ['int32', ['pointer', 'pointer', 'pointer', 'pointer', 'pointer', 'pointer', 'pointer']],
     'Decrypt': ['int32', ['pointer', 'pointer', 'pointer', 'int64', 'pointer', 'int64', 'pointer']],
-    'SetupJson': ['int32', ['pointer']]
+    'SetupJson': ['int32', ['pointer']],
+    'Shutdown': ['void', []]
 });
 
 function find_binaries(): string {
@@ -94,6 +95,10 @@ export function setup(config: AsherahConfig) {
     if (result < 0) {
         throw new Error('setupJson failed: ' + result);
     }
+}
+
+export function shutdown() {
+  libasherah.Shutdown();
 }
 
 export function decrypt(partitionId: string, dataRowRecord: DataRowRecord): Buffer {
