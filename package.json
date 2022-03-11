@@ -1,6 +1,6 @@
 {
   "name": "asherah",
-  "version": "1.0.36",
+  "version": "1.0.37",
   "description": "Asherah envelope encryption and key rotation library",
   "main": "dist/asherah.js",
   "repository": {
