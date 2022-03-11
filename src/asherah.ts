@@ -98,3 +98,11 @@ export function encrypt(partitionId: string, data: Buffer): string {
 
   return cbuffer_to_string(outputJsonBuffer);
 }
+
+export function decrypt_string(partitionId: string, dataRowRecord: string): string {
+  return decrypt(partitionId, dataRowRecord).toString('utf8');
+}
+
+export function encrypt_string(partitionId: string, data: string): string {
+  return encrypt(partitionId, Buffer.from(data, 'utf8'))
+}
