@@ -63,6 +63,14 @@ describe('Asherah', function () {
       EnableRegionSuffix: null
     });
 
+    let enc;
+
+    // Warm up
+    for (let i = 0; i < 1000; i++) {
+      enc = encrypt('partition', Buffer.from(JSON.stringify({ key1: 'value1b', nested: { secret: crypto.randomBytes(1024).toString('base64') } }, ['nested.secret'])));
+      decrypt('partition', enc);
+    }
+
     console.time('encrypt');
     const enc1 = encrypt('partition', Buffer.from(JSON.stringify({ key1: 'value1a', secret1: 'secret1a', nested: { secret2: crypto.randomBytes(256).toString('base64') } }, ['secret1', 'nested.secret2'])));
     console.timeEnd('encrypt');
@@ -77,7 +85,6 @@ describe('Asherah', function () {
     decrypt('partition', enc2);
     console.timeEnd('decrypt');
 
-    let enc;
     console.time('encryptAndDecrypt x 1000 x 1KB');
     for (let i = 0; i < 1000; i++) {
       enc = encrypt('partition', Buffer.from(JSON.stringify({ key1: 'value1b', nested: { secret: crypto.randomBytes(1024).toString('base64') } }, ['nested.secret'])));
