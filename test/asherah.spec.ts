@@ -1,10 +1,10 @@
 import { assert } from 'chai';
-import { AsherahConfig, decrypt, encrypt, setup, shutdown } from '../src/asherah'
+import { AsherahConfig, decrypt, encrypt, encrypt_string, decrypt_string, setup, shutdown } from '../src/asherah'
 import crypto from 'crypto';
 import Benchmark = require('benchmark');
 
 describe('Asherah', function () {
-  it('Round Trip', function () {
+  it('Round Trip Buffers', function () {
     const config: AsherahConfig = {
       KMS: 'static',
       Metastore: 'memory',
@@ -37,6 +37,40 @@ describe('Asherah', function () {
     const decrypted = decrypt('partition', encrypted);
 
     const output = decrypted.toString('utf8');
+
+    shutdown()
+
+    assert(input == output)
+  });
+  it('Round Trip Strings', function () {
+    const config: AsherahConfig = {
+      KMS: 'static',
+      Metastore: 'memory',
+      ServiceName: 'TestService',
+      ProductID: 'TestProduct',
+      Verbose: true,
+      EnableSessionCaching: true,
+      ExpireAfter: null,
+      CheckInterval: null,
+      ConnectionString: null,
+      ReplicaReadConsistency: null,
+      DynamoDBEndpoint: null,
+      DynamoDBRegion: null,
+      DynamoDBTableName: null,
+      SessionCacheMaxSize: null,
+      SessionCacheDuration: null,
+      RegionMap: null,
+      PreferredRegion: null,
+      EnableRegionSuffix: null
+    };
+
+    setup(config)
+
+    const input = 'mysecretdata'
+
+    const encrypted = encrypt_string('partition', input);
+
+    const output = decrypt_string('partition', encrypted);
 
     shutdown()
 
