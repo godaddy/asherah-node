@@ -46,5 +46,5 @@
     "spec": "test/**/*.spec.ts",
     "require": "ts-node/register"
   },
-  "types": "dist/index.d.ts"
+  "types": "dist/asherah.d.ts"
 }
