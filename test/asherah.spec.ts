@@ -34,6 +34,9 @@ describe('Asherah', function () {
 
     const encrypted = encrypt('partition', data);
 
+    //Ensure that the secret data isn't anywhere in the output of encrypt
+    assert(encrypted.indexOf(input) == -1);
+
     const decrypted = decrypt('partition', encrypted);
 
     const output = decrypted.toString('utf8');
@@ -69,6 +72,9 @@ describe('Asherah', function () {
     const input = 'mysecretdata'
 
     const encrypted = encrypt_string('partition', input);
+
+    //Ensure that the secret data isn't anywhere in the output of encrypt
+    assert(encrypted.indexOf(input) == -1);
 
     const output = decrypt_string('partition', encrypted);
 
