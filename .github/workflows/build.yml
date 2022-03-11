@@ -23,9 +23,9 @@ jobs:
       run: npm run build
     - name: Test
       run: npm test
-    - name: Pack (not-main)
+    - name: Publish (dry-run)
       if: github.ref != 'refs/heads/main'
-      run: npm pack
+      run: npm publish --dry-run
     - name: Publish (main)
       if: github.ref == 'refs/heads/main'
       run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc && npm publish; rm .npmrc
