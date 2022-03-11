@@ -1,6 +1,7 @@
 import { assert } from 'chai';
-import { AsherahConfig, decrypt, encrypt, setup, shutdown } from '../src/asherah'
+import { AsherahConfig, decrypt, decrypt_from_json_string, encrypt, encrypt_to_json_string, setup, shutdown } from '../src/asherah'
 import crypto from 'crypto';
+import Benchmark = require('benchmark');
 
 describe('Asherah', function () {
   it('Round Trip', function () {
@@ -41,7 +42,8 @@ describe('Asherah', function () {
 
     assert(input == output)
   });
-  it('Speed Test', function () {
+  it('Benchmarks', function() {
+    this.timeout(0);
     setup({
       KMS: 'static',
       Metastore: 'memory',
@@ -63,34 +65,28 @@ describe('Asherah', function () {
       EnableRegionSuffix: null
     });
 
-    let enc;
+    const suite = new Benchmark.Suite;
+    const input = Buffer.from(JSON.stringify({ key1: 'value1b', nested: { secret: crypto.randomBytes(1024).toString('base64') } }, ['nested.secret']))
 
-    // Warm up
-    for (let i = 0; i < 1000; i++) {
-      enc = encrypt('partition', Buffer.from(JSON.stringify({ key1: 'value1b', nested: { secret: crypto.randomBytes(1024).toString('base64') } }, ['nested.secret'])));
+    // add tests
+    suite.add('RoundTrip#String', function() {
+        const enc = encrypt_to_json_string('partition', input);
+        decrypt_from_json_string('partition', enc);
+    })
+    .add('RoundTrip#Object', function() {
+      const enc = encrypt('partition', input);
       decrypt('partition', enc);
-    }
+    })
+    .on('complete', function() {
+      const fastest = suite.filter('fastest');
+      console.log('Fastest is ' + fastest.map('name') + ' with mean ' + (fastest.map('stats')[0]['mean'] * 1000).toFixed(3) + 'ms');
+      const slowest = suite.filter('slowest');
+      console.log('Slowest is ' + slowest.map('name') + ' with mean ' + (slowest.map('stats')[0]['mean'] * 1000).toFixed(3) + 'ms');
+    })
+    // run async
+    .run({ 'async': false });
 
-    console.time('encrypt');
-    const enc1 = encrypt('partition', Buffer.from(JSON.stringify({ key1: 'value1a', secret1: 'secret1a', nested: { secret2: crypto.randomBytes(256).toString('base64') } }, ['secret1', 'nested.secret2'])));
-    console.timeEnd('encrypt');
-    console.time('decrypt');
-    decrypt('partition', enc1);
-    console.timeEnd('decrypt');
-
-    console.time('encrypt');
-    const enc2 = encrypt('partition', Buffer.from(JSON.stringify({ key1: 'value1b', secret1: 'secret1b', nested: { secret2: crypto.randomBytes(256).toString('base64') } }, ['secret1', 'nested.secret2'])));
-    console.timeEnd('encrypt');
-    console.time('decrypt');
-    decrypt('partition', enc2);
-    console.timeEnd('decrypt');
-
-    console.time('encryptAndDecrypt x 1000 x 1KB');
-    for (let i = 0; i < 1000; i++) {
-      enc = encrypt('partition', Buffer.from(JSON.stringify({ key1: 'value1b', nested: { secret: crypto.randomBytes(1024).toString('base64') } }, ['nested.secret'])));
-      decrypt('partition', enc);
-    }
-    console.timeEnd('encryptAndDecrypt x 1000 x 1KB');
+    shutdown();
   });
 });
 

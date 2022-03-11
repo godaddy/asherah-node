@@ -151,3 +151,30 @@ export function encrypt(partitionId: string, data: Buffer): DataRowRecord {
 
     return dataRowRecord;
 }
+
+export function decrypt_from_json_string(partitionId: string, dataRowRecord: string): Buffer {
+  const partitionIdBuffer = string_to_cbuffer(partitionId);
+  const jsonBuffer = string_to_cbuffer(dataRowRecord);
+  const outputDataBuffer = allocate_cbuffer(jsonBuffer.byteLength);
+
+  const result = libasherah.DecryptFromJson(partitionIdBuffer, jsonBuffer, outputDataBuffer);
+  if (result < 0) {
+      throw new Error('decrypt failed: ' + result);
+  }
+
+  return cbuffer_to_buffer(outputDataBuffer);
+}
+
+export function encrypt_to_json_string(partitionId: string, data: Buffer): string {
+  const partitionIdBuffer = string_to_cbuffer(partitionId);
+  const dataBuffer = buffer_to_cbuffer(data);
+  const outputJsonBuffer = allocate_cbuffer(data.byteLength + 256);
+
+  const result = libasherah.EncryptToJson(partitionIdBuffer, dataBuffer, outputJsonBuffer)
+
+  if (result < 0) {
+      throw new Error('encrypt failed: ' + result);
+  }
+
+  return cbuffer_to_string(outputJsonBuffer);
+}
