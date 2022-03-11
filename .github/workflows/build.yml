@@ -1,0 +1,27 @@
+name: Asherah-Cobhan
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-linux:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    container:
+      image: node:bullseye
+      options: --ulimit core=-1 --ulimit memlock=-1:-1
+    steps:
+    - uses: actions/checkout@v2
+    - name: Download Asherah-Cobhan
+      run: ./download-libasherah.sh
+    - name: Build
+      run: npm run build
+    - name: Test
+      run: npm test
+    - name: Publish
+      run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc && npm publish; rm .npmrc
+      env:
+        NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
