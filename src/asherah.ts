@@ -28,7 +28,7 @@ export type AsherahConfig = {
     SessionCacheDuration: number | null
     /** Configures the master key management service (Default kms) { "aws", "static" } */
     KMS: string | null,
-    /** A comma separated list of key-value pairs in the form of REGION1=ARN1[,REGION2=ARN2] (required if kms=aws) */
+    /** Dictionary of REGION: ARN (required if kms=aws) */
     RegionMap: { [name: string]: string } | null,
     /** The preferred AWS region (required if kms=aws) */
     PreferredRegion: string | null,
