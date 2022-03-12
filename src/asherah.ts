@@ -29,7 +29,7 @@ export type AsherahConfig = {
     /** Configures the master key management service (Default kms) { "aws", "static" } */
     KMS: string | null,
     /** A comma separated list of key-value pairs in the form of REGION1=ARN1[,REGION2=ARN2] (required if kms=aws) */
-    RegionMap: string | null,
+    RegionMap: { [name: string]: string } | null,
     /** The preferred AWS region (required if kms=aws) */
     PreferredRegion: string | null,
     /** Configure the metastore to use regional suffixes (only supported by metastore=dynamodb) */
