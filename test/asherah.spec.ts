@@ -42,6 +42,31 @@ describe('Asherah', function () {
 
     assert(input == output)
   });
+  it('Test RegionMap', function() {
+    const config: AsherahConfig = {
+      KMS: 'aws',
+      Metastore: 'memory',
+      ServiceName: 'TestService',
+      ProductID: 'TestProduct',
+      Verbose: true,
+      EnableSessionCaching: true,
+      ExpireAfter: null,
+      CheckInterval: null,
+      ConnectionString: null,
+      ReplicaReadConsistency: null,
+      DynamoDBEndpoint: null,
+      DynamoDBRegion: null,
+      DynamoDBTableName: null,
+      SessionCacheMaxSize: null,
+      SessionCacheDuration: null,
+      RegionMap: {"us-west-2": "arn:aws:kms:us-west-2:795066905288:key/3a628d06-9db4-4b1f-9f76-54fc742dc662"},
+      PreferredRegion: null,
+      EnableRegionSuffix: null
+    };
+    setup(config)
+
+    shutdown()
+  });
   it('Round Trip Strings', function () {
     const config: AsherahConfig = {
       KMS: 'static',
