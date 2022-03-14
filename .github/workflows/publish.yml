@@ -22,7 +22,7 @@ jobs:
     - name: Test
       run: npm test
     - name: Verify tag matches package version
-      run: scripts/verify-tag.sh ${GITHUB_REF#refs/*/}
+      run: scripts/set-version.sh ${GITHUB_REF#refs/*/}
     - name: Publish (main)
       run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc && npm publish; rm .npmrc
       env:
