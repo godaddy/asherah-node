@@ -1,7 +1,7 @@
 #!/bin/bash
 
 apt-get update
-apt-get install jq
+apt-get install -y jq
 
 CURRENT_TAG=${1}
 PACKAGE_VER=$(jq -r .version package.json)
