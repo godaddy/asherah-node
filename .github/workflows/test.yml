@@ -1,0 +1,27 @@
+name: Test Asherah-Node
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-package:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    container:
+      image: node:bullseye
+      options: --ulimit core=-1 --ulimit memlock=-1:-1
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install packages
+      run: npm install
+    - name: Download Asherah-Cobhan
+      run: scripts/download-libasherah.sh
+    - name: Build
+      run: npm run build
+    - name: Test
+      run: npm test
+    - name: Publish (dry-run)
+      run: npm publish --dry-run

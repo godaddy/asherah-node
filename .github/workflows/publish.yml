@@ -1,13 +1,11 @@
-name: Asherah-Node
+name: Publish Asherah-Node
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  release:
+    types: [published] # Trigger when release is created
 
 jobs:
-  build-npm-package:
+  publish-package:
     timeout-minutes: 15
     runs-on: ubuntu-latest
     container:
@@ -23,11 +21,9 @@ jobs:
       run: npm run build
     - name: Test
       run: npm test
-    - name: Publish (dry-run)
-      if: github.ref != 'refs/heads/main'
-      run: npm publish --dry-run
+    - name: Verify tag matches package version
+      run: scripts/set-version.sh ${GITHUB_REF#refs/*/}
     - name: Publish (main)
-      if: github.ref == 'refs/heads/main'
       run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc && npm publish; rm .npmrc
       env:
         NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
