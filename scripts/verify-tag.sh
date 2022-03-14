@@ -1,4 +1,7 @@
 #!/bin/bash
+
+sudo apt-get install jq
+
 CURRENT_TAG=${1}
 PACKAGE_VER=$(jq -r .version package.json)
 echo "Current tag is ${CURRENT_TAG}"
