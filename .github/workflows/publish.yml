@@ -21,7 +21,7 @@ jobs:
       run: npm run build
     - name: Test
       run: npm test
-    - name: Verify tag matches package version
+    - name: Set version to match tag
       run: scripts/set-version.sh ${GITHUB_REF#refs/*/}
     - name: Publish (main)
       run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc && npm publish; rm .npmrc
