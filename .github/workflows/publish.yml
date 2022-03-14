@@ -3,8 +3,6 @@ name: Publish Asherah-Node
 on:
   release:
     types: [published] # Trigger when release is created
-  pull_request:
-    branches: [ main ]
 
 jobs:
   publish-package:
@@ -25,8 +23,7 @@ jobs:
       run: npm test
     - name: Verify tag matches package version
       run: scripts/verify-tag.sh ${GITHUB_REF#refs/*/}
-#    - name: Publish (main)
-#      if: github.ref == 'refs/heads/main'
-#      run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc && npm publish; rm .npmrc
-#      env:
-#        NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+    - name: Publish (main)
+      run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc && npm publish; rm .npmrc
+      env:
+        NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
