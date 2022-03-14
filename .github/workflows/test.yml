@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build-npm-package:
+  test:
     timeout-minutes: 15
     runs-on: ubuntu-latest
     container:
@@ -24,5 +24,4 @@ jobs:
     - name: Test
       run: npm test
     - name: Publish (dry-run)
-      if: github.ref != 'refs/heads/main'
       run: npm publish --dry-run
