@@ -26,8 +26,3 @@ jobs:
     - name: Publish (dry-run)
       if: github.ref != 'refs/heads/main'
       run: npm publish --dry-run
-    - name: Publish (main)
-      if: github.ref == 'refs/heads/main'
-      run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc && npm publish; rm .npmrc
-      env:
-        NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
