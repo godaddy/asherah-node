@@ -1,0 +1,33 @@
+name: Test Asherah-Node
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-npm-package:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    container:
+      image: node:bullseye
+      options: --ulimit core=-1 --ulimit memlock=-1:-1
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install packages
+      run: npm install
+    - name: Download Asherah-Cobhan
+      run: scripts/download-libasherah.sh
+    - name: Build
+      run: npm run build
+    - name: Test
+      run: npm test
+    - name: Publish (dry-run)
+      if: github.ref != 'refs/heads/main'
+      run: npm publish --dry-run
+    - name: Publish (main)
+      if: github.ref == 'refs/heads/main'
+      run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc && npm publish; rm .npmrc
+      env:
+        NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
