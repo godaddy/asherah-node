@@ -3,6 +3,8 @@ name: publish
 on:
   release:
     types: [published] # Trigger when release is created
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build-npm-package:
