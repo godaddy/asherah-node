@@ -46,6 +46,7 @@ const libasherah = load_platform_library(binaries_path, 'libasherah', {
     'SetupJson': ['int32', ['pointer']],
     'EncryptToJson': ['int32', ['pointer', 'pointer', 'pointer']],
     'DecryptFromJson': ['int32', ['pointer', 'pointer', 'pointer']],
+    'EstimateBuffer': ['int32', ['int32', 'int32']],
     'Shutdown': ['void', []]
 });
 
@@ -85,10 +86,9 @@ export function decrypt(partitionId: string, dataRowRecord: string): Buffer {
 }
 
 export function encrypt(partitionId: string, data: Buffer): string {
-  const json_overhead = 256;
   const partitionIdBuffer = string_to_cbuffer(partitionId);
   const dataBuffer = buffer_to_cbuffer(data);
-  const outputJsonBuffer = allocate_cbuffer(data.byteLength + json_overhead);
+  const outputJsonBuffer = allocate_cbuffer(libasherah.EstimateBuffer(data.byteLength, partitionId.length));
 
   const result = libasherah.EncryptToJson(partitionIdBuffer, dataBuffer, outputJsonBuffer)
 

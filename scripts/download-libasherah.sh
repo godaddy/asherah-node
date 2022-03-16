@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION=v0.1.2
+VERSION=v0.3.1
 
 rm -rf binaries
 mkdir binaries
