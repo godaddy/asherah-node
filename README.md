@@ -10,7 +10,7 @@ Example code:
 import { AsherahConfig, decrypt, encrypt, setup, shutdown } from 'asherah'
 
 const config: AsherahConfig = {
-    KMS: 'static',
+    KMS: 'aws',
     Metastore: 'memory',
     ServiceName: 'TestService',
     ProductID: 'TestProduct',
@@ -25,7 +25,7 @@ const config: AsherahConfig = {
     DynamoDBTableName: null,
     SessionCacheMaxSize: null,
     SessionCacheDuration: null,
-    RegionMap: null,
+    RegionMap: {"us-west-2": "arn:aws:kms:us-west-2:XXXXXXXXX:key/XXXXXXXXXX"},
     PreferredRegion: null,
     EnableRegionSuffix: null
   };
@@ -71,7 +71,7 @@ const config = {
     DynamoDBTableName: null,
     SessionCacheMaxSize: null,
     SessionCacheDuration: null,
-    RegionMap: {"us-west-2": "arn:aws:kms:us-west-2:669979021785:key/a09cf820-ca91-4199-a4a8-ab0c35efc8d4"},
+    RegionMap: {"us-west-2": "arn:aws:kms:us-west-2:XXXXXXXXX:key/XXXXXXXXXX"},
     PreferredRegion: null,
     EnableRegionSuffix: null
   };
