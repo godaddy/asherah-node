@@ -4,6 +4,7 @@ This is a wrapper of the Asherah Go implementation using the Cobhan FFI library
 
 Example code: 
 
+### TypeScript
 
 ```typescript
 import { AsherahConfig, decrypt, encrypt, setup, shutdown } from 'asherah'
@@ -47,6 +48,8 @@ console.log("Output: " + output)
 
 shutdown()
 ```
+
+### JavaScript
 
 ```javascript
 
