@@ -1,4 +1,4 @@
-import { allocate_cbuffer, buffer_to_cbuffer, cbuffer_to_buffer, cbuffer_to_string, json_to_cbuffer, load_platform_library, string_to_cbuffer } from 'cobhan';
+import { allocate_cbuffer, buffer_to_cbuffer, cbuffer_to_buffer, cbuffer_to_string, json_to_cbuffer, load_platform_library, string_to_cbuffer, header_size } from 'cobhan';
 import fs from 'fs';
 
 export type AsherahConfig = {
@@ -46,9 +46,19 @@ const libasherah = load_platform_library(binaries_path, 'libasherah', {
     'SetupJson': ['int32', ['pointer']],
     'EncryptToJson': ['int32', ['pointer', 'pointer', 'pointer']],
     'DecryptFromJson': ['int32', ['pointer', 'pointer', 'pointer']],
-    'EstimateBuffer': ['int32', ['int32', 'int32']],
     'Shutdown': ['void', []]
 });
+
+
+const EstimatedEncryptionOverhead = 48
+const EstimatedEnvelopeOverhead = 185
+const Base64Overhead = 1.34
+let EstimatedIntermediateKeyOverhead = 0
+
+function estimate_buffer(dataLen: number, partitionLen: number): number {
+  const estimatedDataLen = (dataLen + EstimatedEncryptionOverhead) * Base64Overhead
+  return header_size + EstimatedEnvelopeOverhead + EstimatedIntermediateKeyOverhead + partitionLen + estimatedDataLen
+}
 
 function find_binaries(): string {
     if (fs.existsSync('node_modules/asherah/binaries')) {
@@ -62,6 +72,7 @@ function find_binaries(): string {
 
 export function setup(config: AsherahConfig) {
     const configJsonBuffer = json_to_cbuffer(config);
+    EstimatedIntermediateKeyOverhead = config.ProductID.length + config.ServiceName.length
     const result = libasherah.SetupJson(configJsonBuffer);
     if (result < 0) {
         throw new Error('setupJson failed: ' + result);
@@ -88,7 +99,7 @@ export function decrypt(partitionId: string, dataRowRecord: string): Buffer {
 export function encrypt(partitionId: string, data: Buffer): string {
   const partitionIdBuffer = string_to_cbuffer(partitionId);
   const dataBuffer = buffer_to_cbuffer(data);
-  const outputJsonBuffer = allocate_cbuffer(libasherah.EstimateBuffer(data.byteLength, partitionId.length));
+  const outputJsonBuffer = allocate_cbuffer(estimate_buffer(data.byteLength, partitionId.length));
 
   const result = libasherah.EncryptToJson(partitionIdBuffer, dataBuffer, outputJsonBuffer)
 
