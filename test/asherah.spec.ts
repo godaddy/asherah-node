@@ -138,7 +138,7 @@ describe('Asherah', function () {
     })
     .on('complete', function() {
       const fastest = suite.filter('fastest');
-      console.log('RoundTrip mean ' + (fastest.map('stats')[0]['mean'] * 1000).toFixed(3) + 'ms');
+      console.log('RoundTrip mean ' + (fastest.map('stats')[0]['mean'] * 1000).toFixed(3));
     })
     .run({ 'async': false });
 
@@ -174,7 +174,7 @@ describe('Asherah', function () {
     })
     .on('complete', function() {
       const fastest = suite.filter('fastest');
-      console.log('Encrypt mean ' + (fastest.map('stats')[0]['mean'] * 1000).toFixed(3) + 'ms');
+      console.log('Encrypt mean ' + (fastest.map('stats')[0]['mean'] * 1000).toFixed(3));
     })
     .run({ 'async': false });
 
@@ -211,7 +211,7 @@ describe('Asherah', function () {
     })
     .on('complete', function() {
       const fastest = suite.filter('fastest');
-      console.log('Decrypt mean ' + (fastest.map('stats')[0]['mean'] * 1000).toFixed(3) + 'ms');
+      console.log('Decrypt mean ' + (fastest.map('stats')[0]['mean'] * 1000).toFixed(3));
     })
     .run({ 'async': false });
 
