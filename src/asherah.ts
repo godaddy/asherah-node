@@ -1,5 +1,6 @@
 import { allocate_cbuffer, buffer_to_cbuffer, cbuffer_to_buffer, cbuffer_to_string, json_to_cbuffer, load_platform_library, string_to_cbuffer, header_size } from 'cobhan';
 import fs from 'fs';
+import ref from 'ref-napi';
 
 export type AsherahConfig = {
     /** The name of this service (Required) */
@@ -42,13 +43,15 @@ export type AsherahConfig = {
 
 const binaries_path = find_binaries()
 
-const libasherah = load_platform_library(binaries_path, 'libasherah', {
-    'SetupJson': ['int32', ['pointer']],
-    'EncryptToJson': ['int32', ['pointer', 'pointer', 'pointer']],
-    'DecryptFromJson': ['int32', ['pointer', 'pointer', 'pointer']],
-    'Shutdown': ['void', []]
+const libasherah: any = load_platform_library(binaries_path, 'libasherah', {
+  'SetupJson': [ref.types.int32, [ref.refType(ref.types.void)]],
+  'EncryptToJson': [ref.types.int32, [ref.refType(ref.types.void), ref.refType(ref.types.void), ref.refType(ref.types.void)]],
+  'DecryptFromJson': [ref.types.int32, [ref.refType(ref.types.void), ref.refType(ref.types.void), ref.refType(ref.types.void)]],
+  'Shutdown': [ref.types.void, []]
 });
 
+const DecryptFromJson = libasherah["DecryptFromJson"];
+const EncryptToJson = libasherah["EncryptToJson"];
 
 const EstimatedEncryptionOverhead = 48
 const EstimatedEnvelopeOverhead = 185
@@ -88,7 +91,7 @@ export function decrypt(partitionId: string, dataRowRecord: string): Buffer {
   const jsonBuffer = string_to_cbuffer(dataRowRecord);
   const outputDataBuffer = allocate_cbuffer(jsonBuffer.byteLength);
 
-  const result = libasherah.DecryptFromJson(partitionIdBuffer, jsonBuffer, outputDataBuffer);
+  const result = DecryptFromJson(partitionIdBuffer, jsonBuffer, outputDataBuffer);
   if (result < 0) {
       throw new Error('decrypt failed: ' + result);
   }
@@ -101,7 +104,7 @@ export function encrypt(partitionId: string, data: Buffer): string {
   const dataBuffer = buffer_to_cbuffer(data);
   const outputJsonBuffer = allocate_cbuffer(estimate_buffer(data.byteLength, partitionId.length));
 
-  const result = libasherah.EncryptToJson(partitionIdBuffer, dataBuffer, outputJsonBuffer)
+  const result = EncryptToJson(partitionIdBuffer, dataBuffer, outputJsonBuffer)
 
   if (result < 0) {
       throw new Error('encrypt failed: ' + result);
