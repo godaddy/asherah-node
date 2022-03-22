@@ -1,4 +1,4 @@
-import { allocate_cbuffer, buffer_to_cbuffer, cbuffer_to_buffer, cbuffer_to_string, json_to_cbuffer, load_platform_library, string_to_cbuffer, header_size } from 'cobhan';
+import { allocate_cbuffer, buffer_to_cbuffer, cbuffer_to_buffer, cbuffer_to_string, json_to_cbuffer, load_platform_library, string_to_cbuffer } from 'cobhan';
 import fs from 'fs';
 import ref from 'ref-napi';
 
@@ -60,7 +60,7 @@ let EstimatedIntermediateKeyOverhead = 0
 
 function estimate_buffer(dataLen: number, partitionLen: number): number {
   const estimatedDataLen = (dataLen + EstimatedEncryptionOverhead) * Base64Overhead
-  return header_size + EstimatedEnvelopeOverhead + EstimatedIntermediateKeyOverhead + partitionLen + estimatedDataLen
+  return EstimatedEnvelopeOverhead + EstimatedIntermediateKeyOverhead + partitionLen + estimatedDataLen
 }
 
 function find_binaries(): string {
