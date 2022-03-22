@@ -1,0 +1,4 @@
+d5e33736becef0c4ae65265210b1f0d2401b167609700f7752e4f545f92962bb  ./libasherah-arm64.dylib
+ff15814681dbdc4e153ea4078faae501f7a8031fe2540af1be2a595e19acd8d0  ./libasherah-darwin-arm64.h
+ff15814681dbdc4e153ea4078faae501f7a8031fe2540af1be2a595e19acd8d0  ./libasherah-darwin-x64.h
+ead768fd8ba63c015b9d6b69cf14f66834226d8615bcffea2f76e273b3a1b20c  ./libasherah-x64.dylib

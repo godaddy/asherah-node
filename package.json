@@ -9,8 +9,8 @@
   },
   "scripts": {
     "build": "npx tsc",
-    "preprepare": "scripts/update-sums.sh",
-    "prepare": "scripts/download-binaries.sh",
+    "prepublishOnly": "scripts/update-sums.sh",
+    "install": "scripts/download-binaries.sh",
     "test:mocha": "mocha",
     "test": "nyc npm run test:mocha",
     "posttest": "npm run lint",
@@ -21,8 +21,8 @@
   "license": "MIT",
   "files": [
     "dist/asherah.d.ts",
-    "dist/SHA256SUMS",
-    "dist/SHA256SUMS-darwin"
+    "sums/SHA256SUMS",
+    "sums/SHA256SUMS-darwin"
   ],
   "devDependencies": {
     "@types/benchmark": "^2.1.1",
