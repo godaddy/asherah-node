@@ -22,7 +22,8 @@
     "dist/asherah.d.ts",
     "scripts/download-binaries.sh",
     "SHA256SUMS",
-    "SHA256SUMS-darwin"
+    "SHA256SUMS-darwin",
+    ".asherah-version"
   ],
   "devDependencies": {
     "@types/benchmark": "^2.1.1",
