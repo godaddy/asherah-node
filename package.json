@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "npx tsc",
-    "install": "scripts/download-binaries.sh",
+    "install": "cd node_modules/asherah || echo '' ; scripts/download-binaries.sh",
     "test:mocha": "mocha",
     "test": "nyc npm run test:mocha",
     "posttest": "npm run lint",
