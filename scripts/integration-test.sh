@@ -4,7 +4,6 @@ ORIG_DIR=$(pwd)
 
 git -C "${ORIG_DIR}/integration" clone https://github.com/godaddy/asherah.git
 cd "${ORIG_DIR}/integration/asherah" || exit 1
-patch -p1 <${ORIG_DIR}/integration/test-db-hostname.patch
 
 GO_DIR="${ORIG_DIR}/integration/go"
 mkdir -p "${GO_DIR}/bin"
