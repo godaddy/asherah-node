@@ -31,9 +31,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Install npm packages
-      run: npm install
-    - name: Download Asherah-Cobhan binaries
-      run: scripts/download-libasherah.sh
+      run: npm ci
     - name: Build TypeScript
       run: npm run build
     - name: Unit Test
