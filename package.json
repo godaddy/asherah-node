@@ -49,7 +49,7 @@
   },
   "types": "dist/asherah.d.ts",
   "dependencies": {
-    "cobhan": "^1.0.34",
+    "cobhan": "^1.0.35",
     "ref-napi": "^3.0.3"
   }
 }
