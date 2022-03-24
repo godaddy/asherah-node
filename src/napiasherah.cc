@@ -11,7 +11,7 @@ Napi::Value Napi_SetupJson(const Napi::CallbackInfo& info) {
     return env.Null();
   }
 
-  Napi::Buffer configJson = info[0].As<Napi::Buffer<unsigned char>>();
+  Napi::Buffer<unsigned char> configJson = info[0].As<Napi::Buffer<unsigned char>>();
 
   GoInt32 result = SetupJson(configJson.Data());
 
