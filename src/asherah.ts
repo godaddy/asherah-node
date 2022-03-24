@@ -1,6 +1,5 @@
-import { allocate_cbuffer, buffer_to_cbuffer, cbuffer_to_buffer, cbuffer_to_string, json_to_cbuffer, load_platform_library, string_to_cbuffer } from 'cobhan';
-import fs from 'fs';
-import ref from 'ref-napi';
+import { allocate_cbuffer, buffer_to_cbuffer, cbuffer_to_buffer, cbuffer_to_string, json_to_cbuffer, string_to_cbuffer } from 'cobhan';
+const napi_asherah = require('../build/Release/napiasherah.node');
 
 export type AsherahConfig = {
     /** The name of this service (Required) */
@@ -41,18 +40,6 @@ export type AsherahConfig = {
     Verbose: boolean | null,
 }
 
-const binaries_path = find_binaries()
-
-const libasherah: any = load_platform_library(binaries_path, 'libasherah', {
-  'SetupJson': [ref.types.int32, [ref.refType(ref.types.void)]],
-  'EncryptToJson': [ref.types.int32, [ref.refType(ref.types.void), ref.refType(ref.types.void), ref.refType(ref.types.void)]],
-  'DecryptFromJson': [ref.types.int32, [ref.refType(ref.types.void), ref.refType(ref.types.void), ref.refType(ref.types.void)]],
-  'Shutdown': [ref.types.void, []]
-});
-
-const DecryptFromJson = libasherah["DecryptFromJson"];
-const EncryptToJson = libasherah["EncryptToJson"];
-
 const EstimatedEncryptionOverhead = 48
 const EstimatedEnvelopeOverhead = 185
 const Base64Overhead = 1.34
@@ -63,27 +50,17 @@ function estimate_buffer(dataLen: number, partitionLen: number): number {
   return EstimatedEnvelopeOverhead + EstimatedIntermediateKeyOverhead + partitionLen + estimatedDataLen
 }
 
-function find_binaries(): string {
-    if (fs.existsSync('node_modules/asherah/binaries')) {
-        return 'node_modules/asherah/binaries';
-    }
-    if (fs.existsSync('binaries')) {
-        return 'binaries';
-    }
-    throw new Error("Could not locate Asherah binaries!")
-}
-
 export function setup(config: AsherahConfig) {
     const configJsonBuffer = json_to_cbuffer(config);
     EstimatedIntermediateKeyOverhead = config.ProductID.length + config.ServiceName.length
-    const result = libasherah.SetupJson(configJsonBuffer);
+    const result = napi_asherah.Napi_SetupJson(configJsonBuffer);
     if (result < 0) {
         throw new Error('setupJson failed: ' + result);
     }
 }
 
 export function shutdown() {
-  libasherah.Shutdown();
+  napi_asherah.Napi_Shutdown();
 }
 
 export function decrypt(partitionId: string, dataRowRecord: string): Buffer {
@@ -91,7 +68,7 @@ export function decrypt(partitionId: string, dataRowRecord: string): Buffer {
   const jsonBuffer = string_to_cbuffer(dataRowRecord);
   const outputDataBuffer = allocate_cbuffer(jsonBuffer.byteLength);
 
-  const result = DecryptFromJson(partitionIdBuffer, jsonBuffer, outputDataBuffer);
+  const result = napi_asherah.Napi_DecryptFromJson(partitionIdBuffer, jsonBuffer, outputDataBuffer);
   if (result < 0) {
       throw new Error('decrypt failed: ' + result);
   }
@@ -104,7 +81,7 @@ export function encrypt(partitionId: string, data: Buffer): string {
   const dataBuffer = buffer_to_cbuffer(data);
   const outputJsonBuffer = allocate_cbuffer(estimate_buffer(data.byteLength, partitionId.length));
 
-  const result = EncryptToJson(partitionIdBuffer, dataBuffer, outputJsonBuffer)
+  const result = napi_asherah.Napi_EncryptToJson(partitionIdBuffer, dataBuffer, outputJsonBuffer)
 
   if (result < 0) {
       throw new Error('encrypt failed: ' + result);
