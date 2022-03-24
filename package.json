@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "npx tsc",
-    "preinstall": "scripts/download-libraries.sh",
+    "preinstall": "scripts/download-libraries.sh && node-gyp build",
     "test:mocha": "mocha",
     "test": "nyc npm run test:mocha",
     "posttest": "npm run lint",
