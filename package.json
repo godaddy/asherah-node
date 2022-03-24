@@ -9,7 +9,8 @@
   },
   "scripts": {
     "build": "npx tsc",
-    "preinstall": "scripts/download-libraries.sh && node-gyp configure && node-gyp build",
+    "preinstall": "scripts/download-libraries.sh",
+    "install": "node-gyp rebuild",
     "test:mocha": "mocha",
     "test": "nyc npm run test:mocha",
     "posttest": "npm run lint",
@@ -20,7 +21,7 @@
   "license": "MIT",
   "files": [
     "dist/asherah.d.ts",
-    "scripts/download-binaries.sh",
+    "scripts/download-libraries.sh",
     "build/Release/napi-asherah.node",
     "SHA256SUMS",
     "SHA256SUMS-darwin",
