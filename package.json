@@ -20,6 +20,8 @@
   "author": "Jeremiah Gowdy <jeremiah@gowdy.me>",
   "license": "MIT",
   "files": [
+    "binding.gyp",
+    "src/napiasherah.cc",
     "dist/asherah.d.ts",
     "scripts/download-libraries.sh",
     "build/Release/napi-asherah.node",
