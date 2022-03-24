@@ -1,8 +1,6 @@
 #include <napi.h>
 #include "../lib/libasherah.h"
 
-#define NAPI_DISABLE_CPP_EXCEPTIONS 1
-
 //extern GoInt32 SetupJson(void* configJson);
 Napi::Value Napi_SetupJson(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
