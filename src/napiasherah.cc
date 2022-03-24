@@ -34,9 +34,9 @@ Napi::Value Napi_EncryptToJson(const Napi::CallbackInfo& info) {
     return env.Null();
   }
 
-  Napi::Buffer partitionId = info[0].As<Napi::Buffer<unsigned char>>();
-  Napi::Buffer data = info[1].As<Napi::Buffer<unsigned char>>();
-  Napi::Buffer outputJson = info[2].As<Napi::Buffer<unsigned char>>();
+  Napi::Buffer<unsigned char> partitionId = info[0].As<Napi::Buffer<unsigned char>>();
+  Napi::Buffer<unsigned char> data = info[1].As<Napi::Buffer<unsigned char>>();
+  Napi::Buffer<unsigned char> outputJson = info[2].As<Napi::Buffer<unsigned char>>();
 
   GoInt32 result = EncryptToJson(partitionId.Data(), data.Data(), outputJson.Data());
 
@@ -59,9 +59,9 @@ Napi::Value Napi_DecryptFromJson(const Napi::CallbackInfo& info) {
     return env.Null();
   }
 
-  Napi::Buffer partitionId = info[0].As<Napi::Buffer<unsigned char>>();
-  Napi::Buffer inputJson = info[1].As<Napi::Buffer<unsigned char>>();
-  Napi::Buffer outputData = info[2].As<Napi::Buffer<unsigned char>>();
+  Napi::Buffer<unsigned char> partitionId = info[0].As<Napi::Buffer<unsigned char>>();
+  Napi::Buffer<unsigned char> inputJson = info[1].As<Napi::Buffer<unsigned char>>();
+  Napi::Buffer<unsigned char> outputData = info[2].As<Napi::Buffer<unsigned char>>();
 
   GoInt32 result = DecryptFromJson(partitionId.Data(), inputJson.Data(), outputData.Data());
 
