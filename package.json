@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "npx tsc",
-    "postinstall": "scripts/download-binaries.sh",
+    "preinstall": "scripts/download-libraries.sh && node-gyp configure && node-gyp build",
     "test:mocha": "mocha",
     "test": "nyc npm run test:mocha",
     "posttest": "npm run lint",
@@ -21,6 +21,7 @@
   "files": [
     "dist/asherah.d.ts",
     "scripts/download-binaries.sh",
+    "build/Release/napi-asherah.node",
     "SHA256SUMS",
     "SHA256SUMS-darwin",
     ".asherah-version"
@@ -53,6 +54,6 @@
   "types": "dist/asherah.d.ts",
   "dependencies": {
     "cobhan": "^1.0.35",
-    "ref-napi": "^3.0.3"
+    "node-addon-api": "*"
   }
 }
