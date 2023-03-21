@@ -5,7 +5,7 @@
   "main": "dist/asherah.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jgowdy/asherah-cobhan.git"
+    "url": "https://github.com/godaddy/asherah-node.git"
   },
   "scripts": {
     "build": "npx tsc",
