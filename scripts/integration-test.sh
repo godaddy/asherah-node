@@ -14,7 +14,7 @@ PATH=$GOPATH/bin:$GOROOT/bin:$PATH
 ### Encrypt with Go
 cd "${ORIG_DIR}/integration/asherah/tests/cross-language/go" || exit 1
 go mod edit -replace github.com/godaddy/asherah/go/appencryption=../../../go/appencryption
-go get github.com/cucumber/godog/cmd/godog@v0.8.1
+go install github.com/cucumber/godog/cmd/godog@v0.12.6
 echo "GOPATH: ${GOPATH}"
 echo "PATH: ${PATH}"
 echo "GOBIN: ${GOBIN}"
