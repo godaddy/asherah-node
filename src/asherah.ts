@@ -1,4 +1,3 @@
-import { buffer_to_cbuffer, json_to_cbuffer, string_to_cbuffer } from 'cobhan';
 const napi_asherah = require('../build/Release/napiasherah.node');
 
 export type AsherahConfig = {
@@ -41,8 +40,8 @@ export type AsherahConfig = {
 }
 
 export function setup(config: AsherahConfig) {
-    const configJsonBuffer = json_to_cbuffer(config);
-    napi_asherah.Napi_SetupJson(configJsonBuffer);
+    const configStr = JSON.stringify(config);
+    napi_asherah.Napi_SetupJson(configStr, config.ProductID.length, config.ServiceName.length, configStr.length);
 }
 
 export function shutdown() {
@@ -50,23 +49,17 @@ export function shutdown() {
 }
 
 export function decrypt(partitionId: string, dataRowRecord: string): Buffer {
-  const partitionIdBuffer = string_to_cbuffer(partitionId);
-  const jsonBuffer = string_to_cbuffer(dataRowRecord);
-
-  return napi_asherah.Napi_DecryptFromJson(partitionIdBuffer, jsonBuffer);
+  return napi_asherah.Napi_DecryptFromJsonToBuffer(partitionId, dataRowRecord);
 }
 
 export function encrypt(partitionId: string, data: Buffer): string {
-  const partitionIdBuffer = string_to_cbuffer(partitionId);
-  const dataBuffer = buffer_to_cbuffer(data);
-
-  return napi_asherah.Napi_EncryptToJson(partitionIdBuffer, dataBuffer)
+  return napi_asherah.Napi_EncryptFromBufferToJson(partitionId, data)
 }
 
 export function decrypt_string(partitionId: string, dataRowRecord: string): string {
-  return decrypt(partitionId, dataRowRecord).toString('utf8');
+  return napi_asherah.Napi_DecryptFromJsonToString(partitionId, dataRowRecord);
 }
 
 export function encrypt_string(partitionId: string, data: string): string {
-  return encrypt(partitionId, Buffer.from(data, 'utf8'))
+  return napi_asherah.Napi_EncryptFromStringToJson(partitionId, data);
 }

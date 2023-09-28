@@ -1,5 +1,5 @@
 import { assert } from 'chai';
-import { AsherahConfig, decrypt, encrypt, encrypt_string, decrypt_string, setup, shutdown } from '../src/asherah'
+import { AsherahConfig, decrypt, encrypt, decrypt_string, setup, shutdown, encrypt_string } from '../src/asherah'
 import crypto from 'crypto';
 import Benchmark = require('benchmark');
 
@@ -27,23 +27,24 @@ describe('Asherah', function () {
     };
 
     setup(config)
+    try {
+      const input = 'mysecretdata'
 
-    const input = 'mysecretdata'
+      const data = Buffer.from(input, 'utf8');
 
-    const data = Buffer.from(input, 'utf8');
+      const encrypted = encrypt('partition', data);
 
-    const encrypted = encrypt('partition', data);
+      //Ensure that the secret data isn't anywhere in the output of encrypt
+      assert(encrypted.indexOf(input) == -1);
 
-    //Ensure that the secret data isn't anywhere in the output of encrypt
-    assert(encrypted.indexOf(input) == -1);
+      const decrypted = decrypt('partition', encrypted);
 
-    const decrypted = decrypt('partition', encrypted);
+      const output = decrypted.toString('utf8');
 
-    const output = decrypted.toString('utf8');
-
-    shutdown()
-
-    assert(input == output)
+      assert(input == output)
+    } finally {
+      shutdown()
+    }
   });
   it('Test RegionMap', function() {
     const config: AsherahConfig = {
@@ -93,19 +94,19 @@ describe('Asherah', function () {
     };
 
     setup(config)
+    try {
+      const input = 'mysecretdata'
 
-    const input = 'mysecretdata'
+      const encrypted = encrypt_string('partition', input);
 
-    const encrypted = encrypt_string('partition', input);
+      //Ensure that the secret data isn't anywhere in the output of encrypt
+      assert(encrypted.indexOf(input) == -1);
 
-    //Ensure that the secret data isn't anywhere in the output of encrypt
-    assert(encrypted.indexOf(input) == -1);
-
-    const output = decrypt_string('partition', encrypted);
-
-    shutdown()
-
-    assert(input == output)
+      const output = decrypt_string('partition', encrypted);
+      assert(input == output)
+    } finally {
+      shutdown()
+    }
   });
   it('Benchmark RoundTrip', function() {
     this.timeout(0);
@@ -129,20 +130,21 @@ describe('Asherah', function () {
       PreferredRegion: null,
       EnableRegionSuffix: null
     });
-
-    const suite = new Benchmark.Suite;
-    const input = Buffer.from(JSON.stringify({ key1: 'value1b', nested: { secret: crypto.randomBytes(1024).toString('base64') } }, ['nested.secret']))
-    suite.add('RoundTrip#String', function() {
-        const enc = encrypt('partition', input);
-        decrypt('partition', enc);
-    })
-    .on('complete', function() {
-      const fastest = suite.filter('fastest');
-      console.log('RoundTrip mean ' + (fastest.map('stats')[0]['mean'] * 1000).toFixed(3));
-    })
-    .run({ 'async': false });
-
-    shutdown();
+    try {
+      const suite = new Benchmark.Suite;
+      const input = Buffer.from(JSON.stringify({ key1: 'value1b', nested: { secret: crypto.randomBytes(1024).toString('base64') } }, ['nested.secret']))
+      suite.add('RoundTrip#String', function() {
+          const enc = encrypt('partition', input);
+          decrypt('partition', enc);
+      })
+      .on('complete', function() {
+        const fastest = suite.filter('fastest');
+        console.log('RoundTrip mean ' + (fastest.map('stats')[0]['mean'] * 1000).toFixed(3));
+      })
+      .run({ 'async': false });
+    } finally {
+      shutdown();
+    }
   });
   it('Benchmark Encrypt', function() {
     this.timeout(0);
@@ -166,19 +168,20 @@ describe('Asherah', function () {
       PreferredRegion: null,
       EnableRegionSuffix: null
     });
-
-    const suite = new Benchmark.Suite;
-    const input = Buffer.from(JSON.stringify({ key1: 'value1b', nested: { secret: crypto.randomBytes(1024).toString('base64') } }, ['nested.secret']))
-    suite.add('Encrypt#String', function() {
+    try {
+      const suite = new Benchmark.Suite;
+      const input = Buffer.from(JSON.stringify({ key1: 'value1b', nested: { secret: crypto.randomBytes(1024).toString('base64') } }, ['nested.secret']))
+      suite.add('Encrypt#String', function() {
         encrypt('partition', input);
-    })
-    .on('complete', function() {
-      const fastest = suite.filter('fastest');
-      console.log('Encrypt mean ' + (fastest.map('stats')[0]['mean'] * 1000).toFixed(3));
-    })
-    .run({ 'async': false });
-
-    shutdown();
+      })
+      .on('complete', function() {
+        const fastest = suite.filter('fastest');
+        console.log('Encrypt mean ' + (fastest.map('stats')[0]['mean'] * 1000).toFixed(3));
+      })
+      .run({ 'async': false });
+    } finally {
+      shutdown();
+    }
   });
   it('Benchmark Decrypt', function() {
     this.timeout(0);
@@ -202,20 +205,21 @@ describe('Asherah', function () {
       PreferredRegion: null,
       EnableRegionSuffix: null
     });
-
-    const suite = new Benchmark.Suite;
-    const input = Buffer.from(JSON.stringify({ key1: 'value1b', nested: { secret: crypto.randomBytes(1024).toString('base64') } }, ['nested.secret']))
-    const enc = encrypt('partition', input);
-    suite.add('Decrypt#String', function() {
-        decrypt('partition', enc);
-    })
-    .on('complete', function() {
-      const fastest = suite.filter('fastest');
-      console.log('Decrypt mean ' + (fastest.map('stats')[0]['mean'] * 1000).toFixed(3));
-    })
-    .run({ 'async': false });
-
-    shutdown();
+    try {
+      const suite = new Benchmark.Suite;
+      const input = Buffer.from(JSON.stringify({ key1: 'value1b', nested: { secret: crypto.randomBytes(1024).toString('base64') } }, ['nested.secret']))
+      const enc = encrypt('partition', input);
+      suite.add('Decrypt#String', function() {
+          decrypt('partition', enc);
+      })
+      .on('complete', function() {
+        const fastest = suite.filter('fastest');
+        console.log('Decrypt mean ' + (fastest.map('stats')[0]['mean'] * 1000).toFixed(3));
+      })
+      .run({ 'async': false });
+    } finally {
+      shutdown();
+    }
   });
 });
 
