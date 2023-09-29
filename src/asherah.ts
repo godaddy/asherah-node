@@ -41,7 +41,7 @@ export type AsherahConfig = {
 
 export function setup(config: AsherahConfig) {
     const configStr = JSON.stringify(config);
-    napi_asherah.Napi_SetupJson(configStr, config.ProductID.length, config.ServiceName.length, configStr.length);
+    napi_asherah.Napi_SetupJson(configStr, config.ProductID.length, config.ServiceName.length);
 }
 
 export function shutdown() {
