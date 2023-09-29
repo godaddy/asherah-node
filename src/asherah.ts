@@ -67,3 +67,7 @@ export function encrypt_string(partitionId: string, data: string): string {
 export function set_max_stack_alloc_item_size(max_item_size: number) {
   return napi_asherah.Napi_SetMaxStackAllocItemSize(max_item_size);
 }
+
+export function set_safety_padding_overhead(safety_padding_overhead: number) {
+  return napi_asherah.Napi_SetSafetyPaddingOverhead(safety_padding_overhead);
+}
