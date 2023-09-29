@@ -73,6 +73,7 @@ function round_trip_strings(input: string) {
 }
 
 describe('Asherah', function () {
+
   it('Round Trip Buffers', function () {
     setup_asherah_static_memory(true, true);
     const data = Buffer.from('mysecretdata', 'utf8');
@@ -91,118 +92,69 @@ describe('Asherah', function () {
     setup_asherah_static_memory(true, false);
     round_trip_strings('mysecretdata');
   });
+
   it('Benchmark RoundTrip Buffers', function() {
     this.timeout(0);
-    setup_asherah_static_memory(false, false);
-    try {
-      const suite = new Benchmark.Suite;
-      const input = Buffer.from(get_sample_json())
-      suite.add('RoundTrip#Buffer', function() {
-          const enc = encrypt('partition', input);
-          decrypt('partition', enc);
-      })
-      .on('complete', function() {
-        const fastest = suite.filter('fastest');
-        console.log('RoundTrip Buffers mean ' + (fastest.map('stats')[0]['mean'] * 1000).toFixed(3));
-      })
-      .run({ 'async': false });
-    } finally {
-      shutdown();
-    }
+    setup_asherah_static_memory(false, true);
+    benchmark_roundtrip_buffer();
   });
   it('Benchmark Encrypt Buffers', function() {
     this.timeout(0);
-    setup_asherah_static_memory(false, false);
-    try {
-      const suite = new Benchmark.Suite;
-      const input = Buffer.from(get_sample_json());
-      suite.add('Encrypt#Buffer', function() {
-        encrypt('partition', input);
-      })
-      .on('complete', function() {
-        const fastest = suite.filter('fastest');
-        console.log('Encrypt Buffers mean ' + (fastest.map('stats')[0]['mean'] * 1000).toFixed(3));
-      })
-      .run({ 'async': false });
-    } finally {
-      shutdown();
-    }
+    setup_asherah_static_memory(false, true);
+    benchmark_encrypt_buffer();
   });
   it('Benchmark Decrypt Buffers', function() {
     this.timeout(0);
-    setup_asherah_static_memory(false, false);
-    try {
-      const suite = new Benchmark.Suite;
-      const input = Buffer.from(get_sample_json());
-      const enc = encrypt('partition', input);
-      suite.add('Decrypt#Buffer', function() {
-          decrypt('partition', enc);
-      })
-      .on('complete', function() {
-        const fastest = suite.filter('fastest');
-        console.log('Decrypt Buffers mean ' + (fastest.map('stats')[0]['mean'] * 1000).toFixed(3));
-      })
-      .run({ 'async': false });
-    } finally {
-      shutdown();
-    }
+    setup_asherah_static_memory(false, true);
+    benchmark_decrypt_buffer();
   });
   it('Benchmark RoundTrip Strings', function() {
     this.timeout(0);
-    setup_asherah_static_memory(false, false);
-    try {
-      const suite = new Benchmark.Suite;
-      const input = get_sample_json();
-      suite.add('RoundTrip#String', function() {
-          const enc = encrypt_string('partition', input);
-          decrypt_string('partition', enc);
-      })
-      .on('complete', function() {
-        const fastest = suite.filter('fastest');
-        console.log('RoundTrip Strings mean ' + (fastest.map('stats')[0]['mean'] * 1000).toFixed(3));
-      })
-      .run({ 'async': false });
-    } finally {
-      shutdown();
-    }
+    setup_asherah_static_memory(false, true);
+    benchmark_roundtrip_string();
   });
   it('Benchmark Encrypt Strings', function() {
     this.timeout(0);
-    setup_asherah_static_memory(false, false);
-    try {
-      const suite = new Benchmark.Suite;
-      const input = get_sample_json();
-      suite.add('Encrypt#String', function() {
-        encrypt_string('partition', input);
-      })
-      .on('complete', function() {
-        const fastest = suite.filter('fastest');
-        console.log('Encrypt Strings mean ' + (fastest.map('stats')[0]['mean'] * 1000).toFixed(3));
-      })
-      .run({ 'async': false });
-    } finally {
-      shutdown();
-    }
+    setup_asherah_static_memory(false, true);
+    benchmark_encrypt_string();
   });
   it('Benchmark Decrypt Strings', function() {
     this.timeout(0);
-    setup_asherah_static_memory(false, false);
-    try {
-      const suite = new Benchmark.Suite;
-      const input = get_sample_json();
-      const enc = encrypt_string('partition', input);
-      suite.add('Decrypt#String', function() {
-          decrypt_string('partition', enc);
-      })
-      .on('complete', function() {
-        const fastest = suite.filter('fastest');
-        console.log('Decrypt Strings mean ' + (fastest.map('stats')[0]['mean'] * 1000).toFixed(3));
-      })
-      .run({ 'async': false });
-    } finally {
-      shutdown();
-    }
+    setup_asherah_static_memory(false, true);
+    benchmark_decrypt_string();
   });
+
+  it('Benchmark RoundTrip Buffers (No Session Cache)', function() {
+    this.timeout(0);
+    setup_asherah_static_memory(false, false);
+    benchmark_roundtrip_buffer();
+  });
+  it('Benchmark Encrypt Buffers (No Session Cache)', function() {
+    this.timeout(0);
+    setup_asherah_static_memory(false, false);
+    benchmark_encrypt_buffer();
+  });
+  it('Benchmark Decrypt Buffers (No Session Cache)', function() {
+    this.timeout(0);
+    setup_asherah_static_memory(false, false);
+    benchmark_decrypt_buffer();
+  });
+  it('Benchmark RoundTrip Strings (No Session Cache)', function() {
+    this.timeout(0);
+    setup_asherah_static_memory(false, false);
+    benchmark_roundtrip_string();
+  });
+  it('Benchmark Encrypt Strings (No Session Cache)', function() {
+    this.timeout(0);
+    setup_asherah_static_memory(false, false);
+    benchmark_encrypt_string();
+  });
+  it('Benchmark Decrypt Strings (No Session Cache)', function() {
+    this.timeout(0);
+    setup_asherah_static_memory(false, false);
+    benchmark_decrypt_string();
+  });
+
   it('Test RegionMap', function() {
     const config: AsherahConfig = {
       KMS: 'aws',
@@ -229,8 +181,109 @@ describe('Asherah', function () {
   });
 });
 
+function benchmark_roundtrip_buffer() {
+  try {
+    const suite = new Benchmark.Suite;
+    const input = Buffer.from(get_sample_json());
+    suite.add('RoundTrip#Buffer', function () {
+      const enc = encrypt('partition', input);
+      decrypt('partition', enc);
+    })
+      .on('complete', function () {
+        const fastest = suite.filter('fastest');
+        console.log('RoundTrip Buffers mean ' + (fastest.map('stats')[0]['mean'] * 1000).toFixed(3));
+      })
+      .run({ 'async': false });
+  } finally {
+    shutdown();
+  }
+}
 
+function benchmark_encrypt_buffer() {
+  try {
+    const suite = new Benchmark.Suite;
+    const input = Buffer.from(get_sample_json());
+    suite.add('Encrypt#Buffer', function () {
+      encrypt('partition', input);
+    })
+      .on('complete', function () {
+        const fastest = suite.filter('fastest');
+        console.log('Encrypt Buffers mean ' + (fastest.map('stats')[0]['mean'] * 1000).toFixed(3));
+      })
+      .run({ 'async': false });
+  } finally {
+    shutdown();
+  }
+}
 
+function benchmark_decrypt_buffer() {
+  try {
+    const suite = new Benchmark.Suite;
+    const input = Buffer.from(get_sample_json());
+    const enc = encrypt('partition', input);
+    suite.add('Decrypt#Buffer', function () {
+      decrypt('partition', enc);
+    })
+      .on('complete', function () {
+        const fastest = suite.filter('fastest');
+        console.log('Decrypt Buffers mean ' + (fastest.map('stats')[0]['mean'] * 1000).toFixed(3));
+      })
+      .run({ 'async': false });
+  } finally {
+    shutdown();
+  }
+}
 
+function benchmark_roundtrip_string() {
+  try {
+    const suite = new Benchmark.Suite;
+    const input = get_sample_json();
+    suite.add('RoundTrip#String', function () {
+      const enc = encrypt_string('partition', input);
+      decrypt_string('partition', enc);
+    })
+      .on('complete', function () {
+        const fastest = suite.filter('fastest');
+        console.log('RoundTrip Strings mean ' + (fastest.map('stats')[0]['mean'] * 1000).toFixed(3));
+      })
+      .run({ 'async': false });
+  } finally {
+    shutdown();
+  }
+}
 
+function benchmark_encrypt_string() {
+  try {
+    const suite = new Benchmark.Suite;
+    const input = get_sample_json();
+    suite.add('Encrypt#String', function () {
+      encrypt_string('partition', input);
+    })
+      .on('complete', function () {
+        const fastest = suite.filter('fastest');
+        console.log('Encrypt Strings mean ' + (fastest.map('stats')[0]['mean'] * 1000).toFixed(3));
+      })
+      .run({ 'async': false });
+  } finally {
+    shutdown();
+  }
+}
+
+function benchmark_decrypt_string() {
+  try {
+    const suite = new Benchmark.Suite;
+    const input = get_sample_json();
+    const enc = encrypt_string('partition', input);
+    suite.add('Decrypt#String', function () {
+      decrypt_string('partition', enc);
+    })
+      .on('complete', function () {
+        const fastest = suite.filter('fastest');
+        console.log('Decrypt Strings mean ' + (fastest.map('stats')[0]['mean'] * 1000).toFixed(3));
+      })
+      .run({ 'async': false });
+  } finally {
+    shutdown();
+  }
+}
 
