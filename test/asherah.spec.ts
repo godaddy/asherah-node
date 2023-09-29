@@ -93,69 +93,69 @@ describe('Asherah', function () {
     round_trip_strings('mysecretdata');
   });
 
-  it('Benchmark RoundTrip Buffers', function() {
+  it('Benchmark RoundTrip Buffers', function () {
     this.timeout(0);
     setup_asherah_static_memory(false, true);
     benchmark_roundtrip_buffer();
   });
-  it('Benchmark Encrypt Buffers', function() {
+  it('Benchmark Encrypt Buffers', function () {
     this.timeout(0);
     setup_asherah_static_memory(false, true);
     benchmark_encrypt_buffer();
   });
-  it('Benchmark Decrypt Buffers', function() {
+  it('Benchmark Decrypt Buffers', function () {
     this.timeout(0);
     setup_asherah_static_memory(false, true);
     benchmark_decrypt_buffer();
   });
-  it('Benchmark RoundTrip Strings', function() {
+  it('Benchmark RoundTrip Strings', function () {
     this.timeout(0);
     setup_asherah_static_memory(false, true);
     benchmark_roundtrip_string();
   });
-  it('Benchmark Encrypt Strings', function() {
+  it('Benchmark Encrypt Strings', function () {
     this.timeout(0);
     setup_asherah_static_memory(false, true);
     benchmark_encrypt_string();
   });
-  it('Benchmark Decrypt Strings', function() {
+  it('Benchmark Decrypt Strings', function () {
     this.timeout(0);
     setup_asherah_static_memory(false, true);
     benchmark_decrypt_string();
   });
 
-  it('Benchmark RoundTrip Buffers (No Session Cache)', function() {
+  it('Benchmark RoundTrip Buffers (No Session Cache)', function () {
     this.timeout(0);
     setup_asherah_static_memory(false, false);
     benchmark_roundtrip_buffer();
   });
-  it('Benchmark Encrypt Buffers (No Session Cache)', function() {
+  it('Benchmark Encrypt Buffers (No Session Cache)', function () {
     this.timeout(0);
     setup_asherah_static_memory(false, false);
     benchmark_encrypt_buffer();
   });
-  it('Benchmark Decrypt Buffers (No Session Cache)', function() {
+  it('Benchmark Decrypt Buffers (No Session Cache)', function () {
     this.timeout(0);
     setup_asherah_static_memory(false, false);
     benchmark_decrypt_buffer();
   });
-  it('Benchmark RoundTrip Strings (No Session Cache)', function() {
+  it('Benchmark RoundTrip Strings (No Session Cache)', function () {
     this.timeout(0);
     setup_asherah_static_memory(false, false);
     benchmark_roundtrip_string();
   });
-  it('Benchmark Encrypt Strings (No Session Cache)', function() {
+  it('Benchmark Encrypt Strings (No Session Cache)', function () {
     this.timeout(0);
     setup_asherah_static_memory(false, false);
     benchmark_encrypt_string();
   });
-  it('Benchmark Decrypt Strings (No Session Cache)', function() {
+  it('Benchmark Decrypt Strings (No Session Cache)', function () {
     this.timeout(0);
     setup_asherah_static_memory(false, false);
     benchmark_decrypt_string();
   });
 
-  it('Test RegionMap', function() {
+  it('Test RegionMap', function () {
     const config: AsherahConfig = {
       KMS: 'aws',
       Metastore: 'memory',
@@ -172,7 +172,7 @@ describe('Asherah', function () {
       DynamoDBTableName: null,
       SessionCacheMaxSize: null,
       SessionCacheDuration: null,
-      RegionMap: {"us-west-2": "arn:aws:kms:us-west-2:795066905288:key/3a628d06-9db4-4b1f-9f76-54fc742dc662"},
+      RegionMap: { "us-west-2": "arn:aws:kms:us-west-2:795066905288:key/3a628d06-9db4-4b1f-9f76-54fc742dc662" },
       PreferredRegion: null,
       EnableRegionSuffix: null
     };
