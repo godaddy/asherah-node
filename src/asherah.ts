@@ -63,3 +63,7 @@ export function decrypt_string(partitionId: string, dataRowRecord: string): stri
 export function encrypt_string(partitionId: string, data: string): string {
   return napi_asherah.Napi_EncryptFromStringToJson(partitionId, data);
 }
+
+export function set_max_stack_alloc_item_size(max_item_size: number) {
+  return napi_asherah.Napi_SetMaxStackAllocItemSize(max_item_size);
+}

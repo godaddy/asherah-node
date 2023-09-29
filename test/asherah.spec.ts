@@ -37,6 +37,12 @@ describe('Asherah', function () {
       //Ensure that the secret data isn't anywhere in the output of encrypt
       assert(encrypted.indexOf(input) == -1);
 
+      //Ensure that the partition name hasn't been corrupted / truncated
+      assert(encrypted.indexOf('partition') != -1);
+
+      //Ensure that there are no NULLs in the encrypted JSON
+      assert(encrypted.indexOf('\u0000') == -1);
+
       const decrypted = decrypt('partition', encrypted);
 
       const output = decrypted.toString('utf8');
@@ -101,6 +107,12 @@ describe('Asherah', function () {
 
       //Ensure that the secret data isn't anywhere in the output of encrypt
       assert(encrypted.indexOf(input) == -1);
+
+      //Ensure that the partition name hasn't been corrupted / truncated
+      assert(encrypted.indexOf('partition') != -1);
+
+      //Ensure that there are no NULLs in the encrypted JSON
+      assert(encrypted.indexOf('\u0000') == -1);
 
       const output = decrypt_string('partition', encrypted);
       assert(input == output)
