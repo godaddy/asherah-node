@@ -306,20 +306,23 @@ Napi::Value Napi_EncryptFromBufferToJson(const Napi::CallbackInfo &info) {
   // jsonPtr);
   GoInt32 result = EncryptToJson(partitionIdCobhanBuffer, dataCobhanBuffer,
                                  cobhanOutputBuffer);
-  if (partition_utf8_length >= max_stack_alloc_size)
+  if (partition_utf8_length >= max_stack_alloc_size) {
     delete[] partitionIdCobhanBuffer;
+  }
   delete[] dataCobhanBuffer;
   if (unlikely(result < 0)) {
-    if (bufferSize >= max_stack_alloc_size)
+    if (bufferSize >= max_stack_alloc_size) {
       delete[] cobhanOutputBuffer;
+    }
     Napi::TypeError::New(env, encrypt_failed_message + std::to_string(result))
         .ThrowAsJavaScriptException();
     return env.Null();
   }
 
   Napi::Value output = cbuffer_to_nstring(env, cobhanOutputBuffer);
-  if (bufferSize >= max_stack_alloc_size)
+  if (bufferSize >= max_stack_alloc_size) {
     delete[] cobhanOutputBuffer;
+  }
   return output;
 }
 
@@ -374,8 +377,9 @@ Napi::Value Napi_EncryptFromStringToJson(const Napi::CallbackInfo &info) {
       copy_nstring_to_cbuffer(env, partitionId, partition_utf8_length,
                               partitionIdCobhanBuffer, &partition_copied_bytes);
   if (unlikely(partitionIdCobhanBuffer == nullptr)) {
-    if (partition_utf8_length >= max_stack_alloc_size)
+    if (partition_utf8_length >= max_stack_alloc_size) {
       delete[] partitionIdCobhanBuffer;
+    }
     Napi::TypeError::New(
         env, encrypt_failed_message +
                  std::string(" failed to copy partitionId to cobhan buffer"))
@@ -387,8 +391,9 @@ Napi::Value Napi_EncryptFromStringToJson(const Napi::CallbackInfo &info) {
   Napi::String input = info[1].As<Napi::String>();
   char *inputCobhanBuffer = nstring_to_cbuffer(env, input, &input_utf8_length);
   if (unlikely(inputCobhanBuffer == nullptr)) {
-    if (partition_utf8_length >= max_stack_alloc_size)
+    if (partition_utf8_length >= max_stack_alloc_size) {
       delete[] partitionIdCobhanBuffer;
+    }
     Napi::TypeError::New(
         env,
         encrypt_failed_message +
@@ -414,20 +419,23 @@ Napi::Value Napi_EncryptFromStringToJson(const Napi::CallbackInfo &info) {
   // jsonPtr);
   GoInt32 result = EncryptToJson(partitionIdCobhanBuffer, inputCobhanBuffer,
                                  cobhanOutputBuffer);
-  if (partition_utf8_length >= max_stack_alloc_size)
+  if (partition_utf8_length >= max_stack_alloc_size) {
     delete[] partitionIdCobhanBuffer;
+  }
   delete[] inputCobhanBuffer;
   if (unlikely(result < 0)) {
-    if (bufferSize >= max_stack_alloc_size)
+    if (bufferSize >= max_stack_alloc_size) {
       delete[] cobhanOutputBuffer;
+    }
     Napi::TypeError::New(env, encrypt_failed_message + std::to_string(result))
         .ThrowAsJavaScriptException();
     return env.Null();
   }
 
   Napi::Value output = cbuffer_to_nstring(env, cobhanOutputBuffer);
-  if (bufferSize >= max_stack_alloc_size)
+  if (bufferSize >= max_stack_alloc_size) {
     delete[] cobhanOutputBuffer;
+  }
   return output;
 }
 
@@ -482,8 +490,9 @@ Napi::Value Napi_DecryptFromJsonToBuffer(const Napi::CallbackInfo &info) {
       copy_nstring_to_cbuffer(env, partitionId, partition_utf8_length,
                               partitionIdCobhanBuffer, &partition_copied_bytes);
   if (unlikely(partitionIdCobhanBuffer == nullptr)) {
-    if (partition_utf8_length >= max_stack_alloc_size)
+    if (partition_utf8_length >= max_stack_alloc_size) {
       delete[] partitionIdCobhanBuffer;
+    }
     Napi::TypeError::New(
         env, decrypt_failed_message +
                  std::string(" failed to copy partitionId to cobhan buffer"))
@@ -496,8 +505,9 @@ Napi::Value Napi_DecryptFromJsonToBuffer(const Napi::CallbackInfo &info) {
   char *inputJsonCobhanBuffer =
       nstring_to_cbuffer(env, inputJson, &utf8_length);
   if (unlikely(inputJsonCobhanBuffer == nullptr)) {
-    if (partition_utf8_length >= max_stack_alloc_size)
+    if (partition_utf8_length >= max_stack_alloc_size) {
       delete[] partitionIdCobhanBuffer;
+    }
     Napi::TypeError::New(
         env, decrypt_failed_message +
                  std::string(" failed to convert inputJson to cobhan buffer"))
@@ -526,8 +536,9 @@ Napi::Value Napi_DecryptFromJsonToBuffer(const Napi::CallbackInfo &info) {
   // dataPtr);
   GoInt32 result = DecryptFromJson(partitionIdCobhanBuffer,
                                    inputJsonCobhanBuffer, cobhanOutputBuffer);
-  if (partition_utf8_length >= max_stack_alloc_size)
+  if (partition_utf8_length >= max_stack_alloc_size) {
     delete[] partitionIdCobhanBuffer;
+  }
   delete[] inputJsonCobhanBuffer;
   if (unlikely(result < 0)) {
     if (utf8_length >= max_stack_alloc_size) {
@@ -597,8 +608,9 @@ Napi::Value Napi_DecryptFromJsonToString(const Napi::CallbackInfo &info) {
       copy_nstring_to_cbuffer(env, partitionId, partition_utf8_length,
                               partitionIdCobhanBuffer, &partition_copied_bytes);
   if (unlikely(partitionIdCobhanBuffer == nullptr)) {
-    if (partition_utf8_length >= max_stack_alloc_size)
+    if (partition_utf8_length >= max_stack_alloc_size) {
       delete[] partitionIdCobhanBuffer;
+    }
     Napi::TypeError::New(
         env, decrypt_failed_message +
                  std::string(" failed to copy partitionId to cobhan buffer"))
@@ -611,8 +623,9 @@ Napi::Value Napi_DecryptFromJsonToString(const Napi::CallbackInfo &info) {
   char *inputJsonCobhanBuffer =
       nstring_to_cbuffer(env, inputJson, &utf8_length);
   if (unlikely(inputJsonCobhanBuffer == nullptr)) {
-    if (partition_utf8_length >= max_stack_alloc_size)
+    if (partition_utf8_length >= max_stack_alloc_size) {
       delete[] partitionIdCobhanBuffer;
+    }
     Napi::TypeError::New(
         env, decrypt_failed_message +
                  std::string(" failed to convert inputJson to cobhan buffer"))
@@ -641,20 +654,23 @@ Napi::Value Napi_DecryptFromJsonToString(const Napi::CallbackInfo &info) {
   // dataPtr);
   GoInt32 result = DecryptFromJson(partitionIdCobhanBuffer,
                                    inputJsonCobhanBuffer, cobhanOutputBuffer);
-  if (partition_utf8_length >= max_stack_alloc_size)
+  if (partition_utf8_length >= max_stack_alloc_size) {
     delete[] partitionIdCobhanBuffer;
+  }
   delete[] inputJsonCobhanBuffer;
   if (unlikely(result < 0)) {
-    if (utf8_length >= max_stack_alloc_size)
+    if (utf8_length >= max_stack_alloc_size) {
       delete[] cobhanOutputBuffer;
+    }
     Napi::TypeError::New(env, decrypt_failed_message + std::to_string(result))
         .ThrowAsJavaScriptException();
     return env.Null();
   }
 
   Napi::Value output = cbuffer_to_nstring(env, cobhanOutputBuffer);
-  if (utf8_length >= max_stack_alloc_size)
+  if (utf8_length >= max_stack_alloc_size) {
     delete[] cobhanOutputBuffer;
+  }
   return output;
 }
 
