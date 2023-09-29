@@ -1,4 +1,3 @@
-import { allocate_cbuffer, buffer_to_cbuffer, cbuffer_to_buffer, cbuffer_to_string, json_to_cbuffer, string_to_cbuffer } from 'cobhan';
 const napi_asherah = require('../build/Release/napiasherah.node');
 
 export type AsherahConfig = {
@@ -40,23 +39,9 @@ export type AsherahConfig = {
     Verbose: boolean | null,
 }
 
-const EstimatedEncryptionOverhead = 48
-const EstimatedEnvelopeOverhead = 185
-const Base64Overhead = 1.34
-let EstimatedIntermediateKeyOverhead = 0
-
-function estimate_buffer(dataLen: number, partitionLen: number): number {
-  const estimatedDataLen = (dataLen + EstimatedEncryptionOverhead) * Base64Overhead
-  return EstimatedEnvelopeOverhead + EstimatedIntermediateKeyOverhead + partitionLen + estimatedDataLen
-}
-
 export function setup(config: AsherahConfig) {
-    const configJsonBuffer = json_to_cbuffer(config);
-    EstimatedIntermediateKeyOverhead = config.ProductID.length + config.ServiceName.length
-    const result = napi_asherah.Napi_SetupJson(configJsonBuffer);
-    if (result < 0) {
-        throw new Error('setupJson failed: ' + result);
-    }
+    const configStr = JSON.stringify(config);
+    napi_asherah.Napi_SetupJson(configStr, config.ProductID.length, config.ServiceName.length, configStr.length);
 }
 
 export function shutdown() {
@@ -64,36 +49,21 @@ export function shutdown() {
 }
 
 export function decrypt(partitionId: string, dataRowRecord: string): Buffer {
-  const partitionIdBuffer = string_to_cbuffer(partitionId);
-  const jsonBuffer = string_to_cbuffer(dataRowRecord);
-  const outputDataBuffer = allocate_cbuffer(jsonBuffer.byteLength);
-
-  const result = napi_asherah.Napi_DecryptFromJson(partitionIdBuffer, jsonBuffer, outputDataBuffer);
-  if (result < 0) {
-      throw new Error('decrypt failed: ' + result);
-  }
-
-  return cbuffer_to_buffer(outputDataBuffer);
+  return napi_asherah.Napi_DecryptFromJsonToBuffer(partitionId, dataRowRecord);
 }
 
 export function encrypt(partitionId: string, data: Buffer): string {
-  const partitionIdBuffer = string_to_cbuffer(partitionId);
-  const dataBuffer = buffer_to_cbuffer(data);
-  const outputJsonBuffer = allocate_cbuffer(estimate_buffer(data.byteLength, partitionId.length));
-
-  const result = napi_asherah.Napi_EncryptToJson(partitionIdBuffer, dataBuffer, outputJsonBuffer)
-
-  if (result < 0) {
-      throw new Error('encrypt failed: ' + result);
-  }
-
-  return cbuffer_to_string(outputJsonBuffer);
+  return napi_asherah.Napi_EncryptFromBufferToJson(partitionId, data)
 }
 
 export function decrypt_string(partitionId: string, dataRowRecord: string): string {
-  return decrypt(partitionId, dataRowRecord).toString('utf8');
+  return napi_asherah.Napi_DecryptFromJsonToString(partitionId, dataRowRecord);
 }
 
 export function encrypt_string(partitionId: string, data: string): string {
-  return encrypt(partitionId, Buffer.from(data, 'utf8'))
+  return napi_asherah.Napi_EncryptFromStringToJson(partitionId, data);
+}
+
+export function set_max_stack_alloc_item_size(max_item_size: number) {
+  return napi_asherah.Napi_SetMaxStackAllocItemSize(max_item_size);
 }
