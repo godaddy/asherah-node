@@ -109,3 +109,4 @@ integration/asherah
 integration/go
 
 .vscode/
+.tool-versions

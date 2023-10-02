@@ -1,79 +1,167 @@
 #include "../lib/libasherah.h"
+#include <iostream>
 #include <napi.h>
 
 #define unlikely(expr) __builtin_expect(!!(expr), 0)
 #define likely(expr) __builtin_expect(!!(expr), 1)
 
+const size_t cobhan_header_size = 64 / 8;
 const size_t est_encryption_overhead = 48;
 const size_t est_envelope_overhead = 185;
 const double base64_overhead = 1.34;
-const size_t cobhan_header_size = 64 / 8;
 
 size_t est_intermediate_key_overhead = 0;
-size_t safety_padding_overhead = 0;
+size_t safety_padding = 0;
 size_t max_stack_alloc_size = 1024;
 
 const char *setupjson_failed_message = "SetupJson failed: ";
 const char *decrypt_failed_message = "Decrypt failed: ";
 const char *encrypt_failed_message = "Encrypt failed: ";
 
-volatile int32_t setup_state = 0;
+int32_t setup_state = 0;
+int32_t verbose_flag = 0;
 
-void finalize_wrapped_cbuffer(napi_env env, void *finalize_data) {
-  char *buffer = ((char *)finalize_data) - cobhan_header_size;
-  delete[] buffer;
+__attribute__((always_inline)) inline void debug_log(std::string message) {
+  if (unlikely(verbose_flag)) {
+    std::cout << message << std::endl;
+  }
+}
+
+__attribute__((always_inline)) inline void error_log(std::string message) {
+  if (unlikely(verbose_flag)) {
+    std::cerr << message << std::endl;
+  }
+}
+
+std::string napi_status_to_string(napi_status status) {
+  switch (status) {
+  case napi_ok:
+    return "napi_ok";
+  case napi_invalid_arg:
+    return "napi_invalid_arg";
+  case napi_object_expected:
+    return "napi_object_expected";
+  case napi_string_expected:
+    return "napi_string_expected";
+  case napi_name_expected:
+    return "napi_name_expected";
+  case napi_function_expected:
+    return "napi_function_expected";
+  case napi_number_expected:
+    return "napi_number_expected";
+  case napi_boolean_expected:
+    return "napi_boolean_expected";
+  case napi_array_expected:
+    return "napi_array_expected";
+  case napi_generic_failure:
+    return "napi_generic_failure";
+  case napi_pending_exception:
+    return "napi_pending_exception";
+  case napi_cancelled:
+    return "napi_cancelled";
+  case napi_escape_called_twice:
+    return "napi_escape_called_twice";
+  case napi_handle_scope_mismatch:
+    return "napi_handle_scope_mismatch";
+  case napi_callback_scope_mismatch:
+    return "napi_callback_scope_mismatch";
+  case napi_queue_full:
+    return "napi_queue_full";
+  case napi_closing:
+    return "napi_closing";
+  case napi_bigint_expected:
+    return "napi_bigint_expected";
+  case napi_date_expected:
+    return "napi_date_expected";
+  case napi_arraybuffer_expected:
+    return "napi_arraybuffer_expected";
+  case napi_detachable_arraybuffer_expected:
+    return "napi_detachable_arraybuffer_expected";
+  case napi_would_deadlock:
+    return "napi_would_deadlock";
+  default:
+    return "Unknown napi_status";
+  }
+}
+
+Napi::Value LogErrorAndThrow(Napi::Env &env, std::string error_msg) {
+  error_log(error_msg);
+  Napi::Error::New(env, error_msg).ThrowAsJavaScriptException();
+  return env.Null();
 }
 
 __attribute__((always_inline)) inline size_t
-estimate_buffer(size_t dataLen, size_t partitionLen) {
+cobhan_buffer_size(size_t dataLen) {
+  return dataLen + cobhan_header_size + safety_padding +
+         1; // Add one for possible NULL delimiter due to Node string functions
+}
+
+__attribute__((always_inline)) inline size_t
+estimate_asherah_output_size(size_t dataLen, size_t partitionLen) {
   double estimatedDataLen =
       double(dataLen + est_encryption_overhead) * base64_overhead;
   return size_t(est_envelope_overhead + est_intermediate_key_overhead +
-                partitionLen + estimatedDataLen + safety_padding_overhead);
+                partitionLen + estimatedDataLen + safety_padding);
 }
 
-__attribute__((always_inline)) inline char *configure_cbuffer(char *buffer,
-                                                              size_t length) {
+__attribute__((always_inline)) inline void configure_cbuffer(char *buffer,
+                                                             size_t length) {
   *((int32_t *)buffer) = length;
+  // Reserved for future use
   *((int32_t *)(buffer + sizeof(int32_t))) = 0;
-  return buffer;
 }
 
-__attribute__((always_inline)) inline char *allocate_cbuffer(size_t length) {
-  char *cobhanBuffer = new (
-      std::nothrow) char[length + cobhan_header_size + safety_padding_overhead];
+__attribute__((always_inline)) inline std::unique_ptr<char[]>
+allocate_cbuffer(size_t length) {
+  size_t cobhanBufferSize = cobhan_buffer_size(length);
+  if (unlikely(verbose_flag)) {
+    std::string log_msg =
+        "allocate_cbuffer(" + std::to_string(length) +
+        ") cobhanBufferSize: " + std::to_string(cobhanBufferSize);
+    debug_log(log_msg);
+  }
+
+  char *cobhanBuffer = new (std::nothrow) char[cobhanBufferSize];
   if (unlikely(cobhanBuffer == nullptr)) {
+    std::string error_msg = "allocate_cbuffer: new[" +
+                            std::to_string(cobhanBufferSize) + " returned null";
+    error_log(error_msg);
     return nullptr;
   }
-  return configure_cbuffer(cobhanBuffer, length);
+  std::unique_ptr<char[]> cobhanBufferPtr(cobhanBuffer);
+  configure_cbuffer(cobhanBuffer, length);
+  return cobhanBufferPtr;
 }
 
-__attribute__((always_inline)) inline char *
+__attribute__((always_inline)) inline std::unique_ptr<char[]>
 nbuffer_to_cbuffer(Napi::Env &env, Napi::Buffer<unsigned char> &buffer) {
   size_t bufferLength = buffer.ByteLength();
-  char *cobhanBuffer =
-      new (std::nothrow) char[bufferLength + cobhan_header_size +
-                              safety_padding_overhead];
-  if (unlikely(cobhanBuffer == nullptr)) {
+  std::unique_ptr<char[]> cobhanBufferPtr = allocate_cbuffer(bufferLength);
+  if (unlikely(cobhanBufferPtr == nullptr)) {
     return nullptr;
   }
-  memcpy(cobhanBuffer + cobhan_header_size, buffer.Data(), bufferLength);
-  return configure_cbuffer(cobhanBuffer, bufferLength);
+
+  memcpy(cobhanBufferPtr.get() + cobhan_header_size, buffer.Data(),
+         bufferLength);
+  configure_cbuffer(cobhanBufferPtr.get(), bufferLength);
+  return cobhanBufferPtr;
 }
 
 __attribute__((always_inline)) inline Napi::Value
 cbuffer_to_nstring(Napi::Env &env, char *cobhanBuffer) {
   napi_value output;
+
   // Using C function because it allows length delimited input
   napi_status status = napi_create_string_utf8(
       env, ((const char *)cobhanBuffer) + cobhan_header_size,
       *((int *)cobhanBuffer), &output);
+
   if (unlikely(status != napi_ok)) {
-    Napi::Error::New(env,
-                     "cbuffer_to_nstring failed: " + std::to_string(status))
-        .ThrowAsJavaScriptException();
-    return env.Null();
+    return LogErrorAndThrow(
+        env, "cbuffer_to_nstring: napi_create_string_utf8 failed: " +
+                 napi_status_to_string(status));
   }
+
   return Napi::String(env, output);
 }
 
@@ -84,12 +172,13 @@ nstring_utf8_length(Napi::Env &env, Napi::String &str) {
 
   status = napi_get_value_string_utf8(env, str, nullptr, 0, &utf8_length);
   if (unlikely(status != napi_ok)) {
-    Napi::Error::New(env, "nstring_to_cbuffer: Napi utf8 string conversion "
-                          "failure (length check): " +
-                              std::to_string(status))
-        .ThrowAsJavaScriptException();
+    LogErrorAndThrow(
+        env,
+        "nstring_utf8_length: napi_get_value_string_utf8 length check failed" +
+            napi_status_to_string(status));
     return (size_t)(-1);
   }
+
   return utf8_length;
 }
 
@@ -101,19 +190,17 @@ copy_nstring_to_cbuffer(Napi::Env &env, Napi::String &str, size_t utf8_length,
   status = napi_get_value_string_utf8(env, str, cbuffer + cobhan_header_size,
                                       utf8_length + 1, &copied_bytes);
   if (unlikely(status != napi_ok)) {
-    Napi::Error::New(
-        env, "nstring_to_cbuffer: Napi utf8 string conversion failure: " +
-                 std::to_string(status))
-        .ThrowAsJavaScriptException();
+    LogErrorAndThrow(env, "copy_nstring_to_cbuffer: Napi utf8 string conversion "
+                          "failure: " +
+                              napi_status_to_string(status));
     return nullptr;
   }
 
   if (unlikely(copied_bytes != utf8_length)) {
-    Napi::Error::New(
-        env, "nstring_to_cbuffer: Did not copy expected number of bytes " +
-                 std::to_string(utf8_length) + " copied " +
-                 std::to_string(copied_bytes))
-        .ThrowAsJavaScriptException();
+    LogErrorAndThrow(env, "copy_nstring_to_cbuffer: Did not copy expected number "
+                          "of bytes " +
+                              std::to_string(utf8_length) + " copied " +
+                              std::to_string(copied_bytes));
     return nullptr;
   }
 
@@ -125,63 +212,63 @@ copy_nstring_to_cbuffer(Napi::Env &env, Napi::String &str, size_t utf8_length,
   return cbuffer;
 }
 
-inline char *nstring_to_cbuffer(Napi::Env &env, Napi::String &str,
-                                size_t *length = nullptr) {
+inline std::unique_ptr<char[]> nstring_to_cbuffer(Napi::Env &env,
+                                                  Napi::String &str,
+                                                  size_t *length = nullptr) {
   size_t utf8_length = nstring_utf8_length(env, str);
   if (unlikely(utf8_length == (size_t)(-1))) {
     return nullptr;
   }
 
-  char *cobhanBuffer =
-      new (std::nothrow) char[utf8_length + 1 + cobhan_header_size +
-                              safety_padding_overhead];
-  if (unlikely(cobhanBuffer == nullptr)) {
+  std::unique_ptr<char[]> cobhanBufferPtr = allocate_cbuffer(utf8_length);
+  if (unlikely(cobhanBufferPtr == nullptr)) {
     return nullptr;
   }
 
-  char *output =
-      copy_nstring_to_cbuffer(env, str, utf8_length, cobhanBuffer, length);
+  char *output = copy_nstring_to_cbuffer(env, str, utf8_length,
+                                         cobhanBufferPtr.get(), length);
   if (unlikely(output == nullptr)) {
-    delete[] cobhanBuffer;
+    cobhanBufferPtr.release();
   }
-  return output;
+  return cobhanBufferPtr;
+}
+
+inline Napi::Buffer<unsigned char> cbuffer_to_nbuffer(Napi::Env &env,
+                                                      char *cobhanBuffer) {
+  return Napi::Buffer<unsigned char>::Copy(
+      env, ((unsigned char *)cobhanBuffer) + cobhan_header_size,
+      *((int *)cobhanBuffer));
 }
 
 Napi::Value Napi_SetupJson(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   if (unlikely(setup_state == 1)) {
-    Napi::TypeError::New(env, encrypt_failed_message +
-                                  std::string("SetupJson called twice"))
-        .ThrowAsJavaScriptException();
-    return env.Null();
+    return LogErrorAndThrow(env, setupjson_failed_message +
+                                     std::string("SetupJson called twice"));
   }
 
-#ifdef COUNT_ARGUMENTS
   if (unlikely(info.Length() < 3)) {
-    Napi::TypeError::New(env, "SetupJson: Wrong number of arguments")
-        .ThrowAsJavaScriptException();
-    return env.Null();
+    return LogErrorAndThrow(env, "SetupJson: Wrong number of arguments");
   }
-#endif
 
-#ifdef CHECK_ARGUMENT_TYPES
   if (unlikely(!info[0].IsString() || !info[1].IsNumber() ||
-               !info[2].IsNumber())) {
-    Napi::TypeError::New(env, "SetupJson: Wrong argument types")
-        .ThrowAsJavaScriptException();
-    return env.Null();
+               !info[2].IsNumber() || !info[3].IsBoolean())) {
+    return LogErrorAndThrow(env, "SetupJson: Wrong argument types");
   }
-#endif
+
+  Napi::Boolean verbose = info[3].As<Napi::Boolean>();
+  verbose.Value() ? verbose_flag = 1 : verbose_flag = 0;
+  debug_log("SetupJson: verbose_flag: " + std::to_string(verbose_flag) +
+            " verbose.Value(): " + std::to_string(verbose.Value()));
 
   Napi::String configJson = info[0].As<Napi::String>();
-  char *configJsonCobhanBuffer = nstring_to_cbuffer(env, configJson);
-  if (unlikely(configJsonCobhanBuffer == nullptr)) {
-    Napi::TypeError::New(
+  std::unique_ptr<char[]> configJsonCobhanBufferPtr =
+      nstring_to_cbuffer(env, configJson);
+  if (unlikely(configJsonCobhanBufferPtr == nullptr)) {
+    return LogErrorAndThrow(
         env, setupjson_failed_message +
-                 std::string(" failed to convert configJson to cobhan buffer"))
-        .ThrowAsJavaScriptException();
-    return env.Null();
+                 std::string(" failed to convert configJson to cobhan buffer"));
   }
 
   Napi::Number productIdLength = info[1].As<Napi::Number>();
@@ -191,486 +278,370 @@ Napi::Value Napi_SetupJson(const Napi::CallbackInfo &info) {
       productIdLength.Int32Value() + serviceNameLength.Int32Value();
 
   // extern GoInt32 SetupJson(void* configJson);
-  GoInt32 result = SetupJson(configJsonCobhanBuffer);
-  delete[] configJsonCobhanBuffer;
+  GoInt32 result = SetupJson(configJsonCobhanBufferPtr.get());
   if (unlikely(result < 0)) {
-    Napi::TypeError::New(env, setupjson_failed_message + std::to_string(result))
-        .ThrowAsJavaScriptException();
+    return LogErrorAndThrow(env,
+                            setupjson_failed_message + std::to_string(result));
   }
   setup_state = 1;
   return env.Null();
 }
 
-Napi::Value Napi_EncryptFromBufferToJson(const Napi::CallbackInfo &info) {
-  Napi::Env env = info.Env();
+Napi::Value encrypt_to_json(Napi::Env &env, size_t partition_bytes,
+                            size_t data_bytes, char *partitionIdCobhanBuffer,
+                            char *dataCobhanBuffer) {
 
-  if (unlikely(setup_state == 0)) {
-    Napi::TypeError::New(env, encrypt_failed_message +
-                                  std::string("SetupJson not called"))
-        .ThrowAsJavaScriptException();
-    return env.Null();
-  }
-
-#ifdef COUNT_ARGUMENTS
-  if (unlikely(info.Length() < 2)) {
-    Napi::TypeError::New(env,
-                         "EncryptFromBufferToJson: Wrong number of arguments")
-        .ThrowAsJavaScriptException();
-    return env.Null();
-  }
-#endif
-
-#ifdef CHECK_ARGUMENT_TYPES
-  if (unlikely(!info[0].IsString() || !info[1].IsBuffer())) {
-    Napi::TypeError::New(env, "EncryptFromBufferToJson: Wrong argument types")
-        .ThrowAsJavaScriptException();
-    return env.Null();
-  }
-#endif
-
-  size_t partition_utf8_length, partition_copied_bytes;
-  Napi::String partitionId = info[0].As<Napi::String>();
-  partition_utf8_length = nstring_utf8_length(env, partitionId);
-  if (unlikely(partition_utf8_length == (size_t)(-1))) {
-    Napi::TypeError::New(
-        env, encrypt_failed_message +
-                 std::string(" failed to get partitionId utf8 length"))
-        .ThrowAsJavaScriptException();
-    return env.Null();
-  }
-  char *partitionIdCobhanBuffer;
-  if (partition_utf8_length < max_stack_alloc_size) {
-    partitionIdCobhanBuffer =
-        (char *)alloca(partition_utf8_length + 1 + cobhan_header_size +
-                       safety_padding_overhead);
-  } else {
-    partitionIdCobhanBuffer =
-        new (std::nothrow) char[partition_utf8_length + 1 + cobhan_header_size +
-                                safety_padding_overhead];
-  }
-  if (unlikely(partitionIdCobhanBuffer == nullptr)) {
-    Napi::TypeError::New(
-        env, encrypt_failed_message +
-                 std::string(" failed to allocate partitionId cobhan buffer"))
-        .ThrowAsJavaScriptException();
-    return env.Null();
-  }
-  partitionIdCobhanBuffer =
-      copy_nstring_to_cbuffer(env, partitionId, partition_utf8_length,
-                              partitionIdCobhanBuffer, &partition_copied_bytes);
-  if (unlikely(partitionIdCobhanBuffer == nullptr)) {
-    if (partition_utf8_length >= max_stack_alloc_size) {
-      delete[] partitionIdCobhanBuffer;
-    }
-    Napi::TypeError::New(
-        env, encrypt_failed_message +
-                 std::string(" failed to copy partitionId to cobhan buffer"))
-        .ThrowAsJavaScriptException();
-    return env.Null();
-  }
-
-  Napi::Buffer<unsigned char> data = info[1].As<Napi::Buffer<unsigned char>>();
-  char *dataCobhanBuffer = nbuffer_to_cbuffer(env, data);
-  if (unlikely(dataCobhanBuffer == nullptr)) {
-    if (partition_utf8_length >= max_stack_alloc_size) {
-      delete[] partitionIdCobhanBuffer;
-    }
-    Napi::TypeError::New(
-        env, encrypt_failed_message +
-                 std::string(" failed to convert data buffer to cobhan buffer"))
-        .ThrowAsJavaScriptException();
-    return env.Null();
-  }
-
-  size_t bufferSize =
-      estimate_buffer(partition_copied_bytes, data.ByteLength());
+  size_t asherah_output_size =
+      estimate_asherah_output_size(partition_bytes, data_bytes);
 
   char *cobhanOutputBuffer;
-  if (bufferSize < max_stack_alloc_size) {
+  std::unique_ptr<char[]> cobhanOutputBufferPtr;
+  if (asherah_output_size < max_stack_alloc_size) {
     cobhanOutputBuffer =
-        configure_cbuffer((char *)alloca(bufferSize + cobhan_header_size +
-                                         safety_padding_overhead),
-                          bufferSize);
+        (char *)alloca(cobhan_buffer_size(asherah_output_size));
+    configure_cbuffer(cobhanOutputBuffer, asherah_output_size);
   } else {
-    cobhanOutputBuffer = allocate_cbuffer(bufferSize);
+    cobhanOutputBufferPtr = allocate_cbuffer(asherah_output_size);
+    cobhanOutputBuffer = cobhanOutputBufferPtr.get();
   }
   if (unlikely(cobhanOutputBuffer == nullptr)) {
-    Napi::TypeError::New(
+    return LogErrorAndThrow(
         env, encrypt_failed_message +
-                 std::string(" failed to allocate cobhan output buffer"))
-        .ThrowAsJavaScriptException();
-    return env.Null();
+                 std::string(" failed to allocate cobhan output buffer"));
   }
 
   // extern GoInt32 EncryptToJson(void* partitionIdPtr, void* dataPtr, void*
   // jsonPtr);
   GoInt32 result = EncryptToJson(partitionIdCobhanBuffer, dataCobhanBuffer,
                                  cobhanOutputBuffer);
-  if (partition_utf8_length >= max_stack_alloc_size) {
-    delete[] partitionIdCobhanBuffer;
-  }
-  delete[] dataCobhanBuffer;
   if (unlikely(result < 0)) {
-    if (bufferSize >= max_stack_alloc_size) {
-      delete[] cobhanOutputBuffer;
-    }
-    Napi::TypeError::New(env, encrypt_failed_message + std::to_string(result))
-        .ThrowAsJavaScriptException();
-    return env.Null();
+    return LogErrorAndThrow(env,
+                            encrypt_failed_message + std::to_string(result));
   }
 
   Napi::Value output = cbuffer_to_nstring(env, cobhanOutputBuffer);
-  if (bufferSize >= max_stack_alloc_size) {
-    delete[] cobhanOutputBuffer;
-  }
   return output;
+}
+
+Napi::Value Napi_EncryptFromBufferToJson(const Napi::CallbackInfo &info) {
+  Napi::Env env = info.Env();
+
+  if (unlikely(setup_state == 0)) {
+    return LogErrorAndThrow(env, encrypt_failed_message +
+                                     std::string("SetupJson not called"));
+  }
+
+  if (unlikely(info.Length() < 2)) {
+    return LogErrorAndThrow(
+        env, "EncryptFromBufferToJson: Wrong number of arguments");
+  }
+
+  if (unlikely(!info[0].IsString() || !info[1].IsBuffer())) {
+    return LogErrorAndThrow(env,
+                            "EncryptFromBufferToJson: Wrong argument types");
+  }
+
+  // Determine size
+  size_t partition_utf8_length;
+  Napi::String partitionId = info[0].As<Napi::String>();
+  partition_utf8_length = nstring_utf8_length(env, partitionId);
+  if (unlikely(partition_utf8_length == (size_t)(-1))) {
+    return LogErrorAndThrow(
+        env, encrypt_failed_message +
+                 std::string(" failed to get partitionId utf8 length"));
+  }
+
+  // Allocate
+  char *partitionIdCobhanBuffer;
+  std::unique_ptr<char[]> partitionIdCobhanBufferPtr;
+  if (partition_utf8_length < max_stack_alloc_size) {
+    partitionIdCobhanBuffer =
+        (char *)alloca(cobhan_buffer_size(partition_utf8_length));
+  } else {
+    partitionIdCobhanBufferPtr = allocate_cbuffer(partition_utf8_length);
+    partitionIdCobhanBuffer = partitionIdCobhanBufferPtr.get();
+  }
+  if (unlikely(partitionIdCobhanBuffer == nullptr)) {
+    return LogErrorAndThrow(
+        env, encrypt_failed_message +
+                 std::string(" failed to allocate partitionId cobhan buffer"));
+  }
+
+  // Copy
+  size_t partition_copied_bytes;
+  partitionIdCobhanBuffer =
+      copy_nstring_to_cbuffer(env, partitionId, partition_utf8_length,
+                              partitionIdCobhanBuffer, &partition_copied_bytes);
+  if (unlikely(partitionIdCobhanBuffer == nullptr)) {
+    return LogErrorAndThrow(
+        env, encrypt_failed_message +
+                 std::string(" failed to copy partitionId to cobhan buffer"));
+  }
+
+  Napi::Buffer<unsigned char> data = info[1].As<Napi::Buffer<unsigned char>>();
+  std::unique_ptr<char[]> dataCobhanBufferPtr = nbuffer_to_cbuffer(env, data);
+  if (unlikely(dataCobhanBufferPtr == nullptr)) {
+    return LogErrorAndThrow(
+        env,
+        encrypt_failed_message +
+            std::string(" failed to convert data buffer to cobhan buffer"));
+  }
+
+  return encrypt_to_json(env, partition_copied_bytes, data.ByteLength(),
+                         partitionIdCobhanBuffer, dataCobhanBufferPtr.get());
 }
 
 Napi::Value Napi_EncryptFromStringToJson(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   if (unlikely(setup_state == 0)) {
-    Napi::TypeError::New(env, encrypt_failed_message +
-                                  std::string("SetupJson not called"))
-        .ThrowAsJavaScriptException();
-    return env.Null();
+    return LogErrorAndThrow(env, encrypt_failed_message +
+                                     std::string("SetupJson not called"));
   }
 
-#ifdef COUNT_ARGUMENTS
   if (unlikely(info.Length() < 2)) {
-    Napi::TypeError::New(env,
-                         "EncryptFromStringToJson: Wrong number of arguments")
-        .ThrowAsJavaScriptException();
-    return env.Null();
+    return LogErrorAndThrow(
+        env, "EncryptFromStringToJson: Wrong number of arguments");
   }
-#endif
 
-#ifdef CHECK_ARGUMENT_TYPES
   if (unlikely(!info[0].IsString() || !info[1].IsString())) {
-    Napi::TypeError::New(env, "EncryptFromStringToJson: Wrong argument types")
-        .ThrowAsJavaScriptException();
-    return env.Null();
+    return LogErrorAndThrow(env,
+                            "EncryptFromStringToJson: Wrong argument types");
   }
-#endif
 
-  size_t partition_utf8_length, partition_copied_bytes;
+  // Determine size
+  size_t partition_utf8_length;
   Napi::String partitionId = info[0].As<Napi::String>();
   partition_utf8_length = nstring_utf8_length(env, partitionId);
   if (unlikely(partition_utf8_length == (size_t)(-1))) {
-    Napi::TypeError::New(
+    return LogErrorAndThrow(
         env, encrypt_failed_message +
-                 std::string(" failed to get partitionId utf8 length"))
-        .ThrowAsJavaScriptException();
-    return env.Null();
+                 std::string(" failed to get partitionId utf8 length"));
   }
+
+  // Allocate
   char *partitionIdCobhanBuffer;
+  std::unique_ptr<char[]> partitionIdCobhanBufferPtr;
+  size_t cobhanBufferSize = cobhan_buffer_size(partition_utf8_length);
   if (partition_utf8_length < max_stack_alloc_size) {
-    partitionIdCobhanBuffer =
-        (char *)alloca(partition_utf8_length + 1 + cobhan_header_size +
-                       safety_padding_overhead);
+    partitionIdCobhanBuffer = (char *)alloca(cobhanBufferSize);
   } else {
-    partitionIdCobhanBuffer =
-        new (std::nothrow) char[partition_utf8_length + 1 + cobhan_header_size +
-                                safety_padding_overhead];
+    partitionIdCobhanBufferPtr = allocate_cbuffer(partition_utf8_length);
+    partitionIdCobhanBuffer = partitionIdCobhanBufferPtr.get();
   }
+  if (unlikely(partitionIdCobhanBuffer == nullptr)) {
+    return LogErrorAndThrow(
+        env, encrypt_failed_message +
+                 std::string(" failed to allocate partitionId cobhan buffer"));
+  }
+
+  // Copy
+  size_t partition_copied_bytes;
   partitionIdCobhanBuffer =
       copy_nstring_to_cbuffer(env, partitionId, partition_utf8_length,
                               partitionIdCobhanBuffer, &partition_copied_bytes);
   if (unlikely(partitionIdCobhanBuffer == nullptr)) {
-    if (partition_utf8_length >= max_stack_alloc_size) {
-      delete[] partitionIdCobhanBuffer;
-    }
-    Napi::TypeError::New(
+    return LogErrorAndThrow(
         env, encrypt_failed_message +
-                 std::string(" failed to copy partitionId to cobhan buffer"))
-        .ThrowAsJavaScriptException();
-    return env.Null();
+                 std::string(" failed to copy partitionId to cobhan buffer"));
   }
 
   size_t input_utf8_length;
   Napi::String input = info[1].As<Napi::String>();
-  char *inputCobhanBuffer = nstring_to_cbuffer(env, input, &input_utf8_length);
-  if (unlikely(inputCobhanBuffer == nullptr)) {
-    if (partition_utf8_length >= max_stack_alloc_size) {
-      delete[] partitionIdCobhanBuffer;
-    }
-    Napi::TypeError::New(
+  std::unique_ptr<char[]> inputCobhanBufferPtr =
+      nstring_to_cbuffer(env, input, &input_utf8_length);
+  if (unlikely(inputCobhanBufferPtr.get() == nullptr)) {
+    return LogErrorAndThrow(
         env,
         encrypt_failed_message +
-            std::string(" failed to convert input string to cobhan buffer"))
-        .ThrowAsJavaScriptException();
-    return env.Null();
+            std::string(" failed to convert input string to cobhan buffer"));
   }
 
-  // Call estimate_buffer to determine Cobhan output buffer length
-  size_t bufferSize = estimate_buffer(partition_utf8_length, input_utf8_length);
-
-  char *cobhanOutputBuffer;
-  if (bufferSize < max_stack_alloc_size) {
-    cobhanOutputBuffer =
-        configure_cbuffer((char *)alloca(bufferSize + cobhan_header_size +
-                                         safety_padding_overhead),
-                          bufferSize);
-  } else {
-    cobhanOutputBuffer = allocate_cbuffer(bufferSize);
-  }
-
-  // extern GoInt32 EncryptToJson(void* partitionIdPtr, void* dataPtr, void*
-  // jsonPtr);
-  GoInt32 result = EncryptToJson(partitionIdCobhanBuffer, inputCobhanBuffer,
-                                 cobhanOutputBuffer);
-  if (partition_utf8_length >= max_stack_alloc_size) {
-    delete[] partitionIdCobhanBuffer;
-  }
-  delete[] inputCobhanBuffer;
-  if (unlikely(result < 0)) {
-    if (bufferSize >= max_stack_alloc_size) {
-      delete[] cobhanOutputBuffer;
-    }
-    Napi::TypeError::New(env, encrypt_failed_message + std::to_string(result))
-        .ThrowAsJavaScriptException();
-    return env.Null();
-  }
-
-  Napi::Value output = cbuffer_to_nstring(env, cobhanOutputBuffer);
-  if (bufferSize >= max_stack_alloc_size) {
-    delete[] cobhanOutputBuffer;
-  }
-  return output;
+  return encrypt_to_json(env, partition_copied_bytes, input_utf8_length,
+                         partitionIdCobhanBuffer, inputCobhanBufferPtr.get());
 }
 
 Napi::Value Napi_DecryptFromJsonToBuffer(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   if (unlikely(setup_state == 0)) {
-    Napi::TypeError::New(env, encrypt_failed_message +
-                                  std::string("SetupJson not called"))
-        .ThrowAsJavaScriptException();
-    return env.Null();
+    return LogErrorAndThrow(env, encrypt_failed_message +
+                                     std::string("SetupJson not called"));
   }
 
-#ifdef COUNT_ARGUMENTS
   if (unlikely(info.Length() < 2)) {
-    Napi::TypeError::New(env,
-                         "DecryptFromJsonToBuffer: Wrong number of arguments")
-        .ThrowAsJavaScriptException();
-    return env.Null();
+    return LogErrorAndThrow(
+        env, "DecryptFromJsonToBuffer: Wrong number of arguments");
   }
-#endif
 
-#ifdef CHECK_ARGUMENT_TYPES
   if (unlikely(!info[0].IsString() || !info[1].IsString())) {
-    Napi::TypeError::New(env, "DecryptFromJsonToBuffer: Wrong argument types")
-        .ThrowAsJavaScriptException();
-    return env.Null();
+    return LogErrorAndThrow(env,
+                            "DecryptFromJsonToBuffer: Wrong argument types");
   }
-#endif
 
+  // Determine size
   size_t partition_utf8_length, partition_copied_bytes;
   Napi::String partitionId = info[0].As<Napi::String>();
   partition_utf8_length = nstring_utf8_length(env, partitionId);
   if (unlikely(partition_utf8_length == (size_t)(-1))) {
-    Napi::TypeError::New(
+    return LogErrorAndThrow(
         env, decrypt_failed_message +
-                 std::string(" failed to get partitionId utf8 length"))
-        .ThrowAsJavaScriptException();
-    return env.Null();
+                 std::string(" failed to get partitionId utf8 length"));
   }
+
+  // Allocate
   char *partitionIdCobhanBuffer;
+  std::unique_ptr<char[]> partitionIdCobhanBufferPtr;
+  size_t cobhanBufferSize = cobhan_buffer_size(partition_utf8_length);
   if (partition_utf8_length < max_stack_alloc_size) {
-    partitionIdCobhanBuffer =
-        (char *)alloca(partition_utf8_length + 1 + cobhan_header_size +
-                       safety_padding_overhead);
+    partitionIdCobhanBuffer = (char *)alloca(cobhanBufferSize);
   } else {
-    partitionIdCobhanBuffer =
-        new (std::nothrow) char[partition_utf8_length + 1 + cobhan_header_size +
-                                safety_padding_overhead];
+    partitionIdCobhanBufferPtr = allocate_cbuffer(partition_utf8_length);
+    partitionIdCobhanBuffer = partitionIdCobhanBufferPtr.get();
   }
+  if (unlikely(partitionIdCobhanBuffer == nullptr)) {
+    return LogErrorAndThrow(
+        env, encrypt_failed_message +
+                 std::string(" failed to allocate partitionId cobhan buffer"));
+  }
+
+  // Copy
   partitionIdCobhanBuffer =
       copy_nstring_to_cbuffer(env, partitionId, partition_utf8_length,
                               partitionIdCobhanBuffer, &partition_copied_bytes);
   if (unlikely(partitionIdCobhanBuffer == nullptr)) {
-    if (partition_utf8_length >= max_stack_alloc_size) {
-      delete[] partitionIdCobhanBuffer;
-    }
-    Napi::TypeError::New(
+    return LogErrorAndThrow(
         env, decrypt_failed_message +
-                 std::string(" failed to copy partitionId to cobhan buffer"))
-        .ThrowAsJavaScriptException();
-    return env.Null();
+                 std::string(" failed to copy partitionId to cobhan buffer"));
   }
 
   size_t utf8_length;
   Napi::String inputJson = info[1].As<Napi::String>();
-  char *inputJsonCobhanBuffer =
+  std::unique_ptr<char[]> inputJsonCobhanBuffer =
       nstring_to_cbuffer(env, inputJson, &utf8_length);
   if (unlikely(inputJsonCobhanBuffer == nullptr)) {
-    if (partition_utf8_length >= max_stack_alloc_size) {
-      delete[] partitionIdCobhanBuffer;
-    }
-    Napi::TypeError::New(
+    return LogErrorAndThrow(
         env, decrypt_failed_message +
-                 std::string(" failed to convert inputJson to cobhan buffer"))
-        .ThrowAsJavaScriptException();
-    return env.Null();
+                 std::string(" failed to convert inputJson to cobhan buffer"));
   }
 
   char *cobhanOutputBuffer;
+  std::unique_ptr<char[]> cobhanOutputBufferPtr;
   if (utf8_length < max_stack_alloc_size) {
-    cobhanOutputBuffer =
-        configure_cbuffer((char *)alloca(utf8_length + cobhan_header_size +
-                                         safety_padding_overhead),
-                          utf8_length);
+    cobhanOutputBuffer = (char *)alloca(cobhan_buffer_size(utf8_length));
+    configure_cbuffer(cobhanOutputBuffer, utf8_length);
   } else {
-    cobhanOutputBuffer = allocate_cbuffer(utf8_length);
+    cobhanOutputBufferPtr = allocate_cbuffer(utf8_length);
+    cobhanOutputBuffer = cobhanOutputBufferPtr.get();
   }
   if (unlikely(cobhanOutputBuffer == nullptr)) {
-    Napi::TypeError::New(
+    return LogErrorAndThrow(
         env, decrypt_failed_message +
-                 std::string(" failed to allocate cobhan output buffer"))
-        .ThrowAsJavaScriptException();
-    return env.Null();
+                 std::string(" failed to allocate cobhan output buffer"));
   }
 
   // extern GoInt32 DecryptFromJson(void* partitionIdPtr, void* jsonPtr, void*
   // dataPtr);
-  GoInt32 result = DecryptFromJson(partitionIdCobhanBuffer,
-                                   inputJsonCobhanBuffer, cobhanOutputBuffer);
-  if (partition_utf8_length >= max_stack_alloc_size) {
-    delete[] partitionIdCobhanBuffer;
-  }
-  delete[] inputJsonCobhanBuffer;
+  GoInt32 result = DecryptFromJson(
+      partitionIdCobhanBuffer, inputJsonCobhanBuffer.get(), cobhanOutputBuffer);
   if (unlikely(result < 0)) {
-    if (utf8_length >= max_stack_alloc_size) {
-      delete[] cobhanOutputBuffer;
-    }
-    Napi::TypeError::New(env, decrypt_failed_message + std::to_string(result))
-        .ThrowAsJavaScriptException();
-    return env.Null();
+    return LogErrorAndThrow(env,
+                            decrypt_failed_message + std::to_string(result));
   }
 
-  // Wrap the Cobhan output buffer with a NAPI buffer with finalizer
-  if (utf8_length < max_stack_alloc_size) {
-    return Napi::Buffer<unsigned char>::Copy(
-        env, ((unsigned char *)cobhanOutputBuffer) + cobhan_header_size,
-        *((int *)cobhanOutputBuffer));
-  } else {
-    return Napi::Buffer<unsigned char>::New(
-        env, ((unsigned char *)cobhanOutputBuffer) + cobhan_header_size,
-        *((int *)cobhanOutputBuffer), &finalize_wrapped_cbuffer);
-  }
+  return cbuffer_to_nbuffer(env, cobhanOutputBuffer);
 }
 
 Napi::Value Napi_DecryptFromJsonToString(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   if (unlikely(setup_state == 0)) {
-    Napi::TypeError::New(env, encrypt_failed_message +
-                                  std::string("SetupJson not called"))
-        .ThrowAsJavaScriptException();
-    return env.Null();
+    return LogErrorAndThrow(env, encrypt_failed_message +
+                                     std::string("SetupJson not called"));
   }
 
-#ifdef COUNT_ARGUMENTS
   if (unlikely(info.Length() < 2)) {
-    Napi::TypeError::New(env,
-                         "DecryptFromJsonToString: Wrong number of arguments")
-        .ThrowAsJavaScriptException();
-    return env.Null();
+    return LogErrorAndThrow(
+        env, "DecryptFromJsonToString: Wrong number of arguments");
   }
-#endif
 
-#ifdef CHECK_ARGUMENT_TYPES
   if (unlikely(!info[0].IsString() || !info[1].IsString())) {
-    Napi::TypeError::New(env, "DecryptFromJsonToString: Wrong argument types")
-        .ThrowAsJavaScriptException();
-    return env.Null();
+    return LogErrorAndThrow(env,
+                            "DecryptFromJsonToString: Wrong argument types");
   }
-#endif
 
-  size_t partition_utf8_length, partition_copied_bytes;
+  // Determine size
+  size_t partition_utf8_length;
   Napi::String partitionId = info[0].As<Napi::String>();
   partition_utf8_length = nstring_utf8_length(env, partitionId);
   if (unlikely(partition_utf8_length == (size_t)(-1))) {
-    return env.Null();
+    return LogErrorAndThrow(
+        env, decrypt_failed_message +
+                 std::string(" failed to get partitionId utf8 length"));
   }
+
+  // Allocate
   char *partitionIdCobhanBuffer;
+  size_t cobhanBufferSize = cobhan_buffer_size(partition_utf8_length);
+  std::unique_ptr<char[]> partitionIdCobhanBufferPtr;
   if (partition_utf8_length < max_stack_alloc_size) {
-    partitionIdCobhanBuffer =
-        (char *)alloca(partition_utf8_length + 1 + cobhan_header_size +
-                       safety_padding_overhead);
+    partitionIdCobhanBuffer = (char *)alloca(cobhanBufferSize);
   } else {
-    partitionIdCobhanBuffer =
-        new (std::nothrow) char[partition_utf8_length + 1 + cobhan_header_size +
-                                safety_padding_overhead];
+    partitionIdCobhanBufferPtr = allocate_cbuffer(partition_utf8_length);
+    partitionIdCobhanBuffer = partitionIdCobhanBufferPtr.get();
   }
+  if (unlikely(partitionIdCobhanBuffer == nullptr)) {
+    return LogErrorAndThrow(
+        env, encrypt_failed_message +
+                 std::string(" failed to allocate partitionId cobhan buffer"));
+  }
+
+  // Copy
+  size_t partition_copied_bytes;
   partitionIdCobhanBuffer =
       copy_nstring_to_cbuffer(env, partitionId, partition_utf8_length,
                               partitionIdCobhanBuffer, &partition_copied_bytes);
   if (unlikely(partitionIdCobhanBuffer == nullptr)) {
-    if (partition_utf8_length >= max_stack_alloc_size) {
-      delete[] partitionIdCobhanBuffer;
-    }
-    Napi::TypeError::New(
+    return LogErrorAndThrow(
         env, decrypt_failed_message +
-                 std::string(" failed to copy partitionId to cobhan buffer"))
-        .ThrowAsJavaScriptException();
-    return env.Null();
+                 std::string(" failed to copy partitionId to cobhan buffer"));
   }
 
   size_t utf8_length;
   Napi::String inputJson = info[1].As<Napi::String>();
-  char *inputJsonCobhanBuffer =
+  std::unique_ptr<char[]> inputJsonCobhanBuffer =
       nstring_to_cbuffer(env, inputJson, &utf8_length);
   if (unlikely(inputJsonCobhanBuffer == nullptr)) {
-    if (partition_utf8_length >= max_stack_alloc_size) {
-      delete[] partitionIdCobhanBuffer;
-    }
-    Napi::TypeError::New(
+    return LogErrorAndThrow(
         env, decrypt_failed_message +
-                 std::string(" failed to convert inputJson to cobhan buffer"))
-        .ThrowAsJavaScriptException();
-    return env.Null();
+                 std::string(" failed to convert inputJson to cobhan buffer"));
   }
 
   char *cobhanOutputBuffer;
+  std::unique_ptr<char[]> cobhanOutputBufferPtr;
   if (utf8_length < max_stack_alloc_size) {
-    cobhanOutputBuffer =
-        configure_cbuffer((char *)alloca(utf8_length + cobhan_header_size +
-                                         safety_padding_overhead),
-                          utf8_length);
+    cobhanOutputBuffer = (char *)alloca(cobhan_buffer_size(utf8_length));
+    configure_cbuffer(cobhanOutputBuffer, utf8_length);
   } else {
-    cobhanOutputBuffer = allocate_cbuffer(utf8_length);
+    cobhanOutputBufferPtr = allocate_cbuffer(utf8_length);
+    cobhanOutputBuffer = cobhanOutputBufferPtr.get();
   }
   if (unlikely(cobhanOutputBuffer == nullptr)) {
-    Napi::TypeError::New(
+    return LogErrorAndThrow(
         env, decrypt_failed_message +
-                 std::string(" failed to allocate cobhan output buffer"))
-        .ThrowAsJavaScriptException();
-    return env.Null();
+                 std::string(" failed to allocate cobhan output buffer"));
   }
 
   // extern GoInt32 DecryptFromJson(void* partitionIdPtr, void* jsonPtr, void*
   // dataPtr);
-  GoInt32 result = DecryptFromJson(partitionIdCobhanBuffer,
-                                   inputJsonCobhanBuffer, cobhanOutputBuffer);
-  if (partition_utf8_length >= max_stack_alloc_size) {
-    delete[] partitionIdCobhanBuffer;
-  }
-  delete[] inputJsonCobhanBuffer;
+  GoInt32 result = DecryptFromJson(
+      partitionIdCobhanBuffer, inputJsonCobhanBuffer.get(), cobhanOutputBuffer);
   if (unlikely(result < 0)) {
-    if (utf8_length >= max_stack_alloc_size) {
-      delete[] cobhanOutputBuffer;
-    }
-    Napi::TypeError::New(env, decrypt_failed_message + std::to_string(result))
-        .ThrowAsJavaScriptException();
-    return env.Null();
+    return LogErrorAndThrow(env,
+                            decrypt_failed_message + std::to_string(result));
   }
 
   Napi::Value output = cbuffer_to_nstring(env, cobhanOutputBuffer);
-  if (utf8_length >= max_stack_alloc_size) {
-    delete[] cobhanOutputBuffer;
-  }
   return output;
 }
 
@@ -685,14 +656,10 @@ Napi::Value Napi_Shutdown(const Napi::CallbackInfo &info) {
 Napi::Value Napi_SetMaxStackAllocItemSize(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
-#ifdef COUNT_ARGUMENTS
   if (unlikely(info.Length() < 1)) {
-    Napi::TypeError::New(env,
-                         "SetMaxStackAllocItemSize: Wrong number of arguments")
-        .ThrowAsJavaScriptException();
-    return env.Null();
+    return LogErrorAndThrow(
+        env, "SetMaxStackAllocItemSize: Wrong number of arguments");
   }
-#endif
 
   Napi::Number item_size = info[0].As<Napi::Number>();
 
@@ -703,18 +670,14 @@ Napi::Value Napi_SetMaxStackAllocItemSize(const Napi::CallbackInfo &info) {
 Napi::Value Napi_SetSafetyPaddingOverhead(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
-#ifdef COUNT_ARGUMENTS
   if (unlikely(info.Length() < 1)) {
-    Napi::TypeError::New(env,
-                         "SetSafetyPaddingOverhead: Wrong number of arguments")
-        .ThrowAsJavaScriptException();
-    return env.Null();
+    return LogErrorAndThrow(
+        env, "SetSafetyPaddingOverhead: Wrong number of arguments");
   }
-#endif
 
-  Napi::Number safety_padding = info[0].As<Napi::Number>();
+  Napi::Number safety_padding_number = info[0].As<Napi::Number>();
 
-  safety_padding_overhead = (size_t)safety_padding.Int32Value();
+  safety_padding = (size_t)safety_padding_number.Int32Value();
   return env.Null();
 }
 

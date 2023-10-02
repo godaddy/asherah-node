@@ -10,7 +10,7 @@
   "scripts": {
     "build": "npx tsc",
     "preinstall": "scripts/download-libraries.sh",
-    "install": "node-gyp rebuild",
+    "install": "CFLAGS=-fexceptions CXXFLAGS=-fexceptions node-gyp rebuild",
     "test:mocha": "mocha",
     "test": "nyc npm run test:mocha",
     "posttest": "npm run lint",
