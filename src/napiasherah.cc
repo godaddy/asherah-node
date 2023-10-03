@@ -293,8 +293,17 @@ Napi::Value Napi_SetupJson(const Napi::CallbackInfo &info) {
   est_intermediate_key_overhead =
       productIdLength.Int32Value() + serviceNameLength.Int32Value();
 
+  if(unlikely(verbose_flag)) {
+    debug_log("Calling asherah-cobhan SetupJson");
+  }
+
   // extern GoInt32 SetupJson(void* configJson);
   GoInt32 result = SetupJson(configJsonCobhanBuffer);
+
+  if(unlikely(verbose_flag)) {
+    debug_log("Returned from asherah-cobhan SetupJson");
+  }
+
   if (unlikely(result < 0)) {
     return LogErrorAndThrow(env,
                             setupjson_failed_message + std::to_string(result));
@@ -332,10 +341,19 @@ Napi::Value encrypt_to_json(Napi::Env &env, size_t partition_bytes,
                  std::string(" failed to allocate cobhan output buffer"));
   }
 
+  if(unlikely(verbose_flag)) {
+    debug_log("Calling asherah-cobhan EncryptToJson");
+  }
+
   // extern GoInt32 EncryptToJson(void* partitionIdPtr, void* dataPtr, void*
   // jsonPtr);
   GoInt32 result = EncryptToJson(partitionIdCobhanBuffer, dataCobhanBuffer,
                                  cobhanOutputBuffer);
+
+  if(unlikely(verbose_flag)) {
+    debug_log("Returning from asherah-cobhan EncryptToJson");
+  }
+
   if (unlikely(result < 0)) {
     return LogErrorAndThrow(env,
                             encrypt_failed_message + std::to_string(result));
@@ -657,10 +675,19 @@ Napi::Value Napi_DecryptFromJsonToBuffer(const Napi::CallbackInfo &info) {
                  std::string(" failed to allocate cobhan output buffer"));
   }
 
+  if(unlikely(verbose_flag)) {
+    debug_log("Calling asherah-cobhan DecryptFromJson");
+  }
+
   // extern GoInt32 DecryptFromJson(void* partitionIdPtr, void* jsonPtr, void*
   // dataPtr);
   GoInt32 result = DecryptFromJson(partitionIdCobhanBuffer,
                                    inputJsonCobhanBuffer, cobhanOutputBuffer);
+
+  if(unlikely(verbose_flag)) {
+    debug_log("Returned from asherah-cobhan DecryptFromJson");
+  }
+
   if (unlikely(result < 0)) {
     return LogErrorAndThrow(env,
                             decrypt_failed_message + std::to_string(result));
@@ -784,10 +811,19 @@ Napi::Value Napi_DecryptFromJsonToString(const Napi::CallbackInfo &info) {
                  std::string(" failed to allocate cobhan output buffer"));
   }
 
+  if(unlikely(verbose_flag)) {
+    debug_log("Calling asherah-cobhan DecryptFromJson");
+  }
+
   // extern GoInt32 DecryptFromJson(void* partitionIdPtr, void* jsonPtr, void*
   // dataPtr);
   GoInt32 result = DecryptFromJson(partitionIdCobhanBuffer,
                                    inputJsonCobhanBuffer, cobhanOutputBuffer);
+
+  if(unlikely(verbose_flag)) {
+    debug_log("Returned from asherah-cobhan DecryptFromJson");
+  }
+
   if (unlikely(result < 0)) {
     return LogErrorAndThrow(env,
                             decrypt_failed_message + std::to_string(result));
@@ -806,7 +842,17 @@ Napi::Value Napi_Shutdown(const Napi::CallbackInfo &info) {
 
   setup_state = 0;
   // extern void Shutdown();
+
+  if(unlikely(verbose_flag)) {
+    debug_log("Calling asherah-cobhan Shutdown");
+  }
+
   Shutdown();
+
+  if(unlikely(verbose_flag)) {
+    debug_log("Returned from asherah-cobhan Shutdown");
+  }
+
   return env.Null();
 }
 
