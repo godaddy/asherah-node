@@ -39,12 +39,12 @@ export type AsherahConfig = {
     Verbose: boolean | null,
 }
 
-export function setup(config: AsherahConfig) {
+export function setup(config: AsherahConfig): void {
     const configStr = JSON.stringify(config);
-    napi_asherah.Napi_SetupJson(configStr, config.ProductID.length, config.ServiceName.length, configStr.length);
+    napi_asherah.Napi_SetupJson(configStr, config.ProductID.length, config.ServiceName.length, config.Verbose);
 }
 
-export function shutdown() {
+export function shutdown(): void {
   napi_asherah.Napi_Shutdown();
 }
 
@@ -64,6 +64,10 @@ export function encrypt_string(partitionId: string, data: string): string {
   return napi_asherah.Napi_EncryptFromStringToJson(partitionId, data);
 }
 
-export function set_max_stack_alloc_item_size(max_item_size: number) {
+export function set_max_stack_alloc_item_size(max_item_size: number): void {
   return napi_asherah.Napi_SetMaxStackAllocItemSize(max_item_size);
+}
+
+export function set_safety_padding_overhead(safety_padding_overhead: number): void {
+  return napi_asherah.Napi_SetSafetyPaddingOverhead(safety_padding_overhead);
 }
