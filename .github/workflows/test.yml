@@ -39,7 +39,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install default-mysql-client -y
-        mysql -P${{ job.services.mysql.ports[3306] }} -u ${{ env.MYSQL_USERNAME }} -p${{ env.MYSQL_PASSWORD }} -e "CREATE TABLE ${{ env.MYSQL_DATABASE }}.encryption_key (
+        mysql -h 127.0.0.1 -P${{ job.services.mysql.ports[3306] }} -u ${{ env.MYSQL_USERNAME }} -p${{ env.MYSQL_PASSWORD }} -e "CREATE TABLE ${{ env.MYSQL_DATABASE }}.encryption_key (
           id             VARCHAR(255) NOT NULL,
           created        TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
           key_record     TEXT         NOT NULL,
