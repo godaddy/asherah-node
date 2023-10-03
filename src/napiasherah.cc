@@ -23,19 +23,19 @@ int32_t verbose_flag = 0;
 
 __attribute__((always_inline)) inline void debug_log(std::string message) {
   if (unlikely(verbose_flag)) {
-    std::cerr << message << std::endl << std::flush;
+    std::cerr << "asherah-node:" << message << std::endl << std::flush;
   }
 }
 
 __attribute__((always_inline)) inline void debug_log_alloca(size_t length) {
   if (unlikely(verbose_flag)) {
-    std::cerr << "Calling alloca(" << length << ") (stack)" << std::endl << std::flush;
+    std::cerr << "asherah-node:" << "Calling alloca(" << length << ") (stack)" << std::endl << std::flush;
   }
 }
 
 __attribute__((always_inline)) inline void error_log(std::string message) {
   if (unlikely(verbose_flag)) {
-    std::cerr << message << std::endl << std::flush;
+    std::cerr << "asherah-node:" << message << std::endl << std::flush;
   }
 }
 
@@ -107,8 +107,17 @@ __attribute__((always_inline)) inline size_t
 estimate_asherah_output_size(size_t dataLen, size_t partitionLen) {
   double estimatedDataLen =
       double(dataLen + est_encryption_overhead) * base64_overhead;
-  return size_t(est_envelope_overhead + est_intermediate_key_overhead +
+  if(unlikely(verbose_flag)) {
+    std::string log_msg = "estimate_asherah_output_size(" + std::to_string(dataLen) + ", " + std::to_string(partitionLen) + ") estimatedDataLen: " + std::to_string(estimatedDataLen) + " base64_overhead: " + std::to_string(base64_overhead) + " est_encryption_overhead: " + std::to_string(est_encryption_overhead);
+    debug_log(log_msg);
+  }
+  size_t asherah_output_size = size_t(est_envelope_overhead + est_intermediate_key_overhead +
                 partitionLen + estimatedDataLen + safety_padding);
+  if(unlikely(verbose_flag)) {
+    std::string log_msg = "estimate_asherah_output_size(" + std::to_string(dataLen) + ", " + std::to_string(partitionLen) + ") estimatedDataLen: " + std::to_string(estimatedDataLen) + " asherah_output_size: " + std::to_string(asherah_output_size);
+    debug_log(log_msg);
+  }
+  return asherah_output_size;
 }
 
 __attribute__((always_inline)) inline void configure_cbuffer(char *buffer,
@@ -136,7 +145,7 @@ allocate_cbuffer(size_t length) {
     return nullptr;
   }
   std::unique_ptr<char[]> cobhanBufferPtr(cobhanBuffer);
-  configure_cbuffer(cobhanBuffer, length);
+  configure_cbuffer(cobhanBuffer, length + safety_padding);
   return cobhanBufferPtr;
 }
 
@@ -217,7 +226,9 @@ cbuffer_to_nbuffer(Napi::Env &env, char *cobhanBuffer) {
 Napi::Value Napi_SetupJson(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
-  debug_log("SetupJson called");
+  if(unlikely(verbose_flag)) {
+    debug_log("SetupJson called");
+  }
 
   if (unlikely(setup_state == 1)) {
     return LogErrorAndThrow(env, setupjson_failed_message +
@@ -297,7 +308,12 @@ Napi::Value encrypt_to_json(Napi::Env &env, size_t partition_bytes,
                             char *dataCobhanBuffer) {
 
   size_t asherah_output_size =
-      estimate_asherah_output_size(partition_bytes, data_bytes);
+      estimate_asherah_output_size(data_bytes, partition_bytes);
+
+  if(unlikely(verbose_flag)) {
+    debug_log("encrypt_to_json asherah_output_size " +
+            std::to_string(asherah_output_size));
+  }
 
   char *cobhanOutputBuffer;
   std::unique_ptr<char[]> cobhanOutputBufferPtr;
@@ -305,7 +321,7 @@ Napi::Value encrypt_to_json(Napi::Env &env, size_t partition_bytes,
     size_t cobhan_ouput_buffer_size = cobhan_buffer_size(asherah_output_size);
     debug_log_alloca(cobhan_ouput_buffer_size);
     cobhanOutputBuffer = (char *)alloca(cobhan_ouput_buffer_size);
-    configure_cbuffer(cobhanOutputBuffer, asherah_output_size);
+    configure_cbuffer(cobhanOutputBuffer, asherah_output_size + safety_padding);
   } else {
     cobhanOutputBufferPtr = allocate_cbuffer(asherah_output_size);
     cobhanOutputBuffer = cobhanOutputBufferPtr.get();
@@ -332,7 +348,9 @@ Napi::Value encrypt_to_json(Napi::Env &env, size_t partition_bytes,
 Napi::Value Napi_EncryptFromBufferToJson(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
-  debug_log("EncryptFromBufferToJson called");
+  if(unlikely(verbose_flag)) {
+    debug_log("EncryptFromBufferToJson called");
+  }
 
   if (unlikely(setup_state == 0)) {
     return LogErrorAndThrow(env, encrypt_failed_message +
@@ -422,7 +440,9 @@ Napi::Value Napi_EncryptFromBufferToJson(const Napi::CallbackInfo &info) {
 Napi::Value Napi_EncryptFromStringToJson(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
-  debug_log("EncryptFromStringToJson called\n\n");
+  if(unlikely(verbose_flag)) {
+    debug_log("EncryptFromStringToJson called");
+  }
 
   if (unlikely(setup_state == 0)) {
     return LogErrorAndThrow(env, encrypt_failed_message +
@@ -520,7 +540,10 @@ Napi::Value Napi_EncryptFromStringToJson(const Napi::CallbackInfo &info) {
 
 Napi::Value Napi_DecryptFromJsonToBuffer(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  debug_log("DecryptFromJsonToBuffer called\n\n");
+
+  if(unlikely(verbose_flag)) {
+    debug_log("DecryptFromJsonToBuffer called");
+  }
 
   if (unlikely(setup_state == 0)) {
     return LogErrorAndThrow(env, decrypt_failed_message +
@@ -583,8 +606,11 @@ Napi::Value Napi_DecryptFromJsonToBuffer(const Napi::CallbackInfo &info) {
         env, decrypt_failed_message +
                  std::string(" failed to get input utf8 length"));
   }
-  debug_log("DecryptFromJsonToBuffer input size " +
+
+  if(unlikely(verbose_flag)) {
+    debug_log("DecryptFromJsonToBuffer input size " +
             std::to_string(input_utf8_length));
+  }
 
   // Allocate
   char *inputJsonCobhanBuffer;
@@ -646,7 +672,9 @@ Napi::Value Napi_DecryptFromJsonToBuffer(const Napi::CallbackInfo &info) {
 Napi::Value Napi_DecryptFromJsonToString(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
-  debug_log("DecryptFromJsonToString called\n\n");
+  if(unlikely(verbose_flag)) {
+    debug_log("DecryptFromJsonToString called");
+  }
 
   if (unlikely(setup_state == 0)) {
     return LogErrorAndThrow(env, decrypt_failed_message +
@@ -772,7 +800,9 @@ Napi::Value Napi_DecryptFromJsonToString(const Napi::CallbackInfo &info) {
 Napi::Value Napi_Shutdown(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
-  debug_log("Shutdown called");
+  if(unlikely(verbose_flag)) {
+    debug_log("Shutdown called");
+  }
 
   setup_state = 0;
   // extern void Shutdown();
@@ -783,7 +813,9 @@ Napi::Value Napi_Shutdown(const Napi::CallbackInfo &info) {
 Napi::Value Napi_SetMaxStackAllocItemSize(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
-  debug_log("SetMaxStackAllocItemSize called");
+  if(unlikely(verbose_flag)) {
+    debug_log("SetMaxStackAllocItemSize called");
+  }
 
   if (unlikely(info.Length() < 1)) {
     return LogErrorAndThrow(
@@ -799,7 +831,9 @@ Napi::Value Napi_SetMaxStackAllocItemSize(const Napi::CallbackInfo &info) {
 Napi::Value Napi_SetSafetyPaddingOverhead(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
-  debug_log("SetSafetyPaddingOverhead called");
+  if(unlikely(verbose_flag)) {
+    debug_log("SetSafetyPaddingOverhead called");
+  }
 
   if (unlikely(info.Length() < 1)) {
     return LogErrorAndThrow(

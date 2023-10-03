@@ -3,7 +3,7 @@ import { AsherahConfig, decrypt, encrypt, decrypt_string, setup, shutdown, encry
 import crypto from 'crypto';
 import Benchmark = require('benchmark');
 
-const benchmark = false;
+const benchmark = true;
 
 function get_sample_json(): string {
   return JSON.stringify({ key1: 'value1b', nested: { secret: crypto.randomBytes(1024).toString('base64') } }, ['nested.secret']);
@@ -11,7 +11,7 @@ function get_sample_json(): string {
 
 // Fails at 1623 or larger
 function get_big_string(): string {
-  return 'x'.repeat(1622);
+  return 'x'.repeat(16384);
 }
 
 function setup_asherah_static_memory(verbose: boolean, session_cache: boolean) {
@@ -203,7 +203,7 @@ describe('Asherah', function () {
   });
 
   it('Safety Padding Buffers (heap) (big)', function () {
-    set_safety_padding_overhead(512);
+    set_safety_padding_overhead(4096);
     set_max_stack_alloc_item_size(0);
     setup_asherah_static_memory(true, true);
     const data = Buffer.from(get_big_string(), 'utf8');
@@ -211,14 +211,14 @@ describe('Asherah', function () {
   });
 
   it('Safety Padding Strings (heap) (big)', function () {
-    set_safety_padding_overhead(512);
+    set_safety_padding_overhead(4096);
     set_max_stack_alloc_item_size(0);
     setup_asherah_static_memory(true, true);
     round_trip_strings(get_big_string());
   });
 
   it('Safety Padding Buffers (stack) (big)', function () {
-    set_safety_padding_overhead(512);
+    set_safety_padding_overhead(4096);
     set_max_stack_alloc_item_size(65536);
     setup_asherah_static_memory(true, true);
     const data = Buffer.from(get_big_string(), 'utf8');
@@ -226,7 +226,7 @@ describe('Asherah', function () {
   });
 
   it('Safety Padding Strings (stack) (big)', function () {
-    set_safety_padding_overhead(512);
+    set_safety_padding_overhead(4096);
     set_max_stack_alloc_item_size(65536);
     setup_asherah_static_memory(true, true);
     round_trip_strings(get_big_string());
