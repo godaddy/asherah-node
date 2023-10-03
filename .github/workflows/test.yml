@@ -37,8 +37,8 @@ jobs:
       run: npm test
     - name: Initialize RDBMS based metastore
       run: |
-        apt-get update
-        apt-get install default-mysql-client -y
+        sudo apt-get update
+        sudo apt-get install default-mysql-client -y
         mysql -h ${{ env.MYSQL_HOSTNAME }} -P${{ job.services.mysql.ports[3306] }} -u ${{ env.MYSQL_USERNAME }} -p${{ env.MYSQL_PASSWORD }} -e "CREATE TABLE ${{ env.MYSQL_DATABASE }}.encryption_key (
           id             VARCHAR(255) NOT NULL,
           created        TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
