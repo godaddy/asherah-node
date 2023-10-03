@@ -24,7 +24,7 @@ jobs:
           MYSQL_ROOT_PASSWORD: ${{ env.MYSQL_PASSWORD }}
         ports:
           - 3306:3306
-        options: --health-cmd "mysqladmin ping" --health-interval 10s --health-timeout 5s --health-retries 10 --platform linux/amd64
+        options: --health-cmd "mysqladmin ping" --health-interval 10s --health-timeout 5s --health-retries 10
     container:
       image: node:bullseye
       options: --ulimit core=-1 --ulimit memlock=-1:-1 --platform linux/amd64
@@ -75,7 +75,7 @@ jobs:
           MYSQL_ROOT_PASSWORD: ${{ env.MYSQL_PASSWORD }}
         ports:
           - 3306:3306
-        options: --health-cmd "mysqladmin ping" --health-interval 10s --health-timeout 5s --health-retries 10 --platform linux/arm64
+        options: --health-cmd "mysqladmin ping" --health-interval 10s --health-timeout 5s --health-retries 10
     container:
       image: node:bullseye
       options: --ulimit core=-1 --ulimit memlock=-1:-1 --platform linux/arm64
