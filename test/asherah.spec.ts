@@ -49,8 +49,7 @@ function round_trip_buffers(inputBuffer: Buffer) {
 
     assert(encrypted.indexOf('\u0000') == -1, "encrypted data should not contain NULLs");
 
-      //Ensure that there are no NULLs in the encrypted JSON
-      assert(encrypted.indexOf('\u0000') == -1);
+    const decrypted = decrypt('partition', encrypted);
 
     assert(Buffer.compare(inputBuffer, decrypted) == 0, "decrypted data should match original input");
   } finally {
@@ -412,74 +411,74 @@ it('Benchmark Decrypt Strings (stack) (big)', function () {
     this.timeout(0);
     set_max_stack_alloc_item_size(0);
     setup_asherah_static_memory(false, false);
-    benchmark_roundtrip_buffer(this.currentTest?.title ?? this.test?.title ??  'unknown test');
+    benchmark_roundtrip_buffer(this.test?.title ??  'unknown test');
   });
   it('Benchmark Encrypt Buffers (heap) (No Session Cache)', function () {
     this.timeout(0);
     set_max_stack_alloc_item_size(0);
     setup_asherah_static_memory(false, false);
-    benchmark_encrypt_buffer(this.currentTest?.title ?? this.test?.title ??  'unknown test');
+    benchmark_encrypt_buffer(this.test?.title ??  'unknown test');
   });
   it('Benchmark Decrypt Buffers (heap) (No Session Cache)', function () {
     this.timeout(0);
     set_max_stack_alloc_item_size(0);
     setup_asherah_static_memory(false, false);
-    benchmark_decrypt_buffer(this.currentTest?.title ?? this.test?.title ??  'unknown test');
+    benchmark_decrypt_buffer(this.test?.title ??  'unknown test');
   });
   it('Benchmark RoundTrip Strings (heap) (No Session Cache)', function () {
     this.timeout(0);
     set_max_stack_alloc_item_size(0);
     setup_asherah_static_memory(false, false);
-    benchmark_roundtrip_string(this.currentTest?.title ?? this.test?.title ??  'unknown test');
+    benchmark_roundtrip_string(this.test?.title ??  'unknown test');
   });
   it('Benchmark Encrypt Strings (heap) (No Session Cache)', function () {
     this.timeout(0);
     set_max_stack_alloc_item_size(0);
     setup_asherah_static_memory(false, false);
-    benchmark_encrypt_string(this.currentTest?.title ?? this.test?.title ??  'unknown test');
+    benchmark_encrypt_string(this.test?.title ??  'unknown test');
   });
   it('Benchmark Decrypt Strings (heap) (No Session Cache)', function () {
     this.timeout(0);
     set_max_stack_alloc_item_size(0);
     setup_asherah_static_memory(false, false);
-    benchmark_decrypt_string(this.currentTest?.title ?? this.test?.title ??  'unknown test');
+    benchmark_decrypt_string(this.test?.title ??  'unknown test');
   });
 
   it('Benchmark RoundTrip Buffers (stack) (No Session Cache)', function () {
     this.timeout(0);
     set_max_stack_alloc_item_size(2048);
     setup_asherah_static_memory(false, false);
-    benchmark_roundtrip_buffer(this.currentTest?.title ?? this.test?.title ??  'unknown test');
+    benchmark_roundtrip_buffer(this.test?.title ??  'unknown test');
   });
   it('Benchmark Encrypt Buffers (stack) (No Session Cache)', function () {
     this.timeout(0);
     set_max_stack_alloc_item_size(2048);
     setup_asherah_static_memory(false, false);
-    benchmark_encrypt_buffer(this.currentTest?.title ?? this.test?.title ??  'unknown test');
+    benchmark_encrypt_buffer(this.test?.title ??  'unknown test');
   });
   it('Benchmark Decrypt Buffers (stack) (No Session Cache)', function () {
     this.timeout(0);
     set_max_stack_alloc_item_size(2048);
     setup_asherah_static_memory(false, false);
-    benchmark_decrypt_buffer(this.currentTest?.title ?? this.test?.title ?? 'unknown test');
+    benchmark_decrypt_buffer(this.test?.title ?? 'unknown test');
   });
   it('Benchmark RoundTrip Strings (stack) (No Session Cache)', function () {
     this.timeout(0);
     set_max_stack_alloc_item_size(2048);
     setup_asherah_static_memory(false, false);
-    benchmark_roundtrip_string(this.currentTest?.title ?? this.test?.title ??  'unknown test');
+    benchmark_roundtrip_string(this.test?.title ??  'unknown test');
   });
   it('Benchmark Encrypt Strings (stack) (No Session Cache)', function () {
     this.timeout(0);
     set_max_stack_alloc_item_size(2048);
     setup_asherah_static_memory(false, false);
-    benchmark_encrypt_string(this.currentTest?.title ?? this.test?.title ??  'unknown test');
+    benchmark_encrypt_string(this.test?.title ??  'unknown test');
   });
   it('Benchmark Decrypt Strings (stack) (No Session Cache)', function () {
     this.timeout(0);
     set_max_stack_alloc_item_size(2048);
     setup_asherah_static_memory(false, false);
-    benchmark_decrypt_string(this.currentTest?.title ?? this.test?.title ??  'unknown test');
+    benchmark_decrypt_string(this.test?.title ??  'unknown test');
   });
 */
 }
