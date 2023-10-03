@@ -13,7 +13,7 @@ env:
   MYSQL_PASSWORD: Password123
 
 jobs:
-  test-package:
+  test-package-amd64:
     timeout-minutes: 15
     runs-on: ubuntu-latest
     services:
@@ -24,10 +24,61 @@ jobs:
           MYSQL_ROOT_PASSWORD: ${{ env.MYSQL_PASSWORD }}
         ports:
           - 3306:3306
-        options: --health-cmd "mysqladmin ping" --health-interval 10s --health-timeout 5s --health-retries 10
+        options: --health-cmd "mysqladmin ping" --health-interval 10s --health-timeout 5s --health-retries 10 --platform linux/amd64
     container:
       image: node:bullseye
-      options: --ulimit core=-1 --ulimit memlock=-1:-1
+      options: --ulimit core=-1 --ulimit memlock=-1:-1 --platform linux/amd64
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install npm packages
+      run: npm i
+    - name: Build TypeScript
+      run: npm run build
+    - name: Unit Test
+      run: npm test
+    - name: Initialize RDBMS based metastore
+      run: |
+        apt-get update
+        apt-get install default-mysql-client -y
+        mysql -h ${{ env.MYSQL_HOSTNAME }} -P${{ job.services.mysql.ports[3306] }} -u ${{ env.MYSQL_USERNAME }} -p${{ env.MYSQL_PASSWORD }} -e "CREATE TABLE ${{ env.MYSQL_DATABASE }}.encryption_key (
+          id             VARCHAR(255) NOT NULL,
+          created        TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          key_record     TEXT         NOT NULL,
+          PRIMARY KEY (id, created),
+          INDEX (created)
+        );"
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.20.7
+    - name: Test Cross-Language
+      env:
+        TEST_DB_NAME: ${{ env.MYSQL_DATABASE }}
+        TEST_DB_PASSWORD: ${{ env.MYSQL_PASSWORD }}
+        TEST_DB_HOSTNAME: ${{ env.MYSQL_HOSTNAME }}
+        TEST_DB_USER: ${{ env.MYSQL_USERNAME }}
+        TEST_DB_PORT: ${{ job.services.mysql.ports[3306] }}
+        ASHERAH_SERVICE_NAME: service
+        ASHERAH_PRODUCT_NAME: product
+        ASHERAH_KMS_MODE: static
+      run: scripts/integration-test.sh
+    - name: Publish (dry-run)
+      run: npm publish --dry-run
+  test-package-arm64:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_DATABASE: ${{ env.MYSQL_DATABASE }}
+          MYSQL_ROOT_PASSWORD: ${{ env.MYSQL_PASSWORD }}
+        ports:
+          - 3306:3306
+        options: --health-cmd "mysqladmin ping" --health-interval 10s --health-timeout 5s --health-retries 10 --platform linux/arm64
+    container:
+      image: node:bullseye
+      options: --ulimit core=-1 --ulimit memlock=-1:-1 --platform linux/arm64
     steps:
     - uses: actions/checkout@v2
     - name: Install npm packages
