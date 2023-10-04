@@ -45,7 +45,8 @@ void setup(const Napi::CallbackInfo &info) {
   Napi::String product_id = config_json.Get("ProductID").As<Napi::String>();
   Napi::String service_name = config_json.Get("ServiceName").As<Napi::String>();
 
-  est_intermediate_key_overhead = product_id.Utf8Value().length() + service_name.Utf8Value().length();
+  est_intermediate_key_overhead =
+      product_id.Utf8Value().length() + service_name.Utf8Value().length();
 
   Napi::Value verbose = config_json.Get("Verbose");
   if (likely(verbose.IsBoolean())) {
@@ -82,7 +83,8 @@ void setup(const Napi::CallbackInfo &info) {
     config_cobhan_buffer = config_cobhan_buffer_unique_ptr.get();
   }
   if (unlikely(config_cobhan_buffer == nullptr)) {
-    log_error_and_throw(env, "setup", "Failed to allocate config cobhan buffer");
+    log_error_and_throw(env, "setup",
+                        "Failed to allocate config cobhan buffer");
     return;
   }
 
@@ -145,7 +147,7 @@ Napi::Value encrypt_to_json(Napi::Env &env, size_t partition_bytes,
   }
   if (unlikely(output_cobhan_buffer == nullptr)) {
     return log_error_and_throw(env, "encrypt_to_json",
-                            "Failed to allocate cobhan output buffer");
+                               "Failed to allocate cobhan output buffer");
   }
 
   if (unlikely(verbose_flag)) {
@@ -195,7 +197,7 @@ Napi::Value encrypt(const Napi::CallbackInfo &info) {
   partition_utf8_byte_length = nstring_utf8_byte_length(env, partition_id);
   if (unlikely(partition_utf8_byte_length == (size_t)(-1))) {
     return log_error_and_throw(env, "encrypt",
-                            "Failed to get partition_id utf8 length");
+                               "Failed to get partition_id utf8 length");
   }
   if (unlikely(partition_utf8_byte_length == 0)) {
     return log_error_and_throw(env, "encrypt", "partition_id is empty");
@@ -221,7 +223,7 @@ Napi::Value encrypt(const Napi::CallbackInfo &info) {
   }
   if (unlikely(partition_id_cobhan_buffer == nullptr)) {
     return log_error_and_throw(env, "encrypt",
-                            "Failed to allocate partitionId cobhan buffer");
+                               "Failed to allocate partitionId cobhan buffer");
   }
 
   // Copy
@@ -231,7 +233,7 @@ Napi::Value encrypt(const Napi::CallbackInfo &info) {
       &partition_copied_bytes);
   if (unlikely(partition_id_cobhan_buffer == nullptr)) {
     return log_error_and_throw(env, "encrypt",
-                            "Failed to copy partitionId to cobhan buffer");
+                               "Failed to copy partitionId to cobhan buffer");
   }
 
   // Determine size
@@ -269,11 +271,18 @@ Napi::Value encrypt(const Napi::CallbackInfo &info) {
       copy_nbuffer_to_cbuffer(env, input_napi_buffer, input_cobhan_buffer);
   if (unlikely(input_cobhan_buffer == nullptr)) {
     return log_error_and_throw(env, "encrypt",
-                            "Failed to copy input buffer to cobhan buffer");
+                               "Failed to copy input buffer to cobhan buffer");
   }
 
-  return encrypt_to_json(env, partition_copied_bytes, input_byte_length,
-                         partition_id_cobhan_buffer, input_cobhan_buffer);
+  Napi::Value output =
+      encrypt_to_json(env, partition_copied_bytes, input_byte_length,
+                      partition_id_cobhan_buffer, input_cobhan_buffer);
+
+  if (unlikely(verbose_flag)) {
+    debug_log("encrypt", "finished");
+  }
+
+  return output;
 }
 
 Napi::Value encrypt_string(const Napi::CallbackInfo &info) {
@@ -288,7 +297,8 @@ Napi::Value encrypt_string(const Napi::CallbackInfo &info) {
   }
 
   if (unlikely(info.Length() < 2)) {
-    return log_error_and_throw(env, "encrypt_string", "Wrong number of arguments");
+    return log_error_and_throw(env, "encrypt_string",
+                               "Wrong number of arguments");
   }
 
   if (unlikely(!info[0].IsString() || !info[1].IsString())) {
@@ -301,7 +311,7 @@ Napi::Value encrypt_string(const Napi::CallbackInfo &info) {
   partition_utf8_byte_length = nstring_utf8_byte_length(env, partition_id);
   if (unlikely(partition_utf8_byte_length == (size_t)(-1))) {
     return log_error_and_throw(env, "encrypt_string",
-                            "Failed to get partition_id utf8 length");
+                               "Failed to get partition_id utf8 length");
   }
   if (unlikely(partition_utf8_byte_length == 0)) {
     return log_error_and_throw(env, "encrypt_string", "partition_id is empty");
@@ -327,7 +337,7 @@ Napi::Value encrypt_string(const Napi::CallbackInfo &info) {
   }
   if (unlikely(partition_id_cobhan_buffer == nullptr)) {
     return log_error_and_throw(env, "encrypt_string",
-                            "Failed to allocate partitionId cobhan buffer");
+                               "Failed to allocate partitionId cobhan buffer");
   }
 
   // Copy
@@ -337,7 +347,7 @@ Napi::Value encrypt_string(const Napi::CallbackInfo &info) {
       &partition_copied_bytes);
   if (unlikely(partition_id_cobhan_buffer == nullptr)) {
     return log_error_and_throw(env, "encrypt_string",
-                            "Failed to copy partitionId to cobhan buffer");
+                               "Failed to copy partitionId to cobhan buffer");
   }
 
   // Determine size
@@ -346,7 +356,7 @@ Napi::Value encrypt_string(const Napi::CallbackInfo &info) {
   input_utf8_byte_length = nstring_utf8_byte_length(env, input);
   if (unlikely(input_utf8_byte_length == (size_t)(-1))) {
     return log_error_and_throw(env, "encrypt_string",
-                            "Failed to get input utf8 length");
+                               "Failed to get input utf8 length");
   }
   if (unlikely(input_utf8_byte_length == 0)) {
     return log_error_and_throw(env, "encrypt_string", "input is empty");
@@ -371,7 +381,7 @@ Napi::Value encrypt_string(const Napi::CallbackInfo &info) {
   }
   if (unlikely(input_cobhan_buffer == nullptr)) {
     return log_error_and_throw(env, "encrypt_string",
-                            "Failed to allocate input cobhan buffer");
+                               "Failed to allocate input cobhan buffer");
   }
 
   // Copy
@@ -381,11 +391,18 @@ Napi::Value encrypt_string(const Napi::CallbackInfo &info) {
                               input_cobhan_buffer, &input_copied_bytes);
   if (unlikely(input_cobhan_buffer == nullptr)) {
     return log_error_and_throw(env, "encrypt_string",
-                            "Failed to copy input to cobhan buffer");
+                               "Failed to copy input to cobhan buffer");
   }
 
-  return encrypt_to_json(env, partition_copied_bytes, input_utf8_byte_length,
-                         partition_id_cobhan_buffer, input_cobhan_buffer);
+  Napi::Value output =
+      encrypt_to_json(env, partition_copied_bytes, input_utf8_byte_length,
+                      partition_id_cobhan_buffer, input_cobhan_buffer);
+
+  if (unlikely(verbose_flag)) {
+    debug_log("encrypt_string", "finished");
+  }
+
+  return output;
 }
 
 Napi::Value decrypt(const Napi::CallbackInfo &info) {
@@ -413,7 +430,7 @@ Napi::Value decrypt(const Napi::CallbackInfo &info) {
   partition_utf8_byte_length = nstring_utf8_byte_length(env, partition_id);
   if (unlikely(partition_utf8_byte_length == (size_t)(-1))) {
     return log_error_and_throw(env, "decrypt",
-                            "Failed to get partition_id utf8 length");
+                               "Failed to get partition_id utf8 length");
   }
   if (unlikely(partition_utf8_byte_length == 0)) {
     return log_error_and_throw(env, "decrypt", "partition_id is empty");
@@ -439,7 +456,7 @@ Napi::Value decrypt(const Napi::CallbackInfo &info) {
   }
   if (unlikely(partition_id_cobhan_buffer == nullptr)) {
     return log_error_and_throw(env, "decrypt",
-                            "Failed to allocate partition_id cobhan buffer");
+                               "Failed to allocate partition_id cobhan buffer");
   }
 
   // Copy
@@ -448,7 +465,7 @@ Napi::Value decrypt(const Napi::CallbackInfo &info) {
       &partition_copied_bytes);
   if (unlikely(partition_id_cobhan_buffer == nullptr)) {
     return log_error_and_throw(env, "decrypt",
-                            "Failed to copy partition_id to cobhan buffer");
+                               "Failed to copy partition_id to cobhan buffer");
   }
 
   // Determine size
@@ -456,7 +473,8 @@ Napi::Value decrypt(const Napi::CallbackInfo &info) {
   Napi::String input = info[1].As<Napi::String>();
   input_utf8_byte_length = nstring_utf8_byte_length(env, input);
   if (unlikely(input_utf8_byte_length == (size_t)(-1))) {
-    return log_error_and_throw(env, "decrypt", "Failed to get input utf8 length");
+    return log_error_and_throw(env, "decrypt",
+                               "Failed to get input utf8 length");
   }
   if (unlikely(input_utf8_byte_length == 0)) {
     return log_error_and_throw(env, "decrypt", "input is empty");
@@ -486,7 +504,7 @@ Napi::Value decrypt(const Napi::CallbackInfo &info) {
   }
   if (unlikely(input_cobhan_buffer == nullptr)) {
     return log_error_and_throw(env, "decrypt",
-                            "Failed to allocate input cobhan buffer");
+                               "Failed to allocate input cobhan buffer");
   }
 
   // Copy
@@ -496,7 +514,7 @@ Napi::Value decrypt(const Napi::CallbackInfo &info) {
                               input_cobhan_buffer, &input_copied_bytes);
   if (unlikely(input_cobhan_buffer == nullptr)) {
     return log_error_and_throw(env, "decrypt",
-                            "Failed to copy input to cobhan buffer");
+                               "Failed to copy input to cobhan buffer");
   }
 
   char *output_cobhan_buffer;
@@ -517,7 +535,7 @@ Napi::Value decrypt(const Napi::CallbackInfo &info) {
   }
   if (unlikely(output_cobhan_buffer == nullptr)) {
     return log_error_and_throw(env, "decrypt",
-                            "Failed to allocate cobhan output buffer");
+                               "Failed to allocate cobhan output buffer");
   }
 
   if (unlikely(verbose_flag)) {
@@ -538,7 +556,13 @@ Napi::Value decrypt(const Napi::CallbackInfo &info) {
     return log_error_and_throw(env, "decrypt", std::to_string(result));
   }
 
-  return cbuffer_to_nbuffer(env, output_cobhan_buffer);
+  Napi::Value output = cbuffer_to_nbuffer(env, output_cobhan_buffer);
+
+  if (unlikely(verbose_flag)) {
+    debug_log("decrypt", "finished");
+  }
+
+  return output;
 }
 
 Napi::Value decrypt_string(const Napi::CallbackInfo &info) {
@@ -553,7 +577,8 @@ Napi::Value decrypt_string(const Napi::CallbackInfo &info) {
   }
 
   if (unlikely(info.Length() < 2)) {
-    return log_error_and_throw(env, "decrypt_string", "Wrong number of arguments");
+    return log_error_and_throw(env, "decrypt_string",
+                               "Wrong number of arguments");
   }
 
   if (unlikely(!info[0].IsString() || !info[1].IsString())) {
@@ -566,7 +591,7 @@ Napi::Value decrypt_string(const Napi::CallbackInfo &info) {
   partition_utf8_byte_length = nstring_utf8_byte_length(env, partition_id);
   if (unlikely(partition_utf8_byte_length == (size_t)(-1))) {
     return log_error_and_throw(env, "decrypt_string",
-                            "Failed to get partition_id utf8 length");
+                               "Failed to get partition_id utf8 length");
   }
   if (unlikely(partition_utf8_byte_length == 0)) {
     return log_error_and_throw(env, "decrypt_string", "partition_id is empty");
@@ -592,7 +617,7 @@ Napi::Value decrypt_string(const Napi::CallbackInfo &info) {
   }
   if (unlikely(partition_id_cobhan_buffer == nullptr)) {
     return log_error_and_throw(env, "decrypt_string",
-                            "Failed to allocate partitionId cobhan buffer");
+                               "Failed to allocate partitionId cobhan buffer");
   }
 
   // Copy
@@ -602,7 +627,7 @@ Napi::Value decrypt_string(const Napi::CallbackInfo &info) {
       &partition_copied_bytes);
   if (unlikely(partition_id_cobhan_buffer == nullptr)) {
     return log_error_and_throw(env, "decrypt_string",
-                            "Failed to copy partitionId to cobhan buffer");
+                               "Failed to copy partitionId to cobhan buffer");
   }
 
   // Determine size
@@ -611,7 +636,7 @@ Napi::Value decrypt_string(const Napi::CallbackInfo &info) {
   input_utf8_byte_length = nstring_utf8_byte_length(env, input);
   if (unlikely(input_utf8_byte_length == (size_t)(-1))) {
     return log_error_and_throw(env, "decrypt_string",
-                            "Failed to get input utf8 length");
+                               "Failed to get input utf8 length");
   }
   if (unlikely(input_utf8_byte_length == 0)) {
     return log_error_and_throw(env, "decrypt_string", "input is empty");
@@ -636,7 +661,7 @@ Napi::Value decrypt_string(const Napi::CallbackInfo &info) {
   }
   if (unlikely(input_cobhan_buffer == nullptr)) {
     return log_error_and_throw(env, "decrypt_string",
-                            "Failed to allocate input cobhan buffer");
+                               "Failed to allocate input cobhan buffer");
   }
 
   // Copy
@@ -646,7 +671,7 @@ Napi::Value decrypt_string(const Napi::CallbackInfo &info) {
                               input_cobhan_buffer, &input_copied_bytes);
   if (unlikely(input_cobhan_buffer == nullptr)) {
     return log_error_and_throw(env, "decrypt_string",
-                            "Failed to copy input to cobhan buffer");
+                               "Failed to copy input to cobhan buffer");
   }
 
   char *output_cobhan_buffer;
@@ -667,7 +692,7 @@ Napi::Value decrypt_string(const Napi::CallbackInfo &info) {
   }
   if (unlikely(output_cobhan_buffer == nullptr)) {
     return log_error_and_throw(env, "decrypt_string",
-                            "Failed to allocate cobhan output buffer");
+                               "Failed to allocate cobhan output buffer");
   }
 
   if (unlikely(verbose_flag)) {
@@ -689,6 +714,11 @@ Napi::Value decrypt_string(const Napi::CallbackInfo &info) {
   }
 
   Napi::Value output = cbuffer_to_nstring(env, output_cobhan_buffer);
+
+  if (unlikely(verbose_flag)) {
+    debug_log("decrypt_string", "finished");
+  }
+
   return output;
 }
 
@@ -720,7 +750,7 @@ void set_max_stack_alloc_item_size(const Napi::CallbackInfo &info) {
 
   if (unlikely(info.Length() < 1)) {
     log_error_and_throw(env, "set_max_stack_alloc_item_size",
-                     "Wrong number of arguments");
+                        "Wrong number of arguments");
     return;
   }
 
@@ -738,7 +768,7 @@ void set_safety_padding_overhead(const Napi::CallbackInfo &info) {
 
   if (unlikely(info.Length() < 1)) {
     log_error_and_throw(env, "set_safety_padding_overhead",
-                     "Wrong number of arguments");
+                        "Wrong number of arguments");
     return;
   }
 

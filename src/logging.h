@@ -1,8 +1,8 @@
 #ifndef LOGGING_H
 #define LOGGING_H
+#include "hints.h"
 #include <cstdint>
 #include <string>
-#include "hints.h"
 
 extern int32_t verbose_flag;
 
