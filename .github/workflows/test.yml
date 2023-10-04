@@ -31,9 +31,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Install npm packages
-      run: npm i
-    - name: Build TypeScript
-      run: npm run build
+      run: npm install
     - name: Unit Test
       run: npm test
     - name: Initialize RDBMS based metastore
