@@ -6,14 +6,17 @@
 #include "logging.h"
 #include "hints.h"
 
-extern "C" size_t est_intermediate_key_overhead;
-extern "C" size_t safety_padding_bytes;
+extern size_t est_intermediate_key_overhead;
+extern size_t safety_padding_bytes;
 
 const size_t est_encryption_overhead = 48;
 const size_t est_envelope_overhead = 185;
 const double base64_overhead = 1.34;
 
 const size_t cobhan_header_size_bytes = 64 / 8;
+
+void set_est_intermediate_key_overhead(size_t est_intermediate_key_overhead);
+void set_safety_padding_bytes(size_t safety_padding_bytes);
 
 std::string napi_status_to_string(napi_status status) {
   switch (status) {

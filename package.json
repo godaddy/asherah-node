@@ -11,7 +11,7 @@
   },
   "scripts": {
     "preinstall": "scripts/download-libraries.sh",
-    "install": "node-gyp configure && node-gyp build && mkdir -p dist/ && cp build/Release/asherah.node dist/asherah.node && cp src/asherah.d.ts dist/asherah.d.ts",
+    "install": "scripts/build.sh",
     "test:mocha": "mocha",
     "test": "nyc npm run test:mocha",
     "posttest": "npm run lint",
