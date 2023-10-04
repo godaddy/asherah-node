@@ -8,7 +8,7 @@
     "url": "https://github.com/jgowdy/asherah-cobhan.git"
   },
   "scripts": {
-    "build": "npx tsc",
+    "build": "node-gyp build && cp build/Release/asherah.node dist/asherah.node && cp src/asherah.d.ts dist/asherah.d.ts",
     "preinstall": "scripts/download-libraries.sh",
     "install": "CFLAGS=-fexceptions CXXFLAGS=-fexceptions node-gyp rebuild",
     "test:mocha": "mocha",
