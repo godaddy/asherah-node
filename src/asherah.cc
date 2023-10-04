@@ -298,11 +298,13 @@ void setup(const Napi::CallbackInfo &info) {
   char *config_cobhan_buffer;
   std::unique_ptr<char[]> config_cobhan_buffer_unique_ptr;
   if (config_utf8_byte_length < max_stack_alloc_size) {
-    size_t cobhan_buf_size =
+    // If the buffer is small enough, allocate it on the stack
+    size_t config_cobhan_buffer_size_bytes =
         calculate_cobhan_buffer_size_bytes(config_utf8_byte_length);
-    debug_log_alloca("setup", "config_cobhan_buffer", cobhan_buf_size);
-    config_cobhan_buffer = (char *)alloca(cobhan_buf_size);
+    debug_log_alloca("setup", "config_cobhan_buffer", config_cobhan_buffer_size_bytes);
+    config_cobhan_buffer = (char *)alloca(config_cobhan_buffer_size_bytes);
   } else {
+    // Otherwise, allocate it on the heap
     config_cobhan_buffer_unique_ptr =
         heap_allocate_cbuffer("config_cobhan_buffer", config_utf8_byte_length);
     config_cobhan_buffer = config_cobhan_buffer_unique_ptr.get();
@@ -356,14 +358,16 @@ Napi::Value encrypt_to_json(Napi::Env &env, size_t partition_bytes,
   char *output_cobhan_buffer;
   std::unique_ptr<char[]> output_cobhan_buffer_unique_ptr;
   if (asherah_output_size_bytes < max_stack_alloc_size) {
-    size_t ouput_cobhan_buffer_size =
+    // If the buffer is small enough, allocate it on the stack
+    size_t output_cobhan_buffer_size_bytes =
         calculate_cobhan_buffer_size_bytes(asherah_output_size_bytes);
     debug_log_alloca("encrypt_to_json", "output_cobhan_buffer",
-                     ouput_cobhan_buffer_size);
-    output_cobhan_buffer = (char *)alloca(ouput_cobhan_buffer_size);
+                     output_cobhan_buffer_size_bytes);
+    output_cobhan_buffer = (char *)alloca(output_cobhan_buffer_size_bytes);
     configure_cbuffer(output_cobhan_buffer,
                       asherah_output_size_bytes + safety_padding_bytes);
   } else {
+    // Otherwise, allocate it on the heap
     output_cobhan_buffer_unique_ptr = heap_allocate_cbuffer(
         "output_cobhan_buffer", asherah_output_size_bytes);
     output_cobhan_buffer = output_cobhan_buffer_unique_ptr.get();
@@ -430,11 +434,13 @@ Napi::Value encrypt(const Napi::CallbackInfo &info) {
   char *partition_id_cobhan_buffer;
   std::unique_ptr<char[]> partition_id_cobhan_buffer_unique_ptr;
   if (partition_utf8_byte_length < max_stack_alloc_size) {
-    size_t cobhan_buf_size =
+    // If the buffer is small enough, allocate it on the stack
+    size_t partition_id_cobhan_buffer_size_bytes =
         calculate_cobhan_buffer_size_bytes(partition_utf8_byte_length);
-    debug_log_alloca("encrypt", "partition_id_cobhan_buffer", cobhan_buf_size);
-    partition_id_cobhan_buffer = (char *)alloca(cobhan_buf_size);
+    debug_log_alloca("encrypt", "partition_id_cobhan_buffer", partition_id_cobhan_buffer_size_bytes);
+    partition_id_cobhan_buffer = (char *)alloca(partition_id_cobhan_buffer_size_bytes);
   } else {
+    // Otherwise, allocate it on the heap
     partition_id_cobhan_buffer_unique_ptr = heap_allocate_cbuffer(
         "partition_id_cobhan_buffer", partition_utf8_byte_length);
     partition_id_cobhan_buffer = partition_id_cobhan_buffer_unique_ptr.get();
@@ -466,12 +472,14 @@ Napi::Value encrypt(const Napi::CallbackInfo &info) {
   char *input_cobhan_buffer;
   std::unique_ptr<char[]> input_buffer_unique_ptr;
   if (input_byte_length < max_stack_alloc_size) {
-    size_t cobhan_buffer_size_bytes =
+    // If the buffer is small enough, allocate it on the stack
+    size_t input_cobhan_buffer_size_bytes =
         calculate_cobhan_buffer_size_bytes(input_byte_length);
     debug_log_alloca("encrypt", "input_cobhan_buffer",
-                     cobhan_buffer_size_bytes);
-    input_cobhan_buffer = (char *)alloca(cobhan_buffer_size_bytes);
+                     input_cobhan_buffer_size_bytes);
+    input_cobhan_buffer = (char *)alloca(input_cobhan_buffer_size_bytes);
   } else {
+    // Otherwise, allocate it on the heap
     input_buffer_unique_ptr =
         heap_allocate_cbuffer("input_cobhan_buffer", input_byte_length);
     input_cobhan_buffer = input_buffer_unique_ptr.get();
@@ -525,12 +533,14 @@ Napi::Value encrypt_string(const Napi::CallbackInfo &info) {
   char *partition_id_cobhan_buffer;
   std::unique_ptr<char[]> partition_id_cobhan_buffer_unique_ptr;
   if (partition_utf8_byte_length < max_stack_alloc_size) {
-    size_t cobhan_buf_size =
+    // If the buffer is small enough, allocate it on the stack
+    size_t partition_id_cobhan_buffer_size_bytes =
         calculate_cobhan_buffer_size_bytes(partition_utf8_byte_length);
     debug_log_alloca("encrypt_string", "partition_id_cobhan_buffer",
-                     cobhan_buf_size);
-    partition_id_cobhan_buffer = (char *)alloca(cobhan_buf_size);
+                     partition_id_cobhan_buffer_size_bytes);
+    partition_id_cobhan_buffer = (char *)alloca(partition_id_cobhan_buffer_size_bytes);
   } else {
+    // Otherwise, allocate it on the heap
     partition_id_cobhan_buffer_unique_ptr = heap_allocate_cbuffer(
         "partition_id_cobhan_buffer", partition_utf8_byte_length);
     partition_id_cobhan_buffer = partition_id_cobhan_buffer_unique_ptr.get();
@@ -566,11 +576,13 @@ Napi::Value encrypt_string(const Napi::CallbackInfo &info) {
   char *input_cobhan_buffer;
   std::unique_ptr<char[]> input_cobhan_buffer_unique_ptr;
   if (input_utf8_byte_length < max_stack_alloc_size) {
-    size_t cobhan_buf_size =
+    // If the buffer is small enough, allocate it on the stack
+    size_t input_cobhan_buffer_size_bytes =
         calculate_cobhan_buffer_size_bytes(input_utf8_byte_length);
-    debug_log_alloca("encrypt_string", "input_cobhan_buffer", cobhan_buf_size);
-    input_cobhan_buffer = (char *)alloca(cobhan_buf_size);
+    debug_log_alloca("encrypt_string", "input_cobhan_buffer", input_cobhan_buffer_size_bytes);
+    input_cobhan_buffer = (char *)alloca(input_cobhan_buffer_size_bytes);
   } else {
+    // Otherwise, allocate it on the heap
     input_cobhan_buffer_unique_ptr =
         heap_allocate_cbuffer("input_cobhan_buffer", input_utf8_byte_length);
     input_cobhan_buffer = input_cobhan_buffer_unique_ptr.get();
@@ -629,6 +641,7 @@ Napi::Value decrypt(const Napi::CallbackInfo &info) {
   char *partition_id_cobhan_buffer;
   std::unique_ptr<char[]> partition_id_cobhan_buffer_unique_ptr;
   if (partition_utf8_byte_length < max_stack_alloc_size) {
+    // If the buffer is small enough, allocate it on the stack
     size_t partition_id_cobhan_buffer_size_bytes =
         calculate_cobhan_buffer_size_bytes(partition_utf8_byte_length);
     debug_log_alloca("decrypt", "partition_id_cobhan_buffer",
@@ -636,6 +649,7 @@ Napi::Value decrypt(const Napi::CallbackInfo &info) {
     partition_id_cobhan_buffer =
         (char *)alloca(partition_id_cobhan_buffer_size_bytes);
   } else {
+    // Otherwise, allocate it on the heap
     partition_id_cobhan_buffer_unique_ptr = heap_allocate_cbuffer(
         "partition_id_cobhan_buffer", partition_utf8_byte_length);
     partition_id_cobhan_buffer = partition_id_cobhan_buffer_unique_ptr.get();
@@ -674,12 +688,14 @@ Napi::Value decrypt(const Napi::CallbackInfo &info) {
   char *input_cobhan_buffer;
   std::unique_ptr<char[]> input_cobhan_buffer_unique_ptr;
   if (input_utf8_byte_length < max_stack_alloc_size) {
+    // If the buffer is small enough, allocate it on the stack
     size_t input_cobhan_buffer_size_bytes =
         calculate_cobhan_buffer_size_bytes(input_utf8_byte_length);
     debug_log_alloca("decrypt", "input_cobhan_buffer",
                      input_cobhan_buffer_size_bytes);
     input_cobhan_buffer = (char *)alloca(input_cobhan_buffer_size_bytes);
   } else {
+    // Otherwise, allocate it on the heap
     input_cobhan_buffer_unique_ptr =
         heap_allocate_cbuffer("input_cobhan_buffer", input_utf8_byte_length);
     input_cobhan_buffer = input_cobhan_buffer_unique_ptr.get();
@@ -702,6 +718,7 @@ Napi::Value decrypt(const Napi::CallbackInfo &info) {
   char *output_cobhan_buffer;
   std::unique_ptr<char[]> output_cobhan_buffer_unique_ptr;
   if (input_utf8_byte_length < max_stack_alloc_size) {
+    // If the buffer is small enough, allocate it on the stack
     size_t output_cobhan_buffer_size_bytes =
         calculate_cobhan_buffer_size_bytes(input_utf8_byte_length);
     debug_log_alloca("decrypt", "output_cobhan_buffer",
@@ -709,6 +726,7 @@ Napi::Value decrypt(const Napi::CallbackInfo &info) {
     output_cobhan_buffer = (char *)alloca(output_cobhan_buffer_size_bytes);
     configure_cbuffer(output_cobhan_buffer, input_utf8_byte_length);
   } else {
+    // Otherwise, allocate it on the heap
     output_cobhan_buffer_unique_ptr =
         heap_allocate_cbuffer("output_cobhan_buffer", input_utf8_byte_length);
     output_cobhan_buffer = output_cobhan_buffer_unique_ptr.get();
@@ -774,6 +792,7 @@ Napi::Value decrypt_string(const Napi::CallbackInfo &info) {
   char *partition_id_cobhan_buffer;
   std::unique_ptr<char[]> partition_id_cobhan_buffer_unique_ptr;
   if (partition_utf8_byte_length < max_stack_alloc_size) {
+    // If the buffer is small enough, allocate it on the stack
     size_t partition_id_cobhan_buffer_size_bytes =
         calculate_cobhan_buffer_size_bytes(partition_utf8_byte_length);
     debug_log_alloca("decrypt_string", "partition_id_cobhan_buffer",
@@ -781,6 +800,7 @@ Napi::Value decrypt_string(const Napi::CallbackInfo &info) {
     partition_id_cobhan_buffer =
         (char *)alloca(partition_id_cobhan_buffer_size_bytes);
   } else {
+    // Otherwise, allocate it on the heap
     partition_id_cobhan_buffer_unique_ptr = heap_allocate_cbuffer(
         "partition_id_cobhan_buffer", partition_utf8_byte_length);
     partition_id_cobhan_buffer = partition_id_cobhan_buffer_unique_ptr.get();
@@ -816,12 +836,14 @@ Napi::Value decrypt_string(const Napi::CallbackInfo &info) {
   char *input_cobhan_buffer;
   std::unique_ptr<char[]> input_cobhan_buffer_unique_ptr;
   if (input_utf8_byte_length < max_stack_alloc_size) {
+    // If the buffer is small enough, allocate it on the stack
     size_t input_cobhan_buffer_size_bytes =
         calculate_cobhan_buffer_size_bytes(input_utf8_byte_length);
     debug_log_alloca("decrypt_string", "input_cobhan_buffer",
                      input_cobhan_buffer_size_bytes);
     input_cobhan_buffer = (char *)alloca(input_cobhan_buffer_size_bytes);
   } else {
+    // Otherwise, allocate it on the heap
     input_cobhan_buffer_unique_ptr =
         heap_allocate_cbuffer("input_cobhan_buffer", input_utf8_byte_length);
     input_cobhan_buffer = input_cobhan_buffer_unique_ptr.get();
@@ -844,6 +866,7 @@ Napi::Value decrypt_string(const Napi::CallbackInfo &info) {
   char *output_cobhan_buffer;
   std::unique_ptr<char[]> output_cobhan_buffer_unique_ptr;
   if (input_utf8_byte_length < max_stack_alloc_size) {
+    // If the buffer is small enough, allocate it on the stack
     size_t output_cobhan_buffer_size_bytes =
         calculate_cobhan_buffer_size_bytes(input_utf8_byte_length);
     debug_log_alloca("decrypt_string", "output_cobhan_buffer",
@@ -851,6 +874,7 @@ Napi::Value decrypt_string(const Napi::CallbackInfo &info) {
     output_cobhan_buffer = (char *)alloca(output_cobhan_buffer_size_bytes);
     configure_cbuffer(output_cobhan_buffer, input_utf8_byte_length);
   } else {
+    // Otherwise, allocate it on the heap
     output_cobhan_buffer_unique_ptr =
         heap_allocate_cbuffer("output_cobhan_buffer", input_utf8_byte_length);
     output_cobhan_buffer = output_cobhan_buffer_unique_ptr.get();
