@@ -15,7 +15,7 @@
           '-O3'
         ],
       },
-      'defines': [ 'NAPI_CPP_EXCEPTIONS', 'NODE_API_SWALLOW_UNTHROWABLE_EXCEPTIONS', 'NODE_ADDON_API_DISABLE_DEPRECATED' ],
+      'defines': [ 'NAPI_CPP_EXCEPTIONS', 'NODE_API_SWALLOW_UNTHROWABLE_EXCEPTIONS', 'NODE_ADDON_API_DISABLE_DEPRECATED', 'NODE_API_NO_EXTERNAL_BUFFERS_ALLOWED' ],
       'sources': [
         'lib/libasherah.h',
         'src/asherah.cc',
