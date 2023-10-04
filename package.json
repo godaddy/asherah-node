@@ -2,7 +2,7 @@
   "name": "asherah",
   "version": "0.0.0",
   "description": "Asherah envelope encryption and key rotation library",
-  "main": "dist/asherah",
+  "main": "dist/asherah.node",
   "repository": {
     "type": "git",
     "url": "https://github.com/jgowdy/asherah-cobhan.git"
