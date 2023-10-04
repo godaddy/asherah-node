@@ -3,6 +3,7 @@
 #include "hints.h"
 #include <cstdint>
 #include <string>
+#include <iostream>
 
 extern int32_t verbose_flag;
 
