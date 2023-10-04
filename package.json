@@ -23,7 +23,7 @@
   "files": [
     "binding.gyp",
     "src/asherah.cc",
-    "dist/asherah.d.ts",
+    "src/asherah.d.ts",
     "scripts/download-libraries.sh",
     "SHA256SUMS",
     "SHA256SUMS-darwin",
