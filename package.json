@@ -11,7 +11,7 @@
   },
   "scripts": {
     "preinstall": "scripts/download-libraries.sh",
-    "install": "node-gyp configure && node-gyp build && mkdir -p dist/ && cp build/Release/asherah.node dist/asherah.node && cp src/asherah.d.ts dist/asherah.d.ts && cp src/main.js dist/main.js",
+    "install": "node-gyp configure && node-gyp build && mkdir -p dist/ && cp build/Release/asherah.node dist/asherah.node && cp src/asherah.d.ts dist/asherah.d.ts",
     "test:mocha": "mocha",
     "test": "nyc npm run test:mocha",
     "posttest": "npm run lint",
@@ -24,7 +24,6 @@
     "binding.gyp",
     "src/asherah.cc",
     "dist/asherah.d.ts",
-    "dist/main.js",
     "scripts/download-libraries.sh",
     "SHA256SUMS",
     "SHA256SUMS-darwin",
