@@ -21,17 +21,19 @@ int32_t verbose_flag = 0;
 __attribute__((always_inline)) inline void debug_log(const char *function_name,
                                                      std::string message) {
   if (unlikely(verbose_flag)) {
-    std::cerr << "asherah-node: " << function_name << ": " << message
+    std::cerr << "asherah-node: [DEBUG] " << function_name << ": " << message
               << std::endl
               << std::flush;
   }
 }
 
 __attribute__((always_inline)) inline void
-debug_log_alloca(const char *function_name, size_t length) {
+debug_log_alloca(const char *function_name, const char *variable_name,
+                 size_t length) {
   if (unlikely(verbose_flag)) {
-    std::cerr << "asherah-node: " << function_name << ": Calling alloca("
-              << length << ") (stack)" << std::endl
+    std::cerr << "asherah-node: [DEBUG] " << function_name
+              << ": Calling alloca(" << length << ") (stack) for "
+              << variable_name << std::endl
               << std::flush;
   }
 }
@@ -39,7 +41,7 @@ debug_log_alloca(const char *function_name, size_t length) {
 __attribute__((always_inline)) inline void error_log(const char *function_name,
                                                      std::string message) {
   if (unlikely(verbose_flag)) {
-    std::cerr << "asherah-node: " << function_name << ": " << message
+    std::cerr << "asherah-node: [ERROR] " << function_name << ": " << message
               << std::endl
               << std::flush;
   }
@@ -114,17 +116,10 @@ calculate_cobhan_buffer_size_bytes(size_t data_len_bytes) {
 __attribute__((always_inline)) inline size_t
 estimate_asherah_output_size_bytes(size_t data_byte_len,
                                    size_t partition_byte_len) {
+  // Add one rather than using std::ceil to round up
   double est_data_byte_len =
-      double(data_byte_len + est_encryption_overhead) * base64_overhead;
-  if (unlikely(verbose_flag)) {
-    std::string log_msg =
-        "estimate_asherah_output_size(" + std::to_string(data_byte_len) + ", " +
-        std::to_string(partition_byte_len) +
-        ") est_data_byte_len: " + std::to_string(est_data_byte_len) +
-        " base64_overhead: " + std::to_string(base64_overhead) +
-        " est_encryption_overhead: " + std::to_string(est_encryption_overhead);
-    debug_log("estimate_asherah_output_size", log_msg);
-  }
+      (double(data_byte_len + est_encryption_overhead) * base64_overhead) + 1;
+
   size_t asherah_output_size_bytes =
       size_t(est_envelope_overhead + est_intermediate_key_overhead +
              partition_byte_len + est_data_byte_len + safety_padding_bytes);
@@ -148,12 +143,14 @@ __attribute__((always_inline)) inline void configure_cbuffer(char *buffer,
 }
 
 __attribute__((always_inline)) inline std::unique_ptr<char[]>
-allocate_cbuffer(size_t length) {
-  size_t cobhan_buffer_size_bytes = calculate_cobhan_buffer_size_bytes(length);
+heap_allocate_cbuffer(const char *variable_name, size_t size_bytes) {
+  size_t cobhan_buffer_size_bytes =
+      calculate_cobhan_buffer_size_bytes(size_bytes);
   if (unlikely(verbose_flag)) {
-    std::string log_msg = "allocate_cbuffer(" + std::to_string(length) +
-                          ") (heap) cobhanBufferSize: " +
-                          std::to_string(cobhan_buffer_size_bytes);
+    std::string log_msg =
+        "heap_allocate_cbuffer(" + std::to_string(size_bytes) +
+        ") (heap) cobhan_buffer_size_bytes: " +
+        std::to_string(cobhan_buffer_size_bytes) + " for " + variable_name;
     debug_log("allocate_cbuffer", log_msg);
   }
 
@@ -165,7 +162,7 @@ allocate_cbuffer(size_t length) {
     return nullptr;
   }
   std::unique_ptr<char[]> cobhan_buffer_unique_ptr(cobhan_buffer);
-  configure_cbuffer(cobhan_buffer, length + safety_padding_bytes);
+  configure_cbuffer(cobhan_buffer, size_bytes + safety_padding_bytes);
   return cobhan_buffer_unique_ptr;
 }
 
@@ -260,14 +257,13 @@ void setup(const Napi::CallbackInfo &info) {
 
   Napi::String config;
   Napi::Object config_json;
+  Napi::Object json = env.Global().Get("JSON").As<Napi::Object>();
   if (likely(info[0].IsObject())) {
     config_json = info[0].As<Napi::Object>();
-    Napi::Object json = env.Global().Get("JSON").As<Napi::Object>();
     Napi::Function stringify = json.Get("stringify").As<Napi::Function>();
     config = stringify.Call(json, {config_json}).As<Napi::String>();
   } else if (likely(info[0].IsString())) {
     config = info[0].As<Napi::String>();
-    Napi::Object json = env.Global().Get("JSON").As<Napi::Object>();
     Napi::Function parse = json.Get("parse").As<Napi::Function>();
     config_json = parse.Call(json, {config}).As<Napi::Object>();
   } else {
@@ -304,16 +300,15 @@ void setup(const Napi::CallbackInfo &info) {
   if (config_utf8_byte_length < max_stack_alloc_size) {
     size_t cobhan_buf_size =
         calculate_cobhan_buffer_size_bytes(config_utf8_byte_length);
-    debug_log_alloca("setup", cobhan_buf_size);
+    debug_log_alloca("setup", "config_cobhan_buffer", cobhan_buf_size);
     config_cobhan_buffer = (char *)alloca(cobhan_buf_size);
   } else {
     config_cobhan_buffer_unique_ptr =
-        allocate_cbuffer(config_utf8_byte_length);
+        heap_allocate_cbuffer("config_cobhan_buffer", config_utf8_byte_length);
     config_cobhan_buffer = config_cobhan_buffer_unique_ptr.get();
   }
   if (unlikely(config_cobhan_buffer == nullptr)) {
-    LogErrorAndThrow(env, "setup",
-                     "Failed to allocate config cobhan buffer");
+    LogErrorAndThrow(env, "setup", "Failed to allocate config cobhan buffer");
     return;
   }
 
@@ -323,8 +318,7 @@ void setup(const Napi::CallbackInfo &info) {
       copy_nstring_to_cbuffer(env, config, config_utf8_byte_length,
                               config_cobhan_buffer, &config_copied_bytes);
   if (unlikely(config_cobhan_buffer == nullptr)) {
-    LogErrorAndThrow(env, "setup",
-                     "Failed to copy config to cobhan buffer");
+    LogErrorAndThrow(env, "setup", "Failed to copy config to cobhan buffer");
     return;
   }
 
@@ -362,15 +356,16 @@ Napi::Value encrypt_to_json(Napi::Env &env, size_t partition_bytes,
   char *output_cobhan_buffer;
   std::unique_ptr<char[]> output_cobhan_buffer_unique_ptr;
   if (asherah_output_size_bytes < max_stack_alloc_size) {
-    size_t cobhan_ouput_buffer_size =
+    size_t ouput_cobhan_buffer_size =
         calculate_cobhan_buffer_size_bytes(asherah_output_size_bytes);
-    debug_log_alloca("encrypt_to_json", cobhan_ouput_buffer_size);
-    output_cobhan_buffer = (char *)alloca(cobhan_ouput_buffer_size);
+    debug_log_alloca("encrypt_to_json", "output_cobhan_buffer",
+                     ouput_cobhan_buffer_size);
+    output_cobhan_buffer = (char *)alloca(ouput_cobhan_buffer_size);
     configure_cbuffer(output_cobhan_buffer,
                       asherah_output_size_bytes + safety_padding_bytes);
   } else {
-    output_cobhan_buffer_unique_ptr =
-        allocate_cbuffer(asherah_output_size_bytes);
+    output_cobhan_buffer_unique_ptr = heap_allocate_cbuffer(
+        "output_cobhan_buffer", asherah_output_size_bytes);
     output_cobhan_buffer = output_cobhan_buffer_unique_ptr.get();
   }
   if (unlikely(output_cobhan_buffer == nullptr)) {
@@ -425,7 +420,10 @@ Napi::Value encrypt(const Napi::CallbackInfo &info) {
   partition_utf8_byte_length = nstring_utf8_byte_length(env, partition_id);
   if (unlikely(partition_utf8_byte_length == (size_t)(-1))) {
     return LogErrorAndThrow(env, "encrypt",
-                            "Failed to get partitionId utf8 length");
+                            "Failed to get partition_id utf8 length");
+  }
+  if (unlikely(partition_utf8_byte_length == 0)) {
+    return LogErrorAndThrow(env, "encrypt", "partition_id is empty");
   }
 
   // Allocate
@@ -434,11 +432,11 @@ Napi::Value encrypt(const Napi::CallbackInfo &info) {
   if (partition_utf8_byte_length < max_stack_alloc_size) {
     size_t cobhan_buf_size =
         calculate_cobhan_buffer_size_bytes(partition_utf8_byte_length);
-    debug_log_alloca("encrypt", cobhan_buf_size);
+    debug_log_alloca("encrypt", "partition_id_cobhan_buffer", cobhan_buf_size);
     partition_id_cobhan_buffer = (char *)alloca(cobhan_buf_size);
   } else {
-    partition_id_cobhan_buffer_unique_ptr =
-        allocate_cbuffer(partition_utf8_byte_length);
+    partition_id_cobhan_buffer_unique_ptr = heap_allocate_cbuffer(
+        "partition_id_cobhan_buffer", partition_utf8_byte_length);
     partition_id_cobhan_buffer = partition_id_cobhan_buffer_unique_ptr.get();
   }
   if (unlikely(partition_id_cobhan_buffer == nullptr)) {
@@ -460,31 +458,36 @@ Napi::Value encrypt(const Napi::CallbackInfo &info) {
   Napi::Buffer<unsigned char> input_napi_buffer =
       info[1].As<Napi::Buffer<unsigned char>>();
   size_t input_byte_length = input_napi_buffer.ByteLength();
+  if (unlikely(input_byte_length == 0)) {
+    return LogErrorAndThrow(env, "encrypt", "input is empty");
+  }
 
   // Allocate
-  char *input_buffer;
+  char *input_cobhan_buffer;
   std::unique_ptr<char[]> input_buffer_unique_ptr;
   if (input_byte_length < max_stack_alloc_size) {
-    size_t cobhan_buf_size =
+    size_t cobhan_buffer_size_bytes =
         calculate_cobhan_buffer_size_bytes(input_byte_length);
-    debug_log_alloca("encrypt", cobhan_buf_size);
-    input_buffer = (char *)alloca(cobhan_buf_size);
+    debug_log_alloca("encrypt", "input_cobhan_buffer",
+                     cobhan_buffer_size_bytes);
+    input_cobhan_buffer = (char *)alloca(cobhan_buffer_size_bytes);
   } else {
-    input_buffer_unique_ptr = allocate_cbuffer(input_byte_length);
-    input_buffer = input_buffer_unique_ptr.get();
+    input_buffer_unique_ptr =
+        heap_allocate_cbuffer("input_cobhan_buffer", input_byte_length);
+    input_cobhan_buffer = input_buffer_unique_ptr.get();
   }
-  if (unlikely(input_buffer == nullptr)) {
+  if (unlikely(input_cobhan_buffer == nullptr)) {
     return LogErrorAndThrow(
         env, "encrypt", "Failed to allocate cobhan buffer for input buffer");
   }
 
   // Copy
-  memcpy(input_buffer + cobhan_header_size_bytes, input_napi_buffer.Data(),
-         input_byte_length);
-  configure_cbuffer(input_buffer, input_byte_length);
+  memcpy(input_cobhan_buffer + cobhan_header_size_bytes,
+         input_napi_buffer.Data(), input_byte_length);
+  configure_cbuffer(input_cobhan_buffer, input_byte_length);
 
   return encrypt_to_json(env, partition_copied_bytes, input_byte_length,
-                         partition_id_cobhan_buffer, input_buffer);
+                         partition_id_cobhan_buffer, input_cobhan_buffer);
 }
 
 Napi::Value encrypt_string(const Napi::CallbackInfo &info) {
@@ -512,7 +515,10 @@ Napi::Value encrypt_string(const Napi::CallbackInfo &info) {
   partition_utf8_byte_length = nstring_utf8_byte_length(env, partition_id);
   if (unlikely(partition_utf8_byte_length == (size_t)(-1))) {
     return LogErrorAndThrow(env, "encrypt_string",
-                            "Failed to get partitionId utf8 length");
+                            "Failed to get partition_id utf8 length");
+  }
+  if (unlikely(partition_utf8_byte_length == 0)) {
+    return LogErrorAndThrow(env, "encrypt_string", "partition_id is empty");
   }
 
   // Allocate
@@ -521,11 +527,12 @@ Napi::Value encrypt_string(const Napi::CallbackInfo &info) {
   if (partition_utf8_byte_length < max_stack_alloc_size) {
     size_t cobhan_buf_size =
         calculate_cobhan_buffer_size_bytes(partition_utf8_byte_length);
-    debug_log_alloca("encrypt_string", cobhan_buf_size);
+    debug_log_alloca("encrypt_string", "partition_id_cobhan_buffer",
+                     cobhan_buf_size);
     partition_id_cobhan_buffer = (char *)alloca(cobhan_buf_size);
   } else {
-    partition_id_cobhan_buffer_unique_ptr =
-        allocate_cbuffer(partition_utf8_byte_length);
+    partition_id_cobhan_buffer_unique_ptr = heap_allocate_cbuffer(
+        "partition_id_cobhan_buffer", partition_utf8_byte_length);
     partition_id_cobhan_buffer = partition_id_cobhan_buffer_unique_ptr.get();
   }
   if (unlikely(partition_id_cobhan_buffer == nullptr)) {
@@ -551,6 +558,9 @@ Napi::Value encrypt_string(const Napi::CallbackInfo &info) {
     return LogErrorAndThrow(env, "encrypt_string",
                             "Failed to get input utf8 length");
   }
+  if (unlikely(input_utf8_byte_length == 0)) {
+    return LogErrorAndThrow(env, "encrypt_string", "input is empty");
+  }
 
   // Allocate
   char *input_cobhan_buffer;
@@ -558,10 +568,11 @@ Napi::Value encrypt_string(const Napi::CallbackInfo &info) {
   if (input_utf8_byte_length < max_stack_alloc_size) {
     size_t cobhan_buf_size =
         calculate_cobhan_buffer_size_bytes(input_utf8_byte_length);
-    debug_log_alloca("encrypt_string", cobhan_buf_size);
+    debug_log_alloca("encrypt_string", "input_cobhan_buffer", cobhan_buf_size);
     input_cobhan_buffer = (char *)alloca(cobhan_buf_size);
   } else {
-    input_cobhan_buffer_unique_ptr = allocate_cbuffer(input_utf8_byte_length);
+    input_cobhan_buffer_unique_ptr =
+        heap_allocate_cbuffer("input_cobhan_buffer", input_utf8_byte_length);
     input_cobhan_buffer = input_cobhan_buffer_unique_ptr.get();
   }
   if (unlikely(input_cobhan_buffer == nullptr)) {
@@ -608,25 +619,30 @@ Napi::Value decrypt(const Napi::CallbackInfo &info) {
   partition_utf8_byte_length = nstring_utf8_byte_length(env, partition_id);
   if (unlikely(partition_utf8_byte_length == (size_t)(-1))) {
     return LogErrorAndThrow(env, "decrypt",
-                            "Failed to get partitionId utf8 length");
+                            "Failed to get partition_id utf8 length");
+  }
+  if (unlikely(partition_utf8_byte_length == 0)) {
+    return LogErrorAndThrow(env, "decrypt", "partition_id is empty");
   }
 
   // Allocate
   char *partition_id_cobhan_buffer;
   std::unique_ptr<char[]> partition_id_cobhan_buffer_unique_ptr;
   if (partition_utf8_byte_length < max_stack_alloc_size) {
-    size_t cobhan_buf_size =
+    size_t partition_id_cobhan_buffer_size_bytes =
         calculate_cobhan_buffer_size_bytes(partition_utf8_byte_length);
-    debug_log_alloca("decrypt", cobhan_buf_size);
-    partition_id_cobhan_buffer = (char *)alloca(cobhan_buf_size);
+    debug_log_alloca("decrypt", "partition_id_cobhan_buffer",
+                     partition_id_cobhan_buffer_size_bytes);
+    partition_id_cobhan_buffer =
+        (char *)alloca(partition_id_cobhan_buffer_size_bytes);
   } else {
-    partition_id_cobhan_buffer_unique_ptr =
-        allocate_cbuffer(partition_utf8_byte_length);
+    partition_id_cobhan_buffer_unique_ptr = heap_allocate_cbuffer(
+        "partition_id_cobhan_buffer", partition_utf8_byte_length);
     partition_id_cobhan_buffer = partition_id_cobhan_buffer_unique_ptr.get();
   }
   if (unlikely(partition_id_cobhan_buffer == nullptr)) {
     return LogErrorAndThrow(env, "decrypt",
-                            "Failed to allocate partitionId cobhan buffer");
+                            "Failed to allocate partition_id cobhan buffer");
   }
 
   // Copy
@@ -635,7 +651,7 @@ Napi::Value decrypt(const Napi::CallbackInfo &info) {
       &partition_copied_bytes);
   if (unlikely(partition_id_cobhan_buffer == nullptr)) {
     return LogErrorAndThrow(env, "decrypt",
-                            "Failed to copy partitionId to cobhan buffer");
+                            "Failed to copy partition_id to cobhan buffer");
   }
 
   // Determine size
@@ -644,6 +660,9 @@ Napi::Value decrypt(const Napi::CallbackInfo &info) {
   input_utf8_byte_length = nstring_utf8_byte_length(env, input);
   if (unlikely(input_utf8_byte_length == (size_t)(-1))) {
     return LogErrorAndThrow(env, "decrypt", "Failed to get input utf8 length");
+  }
+  if (unlikely(input_utf8_byte_length == 0)) {
+    return LogErrorAndThrow(env, "decrypt", "input is empty");
   }
 
   if (unlikely(verbose_flag)) {
@@ -655,12 +674,14 @@ Napi::Value decrypt(const Napi::CallbackInfo &info) {
   char *input_cobhan_buffer;
   std::unique_ptr<char[]> input_cobhan_buffer_unique_ptr;
   if (input_utf8_byte_length < max_stack_alloc_size) {
-    size_t cobhan_buf_size =
+    size_t input_cobhan_buffer_size_bytes =
         calculate_cobhan_buffer_size_bytes(input_utf8_byte_length);
-    debug_log_alloca("decrypt", cobhan_buf_size);
-    input_cobhan_buffer = (char *)alloca(cobhan_buf_size);
+    debug_log_alloca("decrypt", "input_cobhan_buffer",
+                     input_cobhan_buffer_size_bytes);
+    input_cobhan_buffer = (char *)alloca(input_cobhan_buffer_size_bytes);
   } else {
-    input_cobhan_buffer_unique_ptr = allocate_cbuffer(input_utf8_byte_length);
+    input_cobhan_buffer_unique_ptr =
+        heap_allocate_cbuffer("input_cobhan_buffer", input_utf8_byte_length);
     input_cobhan_buffer = input_cobhan_buffer_unique_ptr.get();
   }
   if (unlikely(input_cobhan_buffer == nullptr)) {
@@ -681,13 +702,15 @@ Napi::Value decrypt(const Napi::CallbackInfo &info) {
   char *output_cobhan_buffer;
   std::unique_ptr<char[]> output_cobhan_buffer_unique_ptr;
   if (input_utf8_byte_length < max_stack_alloc_size) {
-    size_t cobhan_buf_size =
+    size_t output_cobhan_buffer_size_bytes =
         calculate_cobhan_buffer_size_bytes(input_utf8_byte_length);
-    debug_log_alloca("decrypt", cobhan_buf_size);
-    output_cobhan_buffer = (char *)alloca(cobhan_buf_size);
+    debug_log_alloca("decrypt", "output_cobhan_buffer",
+                     output_cobhan_buffer_size_bytes);
+    output_cobhan_buffer = (char *)alloca(output_cobhan_buffer_size_bytes);
     configure_cbuffer(output_cobhan_buffer, input_utf8_byte_length);
   } else {
-    output_cobhan_buffer_unique_ptr = allocate_cbuffer(input_utf8_byte_length);
+    output_cobhan_buffer_unique_ptr =
+        heap_allocate_cbuffer("output_cobhan_buffer", input_utf8_byte_length);
     output_cobhan_buffer = output_cobhan_buffer_unique_ptr.get();
   }
   if (unlikely(output_cobhan_buffer == nullptr)) {
@@ -741,20 +764,25 @@ Napi::Value decrypt_string(const Napi::CallbackInfo &info) {
   partition_utf8_byte_length = nstring_utf8_byte_length(env, partition_id);
   if (unlikely(partition_utf8_byte_length == (size_t)(-1))) {
     return LogErrorAndThrow(env, "decrypt_string",
-                            "Failed to get partitionId utf8 length");
+                            "Failed to get partition_id utf8 length");
+  }
+  if (unlikely(partition_utf8_byte_length == 0)) {
+    return LogErrorAndThrow(env, "decrypt_string", "partition_id is empty");
   }
 
   // Allocate
   char *partition_id_cobhan_buffer;
   std::unique_ptr<char[]> partition_id_cobhan_buffer_unique_ptr;
   if (partition_utf8_byte_length < max_stack_alloc_size) {
-    size_t cobhan_buf_size =
+    size_t partition_id_cobhan_buffer_size_bytes =
         calculate_cobhan_buffer_size_bytes(partition_utf8_byte_length);
-    debug_log_alloca("decrypt_string", cobhan_buf_size);
-    partition_id_cobhan_buffer = (char *)alloca(cobhan_buf_size);
+    debug_log_alloca("decrypt_string", "partition_id_cobhan_buffer",
+                     partition_id_cobhan_buffer_size_bytes);
+    partition_id_cobhan_buffer =
+        (char *)alloca(partition_id_cobhan_buffer_size_bytes);
   } else {
-    partition_id_cobhan_buffer_unique_ptr =
-        allocate_cbuffer(partition_utf8_byte_length);
+    partition_id_cobhan_buffer_unique_ptr = heap_allocate_cbuffer(
+        "partition_id_cobhan_buffer", partition_utf8_byte_length);
     partition_id_cobhan_buffer = partition_id_cobhan_buffer_unique_ptr.get();
   }
   if (unlikely(partition_id_cobhan_buffer == nullptr)) {
@@ -780,17 +808,22 @@ Napi::Value decrypt_string(const Napi::CallbackInfo &info) {
     return LogErrorAndThrow(env, "decrypt_string",
                             "Failed to get input utf8 length");
   }
+  if (unlikely(input_utf8_byte_length == 0)) {
+    return LogErrorAndThrow(env, "decrypt_string", "input is empty");
+  }
 
   // Allocate
   char *input_cobhan_buffer;
   std::unique_ptr<char[]> input_cobhan_buffer_unique_ptr;
   if (input_utf8_byte_length < max_stack_alloc_size) {
-    size_t cobhan_buf_size =
+    size_t input_cobhan_buffer_size_bytes =
         calculate_cobhan_buffer_size_bytes(input_utf8_byte_length);
-    debug_log_alloca("decrypt_string", cobhan_buf_size);
-    input_cobhan_buffer = (char *)alloca(cobhan_buf_size);
+    debug_log_alloca("decrypt_string", "input_cobhan_buffer",
+                     input_cobhan_buffer_size_bytes);
+    input_cobhan_buffer = (char *)alloca(input_cobhan_buffer_size_bytes);
   } else {
-    input_cobhan_buffer_unique_ptr = allocate_cbuffer(input_utf8_byte_length);
+    input_cobhan_buffer_unique_ptr =
+        heap_allocate_cbuffer("input_cobhan_buffer", input_utf8_byte_length);
     input_cobhan_buffer = input_cobhan_buffer_unique_ptr.get();
   }
   if (unlikely(input_cobhan_buffer == nullptr)) {
@@ -811,13 +844,15 @@ Napi::Value decrypt_string(const Napi::CallbackInfo &info) {
   char *output_cobhan_buffer;
   std::unique_ptr<char[]> output_cobhan_buffer_unique_ptr;
   if (input_utf8_byte_length < max_stack_alloc_size) {
-    size_t cobhan_buf_size =
+    size_t output_cobhan_buffer_size_bytes =
         calculate_cobhan_buffer_size_bytes(input_utf8_byte_length);
-    debug_log_alloca("decrypt_string", cobhan_buf_size);
-    output_cobhan_buffer = (char *)alloca(cobhan_buf_size);
+    debug_log_alloca("decrypt_string", "output_cobhan_buffer",
+                     output_cobhan_buffer_size_bytes);
+    output_cobhan_buffer = (char *)alloca(output_cobhan_buffer_size_bytes);
     configure_cbuffer(output_cobhan_buffer, input_utf8_byte_length);
   } else {
-    output_cobhan_buffer_unique_ptr = allocate_cbuffer(input_utf8_byte_length);
+    output_cobhan_buffer_unique_ptr =
+        heap_allocate_cbuffer("output_cobhan_buffer", input_utf8_byte_length);
     output_cobhan_buffer = output_cobhan_buffer_unique_ptr.get();
   }
   if (unlikely(output_cobhan_buffer == nullptr)) {
