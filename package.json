@@ -62,6 +62,6 @@
   "types": "dist/asherah.d.ts",
   "dependencies": {
     "cobhan": "^1.0.37",
-    "node-addon-api": "*"
+    "node-addon-api": "7.0.0"
   }
 }
