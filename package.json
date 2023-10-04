@@ -23,6 +23,11 @@
   "files": [
     "binding.gyp",
     "src/asherah.cc",
+    "src/hints.h",
+    "src/logging.h",
+    "src/logging.cc",
+    "src/cobhan_napi_interop.h",
+    "src/cobhan_napi_interop.cc",
     "src/asherah.d.ts",
     "scripts/download-libraries.sh",
     "SHA256SUMS",
