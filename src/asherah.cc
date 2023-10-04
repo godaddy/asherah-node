@@ -298,10 +298,10 @@ void setup(const Napi::CallbackInfo &info) {
   char *config_cobhan_buffer;
   std::unique_ptr<char[]> config_cobhan_buffer_unique_ptr;
   if (config_utf8_byte_length < max_stack_alloc_size) {
-    size_t cobhan_buf_size =
+    size_t config_cobhan_buffer_size_bytes =
         calculate_cobhan_buffer_size_bytes(config_utf8_byte_length);
-    debug_log_alloca("setup", "config_cobhan_buffer", cobhan_buf_size);
-    config_cobhan_buffer = (char *)alloca(cobhan_buf_size);
+    debug_log_alloca("setup", "config_cobhan_buffer", config_cobhan_buffer_size_bytes);
+    config_cobhan_buffer = (char *)alloca(config_cobhan_buffer_size_bytes);
   } else {
     config_cobhan_buffer_unique_ptr =
         heap_allocate_cbuffer("config_cobhan_buffer", config_utf8_byte_length);
@@ -430,10 +430,10 @@ Napi::Value encrypt(const Napi::CallbackInfo &info) {
   char *partition_id_cobhan_buffer;
   std::unique_ptr<char[]> partition_id_cobhan_buffer_unique_ptr;
   if (partition_utf8_byte_length < max_stack_alloc_size) {
-    size_t cobhan_buf_size =
+    size_t partition_id_cobhan_buffer_size_bytes =
         calculate_cobhan_buffer_size_bytes(partition_utf8_byte_length);
-    debug_log_alloca("encrypt", "partition_id_cobhan_buffer", cobhan_buf_size);
-    partition_id_cobhan_buffer = (char *)alloca(cobhan_buf_size);
+    debug_log_alloca("encrypt", "partition_id_cobhan_buffer", partition_id_cobhan_buffer_size_bytes);
+    partition_id_cobhan_buffer = (char *)alloca(partition_id_cobhan_buffer_size_bytes);
   } else {
     partition_id_cobhan_buffer_unique_ptr = heap_allocate_cbuffer(
         "partition_id_cobhan_buffer", partition_utf8_byte_length);
@@ -466,11 +466,11 @@ Napi::Value encrypt(const Napi::CallbackInfo &info) {
   char *input_cobhan_buffer;
   std::unique_ptr<char[]> input_buffer_unique_ptr;
   if (input_byte_length < max_stack_alloc_size) {
-    size_t cobhan_buffer_size_bytes =
+    size_t input_cobhan_buffer_size_bytes =
         calculate_cobhan_buffer_size_bytes(input_byte_length);
     debug_log_alloca("encrypt", "input_cobhan_buffer",
-                     cobhan_buffer_size_bytes);
-    input_cobhan_buffer = (char *)alloca(cobhan_buffer_size_bytes);
+                     input_cobhan_buffer_size_bytes);
+    input_cobhan_buffer = (char *)alloca(input_cobhan_buffer_size_bytes);
   } else {
     input_buffer_unique_ptr =
         heap_allocate_cbuffer("input_cobhan_buffer", input_byte_length);
@@ -525,11 +525,11 @@ Napi::Value encrypt_string(const Napi::CallbackInfo &info) {
   char *partition_id_cobhan_buffer;
   std::unique_ptr<char[]> partition_id_cobhan_buffer_unique_ptr;
   if (partition_utf8_byte_length < max_stack_alloc_size) {
-    size_t cobhan_buf_size =
+    size_t partition_id_cobhan_buffer_size_bytes =
         calculate_cobhan_buffer_size_bytes(partition_utf8_byte_length);
     debug_log_alloca("encrypt_string", "partition_id_cobhan_buffer",
-                     cobhan_buf_size);
-    partition_id_cobhan_buffer = (char *)alloca(cobhan_buf_size);
+                     partition_id_cobhan_buffer_size_bytes);
+    partition_id_cobhan_buffer = (char *)alloca(partition_id_cobhan_buffer_size_bytes);
   } else {
     partition_id_cobhan_buffer_unique_ptr = heap_allocate_cbuffer(
         "partition_id_cobhan_buffer", partition_utf8_byte_length);
@@ -566,10 +566,10 @@ Napi::Value encrypt_string(const Napi::CallbackInfo &info) {
   char *input_cobhan_buffer;
   std::unique_ptr<char[]> input_cobhan_buffer_unique_ptr;
   if (input_utf8_byte_length < max_stack_alloc_size) {
-    size_t cobhan_buf_size =
+    size_t input_cobhan_buffer_size_bytes =
         calculate_cobhan_buffer_size_bytes(input_utf8_byte_length);
-    debug_log_alloca("encrypt_string", "input_cobhan_buffer", cobhan_buf_size);
-    input_cobhan_buffer = (char *)alloca(cobhan_buf_size);
+    debug_log_alloca("encrypt_string", "input_cobhan_buffer", input_cobhan_buffer_size_bytes);
+    input_cobhan_buffer = (char *)alloca(input_cobhan_buffer_size_bytes);
   } else {
     input_cobhan_buffer_unique_ptr =
         heap_allocate_cbuffer("input_cobhan_buffer", input_utf8_byte_length);
