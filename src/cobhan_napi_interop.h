@@ -232,9 +232,21 @@ copy_nbuffer_to_cbuffer(Napi::Env &env, Napi::Buffer<unsigned char> &nbuffer,
 
 __attribute__((always_inline)) inline Napi::Buffer<unsigned char>
 cbuffer_to_nbuffer(Napi::Env &env, char *cobhan_buffer) {
-  return Napi::Buffer<unsigned char>::Copy(
+  size_t cobhan_buffer_byte_length = cbuffer_byte_length(cobhan_buffer);
+
+  if(verbose_flag) {
+    debug_log("cbuffer_to_nbuffer", "cbuffer_byte_length: " + std::to_string(cobhan_buffer_byte_length));
+  }
+
+  Napi::Buffer nbuffer = Napi::Buffer<unsigned char>::Copy(
       env, ((unsigned char *)cobhan_buffer) + cobhan_header_size_bytes,
       cbuffer_byte_length(cobhan_buffer));
+
+  if(verbose_flag) {
+    debug_log("cbuffer_to_nbuffer", "nbuffer.ByteLength(): " + std::to_string(nbuffer.ByteLength()));
+  }
+
+  return nbuffer;
 }
 
 #endif
