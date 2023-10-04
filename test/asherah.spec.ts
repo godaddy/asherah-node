@@ -1,5 +1,5 @@
 import { assert } from 'chai';
-import { AsherahConfig, decrypt, encrypt, decrypt_string, setup, shutdown, encrypt_string, set_max_stack_alloc_item_size, set_safety_padding_overhead } from '../src/asherah'
+import { AsherahConfig, decrypt, encrypt, decrypt_string, setup, shutdown, encrypt_string, set_max_stack_alloc_item_size, set_safety_padding_overhead } from '../dist/asherah'
 import crypto from 'crypto';
 import Benchmark = require('benchmark');
 
@@ -483,6 +483,7 @@ it('Benchmark Decrypt Strings (stack) (big)', function () {
 */
 }
 const benchmark_seconds = 3.5;
+const benchmark_for_cycles = 1;
 
 function benchmark_roundtrip_buffer(name: string, input: string) {
   try {
@@ -494,7 +495,7 @@ function benchmark_roundtrip_buffer(name: string, input: string) {
     });
     const inputBuffer = Buffer.from(input);
     suite.add('RoundTrip#Buffer', function () {
-      for(let i = 0; i < 1000; i++) {
+      for(let i = 0; i < benchmark_for_cycles; i++) {
         const enc = encrypt('partition', inputBuffer);
         decrypt('partition', enc);
       }
@@ -515,7 +516,7 @@ function benchmark_encrypt_buffer(name: string, input: string) {
     });
     const inputBuffer = Buffer.from(input);
     suite.add('Encrypt#Buffer', function () {
-      for(let i = 0; i < 1000; i++) {
+      for(let i = 0; i < benchmark_for_cycles; i++) {
         encrypt('partition', inputBuffer);
       }
     }, { maxTime: benchmark_seconds })
@@ -536,7 +537,7 @@ function benchmark_decrypt_buffer(name: string, input: string) {
     const inputBuffer = Buffer.from(input);
     const enc = encrypt('partition', inputBuffer);
     suite.add('Decrypt#Buffer', function () {
-      for(let i = 0; i < 1000; i++) {
+      for(let i = 0; i < benchmark_for_cycles; i++) {
         decrypt('partition', enc);
       }
     }, { maxTime: benchmark_seconds })
@@ -555,7 +556,7 @@ function benchmark_roundtrip_string(name: string, input: string) {
       console.error(e);
     });
     suite.add('RoundTrip#String', function () {
-      for(let i = 0; i < 1000; i++) {
+      for(let i = 0; i < benchmark_for_cycles; i++) {
         const enc = encrypt_string('partition', input);
         decrypt_string('partition', enc);
       }
@@ -575,7 +576,7 @@ function benchmark_encrypt_string(name: string, input: string) {
       console.error(e);
     });
     suite.add('Encrypt#String', function () {
-      for(let i = 0; i < 1000; i++) {
+      for(let i = 0; i < benchmark_for_cycles; i++) {
         encrypt_string('partition', input);
       }
     }, { maxTime: benchmark_seconds })
@@ -596,7 +597,7 @@ function benchmark_decrypt_string(name: string, input: string) {
 
     const enc = encrypt_string('partition', input);
     suite.add('Decrypt#String', function () {
-      for(let i = 0; i < 1000; i++) {
+      for(let i = 0; i < benchmark_for_cycles; i++) {
         decrypt_string('partition', enc);
       }
     }, { maxTime: benchmark_seconds })
