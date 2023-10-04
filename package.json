@@ -11,7 +11,7 @@
   },
   "scripts": {
     "preinstall": "scripts/download-libraries.sh",
-    "install": "node-gyp configure && node-gyp build && mkdir -p dist/ && cp build/Release/asherah.node dist/asherah.node && cp src/asherah.d.ts dist/asherah.d.ts",
+    "install": "scripts/build.sh",
     "test:mocha": "mocha",
     "test": "nyc npm run test:mocha",
     "posttest": "npm run lint",
@@ -23,6 +23,11 @@
   "files": [
     "binding.gyp",
     "src/asherah.cc",
+    "src/hints.h",
+    "src/logging.h",
+    "src/logging.cc",
+    "src/cobhan_napi_interop.h",
+    "src/cobhan_napi_interop.cc",
     "src/asherah.d.ts",
     "scripts/download-libraries.sh",
     "SHA256SUMS",

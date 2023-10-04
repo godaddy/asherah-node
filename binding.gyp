@@ -18,7 +18,12 @@
       'defines': [ 'NAPI_CPP_EXCEPTIONS', 'NODE_API_SWALLOW_UNTHROWABLE_EXCEPTIONS' ],
       'sources': [
         'lib/libasherah.h',
-        'src/asherah.cc'
+        'src/asherah.cc',
+        'src/logging.cc',
+        'src/logging.h',
+        'src/cobhan_napi_interop.cc',
+        'src/cobhan_napi_interop.h',
+        'src/hints.h'
       ],
       'libraries': [ '../lib/libasherah.a' ]
     }
