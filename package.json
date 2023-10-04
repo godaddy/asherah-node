@@ -30,6 +30,7 @@
     "src/cobhan_napi_interop.cc",
     "src/asherah.d.ts",
     "scripts/download-libraries.sh",
+    "scripts/build.sh",
     "SHA256SUMS",
     "SHA256SUMS-darwin",
     ".asherah-version"
