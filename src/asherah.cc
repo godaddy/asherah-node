@@ -3,8 +3,6 @@
 #include "hints.h"
 #include "logging.h"
 #include <iostream>
-#define NODE_ADDON_API_DISABLE_DEPRECATED
-#define NODE_API_NO_EXTERNAL_BUFFERS_ALLOWED
 #include <napi.h>
 
 size_t max_stack_alloc_size = 2048;
