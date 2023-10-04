@@ -258,30 +258,30 @@ void setup(const Napi::CallbackInfo &info) {
     return;
   }
 
-  Napi::String config_json;
-  Napi::Object json_obj;
+  Napi::String config;
+  Napi::Object config_json;
   if (likely(info[0].IsObject())) {
-    json_obj = info[0].As<Napi::Object>();
+    config_json = info[0].As<Napi::Object>();
     Napi::Object json = env.Global().Get("JSON").As<Napi::Object>();
     Napi::Function stringify = json.Get("stringify").As<Napi::Function>();
-    config_json = stringify.Call(json, {json_obj}).As<Napi::String>();
+    config = stringify.Call(json, {config_json}).As<Napi::String>();
   } else if (likely(info[0].IsString())) {
-    config_json = info[0].As<Napi::String>();
+    config = info[0].As<Napi::String>();
     Napi::Object json = env.Global().Get("JSON").As<Napi::Object>();
     Napi::Function parse = json.Get("parse").As<Napi::Function>();
-    json_obj = parse.Call(json, {config_json}).As<Napi::Object>();
+    config_json = parse.Call(json, {config}).As<Napi::Object>();
   } else {
     LogErrorAndThrow(env, "setup", "Wrong argument type");
     return;
   }
 
-  Napi::String product_id = json_obj.Get("ProductID").As<Napi::String>();
-  Napi::String service_name = json_obj.Get("ServiceName").As<Napi::String>();
+  Napi::String product_id = config_json.Get("ProductID").As<Napi::String>();
+  Napi::String service_name = config_json.Get("ServiceName").As<Napi::String>();
 
   est_intermediate_key_overhead =
       product_id.Utf8Value().length() + service_name.Utf8Value().length();
 
-  Napi::Value verbose = json_obj.Get("Verbose");
+  Napi::Value verbose = config_json.Get("Verbose");
   if (likely(verbose.IsBoolean())) {
     verbose_flag = verbose.As<Napi::Boolean>().Value();
     debug_log("setup", "verbose_flag: " + std::to_string(verbose_flag));
@@ -292,39 +292,39 @@ void setup(const Napi::CallbackInfo &info) {
 
   // Determine size
   size_t config_utf8_byte_length;
-  config_utf8_byte_length = nstring_utf8_byte_length(env, config_json);
+  config_utf8_byte_length = nstring_utf8_byte_length(env, config);
   if (unlikely(config_utf8_byte_length == (size_t)(-1))) {
-    LogErrorAndThrow(env, "setup", "Failed to get config_json utf8 length");
+    LogErrorAndThrow(env, "setup", "Failed to get config utf8 length");
     return;
   }
 
   // Allocate
-  char *config_json_cobhan_buffer;
-  std::unique_ptr<char[]> config_json_cobhan_buffer_unique_ptr;
+  char *config_cobhan_buffer;
+  std::unique_ptr<char[]> config_cobhan_buffer_unique_ptr;
   if (config_utf8_byte_length < max_stack_alloc_size) {
     size_t cobhan_buf_size =
         calculate_cobhan_buffer_size_bytes(config_utf8_byte_length);
     debug_log_alloca("setup", cobhan_buf_size);
-    config_json_cobhan_buffer = (char *)alloca(cobhan_buf_size);
+    config_cobhan_buffer = (char *)alloca(cobhan_buf_size);
   } else {
-    config_json_cobhan_buffer_unique_ptr =
+    config_cobhan_buffer_unique_ptr =
         allocate_cbuffer(config_utf8_byte_length);
-    config_json_cobhan_buffer = config_json_cobhan_buffer_unique_ptr.get();
+    config_cobhan_buffer = config_cobhan_buffer_unique_ptr.get();
   }
-  if (unlikely(config_json_cobhan_buffer == nullptr)) {
+  if (unlikely(config_cobhan_buffer == nullptr)) {
     LogErrorAndThrow(env, "setup",
-                     "Failed to allocate config_json cobhan buffer");
+                     "Failed to allocate config cobhan buffer");
     return;
   }
 
   // Copy
   size_t config_copied_bytes;
-  config_json_cobhan_buffer =
-      copy_nstring_to_cbuffer(env, config_json, config_utf8_byte_length,
-                              config_json_cobhan_buffer, &config_copied_bytes);
-  if (unlikely(config_json_cobhan_buffer == nullptr)) {
+  config_cobhan_buffer =
+      copy_nstring_to_cbuffer(env, config, config_utf8_byte_length,
+                              config_cobhan_buffer, &config_copied_bytes);
+  if (unlikely(config_cobhan_buffer == nullptr)) {
     LogErrorAndThrow(env, "setup",
-                     "Failed to copy configJson to cobhan buffer");
+                     "Failed to copy config to cobhan buffer");
     return;
   }
 
@@ -333,7 +333,7 @@ void setup(const Napi::CallbackInfo &info) {
   }
 
   // extern GoInt32 SetupJson(void* configJson);
-  GoInt32 result = SetupJson(config_json_cobhan_buffer);
+  GoInt32 result = SetupJson(config_cobhan_buffer);
 
   if (unlikely(verbose_flag)) {
     debug_log("setup", "Returned from asherah-cobhan SetupJson");
