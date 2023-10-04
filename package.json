@@ -24,7 +24,6 @@
     "src/asherah.cc",
     "dist/asherah.d.ts",
     "scripts/download-libraries.sh",
-    "dist/asherah.node",
     "SHA256SUMS",
     "SHA256SUMS-darwin",
     ".asherah-version"
