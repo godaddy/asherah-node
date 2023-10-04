@@ -980,4 +980,4 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   return exports;
 }
 
-NODE_API_MODULE(napiasherah, Init)
+NODE_API_MODULE(asherah, Init)
