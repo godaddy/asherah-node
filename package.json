@@ -2,15 +2,14 @@
   "name": "asherah",
   "version": "0.0.0",
   "description": "Asherah envelope encryption and key rotation library",
-  "main": "dist/asherah.js",
+  "main": "dist/main.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/jgowdy/asherah-cobhan.git"
   },
   "scripts": {
-    "build": "node-gyp build && mkdir -p dist/ && cp build/Release/asherah.node dist/asherah.node && cp src/asherah.d.ts dist/asherah.d.ts",
     "preinstall": "scripts/download-libraries.sh",
-    "install": "CFLAGS=-fexceptions CXXFLAGS=-fexceptions node-gyp rebuild",
+    "install": "node-gyp configure && node-gyp build && mkdir -p dist/ && cp build/Release/asherah.node dist/asherah.node && cp src/asherah.d.ts dist/asherah.d.ts && cp src/main.js dist/main.js",
     "test:mocha": "mocha",
     "test": "nyc npm run test:mocha",
     "posttest": "npm run lint",
@@ -23,6 +22,7 @@
     "binding.gyp",
     "src/asherah.cc",
     "dist/asherah.d.ts",
+    "dist/main.js",
     "scripts/download-libraries.sh",
     "SHA256SUMS",
     "SHA256SUMS-darwin",
