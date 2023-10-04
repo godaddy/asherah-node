@@ -3,8 +3,6 @@
 #include "hints.h"
 #include "logging.h"
 #include <string>
-#define NODE_ADDON_API_DISABLE_DEPRECATED
-#define NODE_API_NO_EXTERNAL_BUFFERS_ALLOWED
 #include <napi.h>
 
 extern size_t est_intermediate_key_overhead;
