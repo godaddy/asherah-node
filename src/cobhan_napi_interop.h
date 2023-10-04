@@ -6,15 +6,14 @@
 #include "logging.h"
 #include "hints.h"
 
-extern size_t est_intermediate_key_overhead;
-extern size_t safety_padding_bytes;
-
 const size_t est_encryption_overhead = 48;
 const size_t est_envelope_overhead = 185;
 const double base64_overhead = 1.34;
 
 const size_t cobhan_header_size_bytes = 64 / 8;
 
+size_t get_est_intermediate_key_overhead();
+size_t get_safety_padding_bytes();
 void set_est_intermediate_key_overhead(size_t est_intermediate_key_overhead);
 void set_safety_padding_bytes(size_t safety_padding_bytes);
 
@@ -85,7 +84,7 @@ log_error_and_throw(Napi::Env &env, const char *function_name,
 
 __attribute__((always_inline)) inline size_t
 calculate_cobhan_buffer_size_bytes(size_t data_len_bytes) {
-  return data_len_bytes + cobhan_header_size_bytes + safety_padding_bytes +
+  return data_len_bytes + cobhan_header_size_bytes + get_safety_padding_bytes() +
          1; // Add one for possible NULL delimiter due to Node string functions
 }
 
@@ -97,8 +96,8 @@ estimate_asherah_output_size_bytes(size_t data_byte_len,
       (double(data_byte_len + est_encryption_overhead) * base64_overhead) + 1;
 
   size_t asherah_output_size_bytes =
-      size_t(est_envelope_overhead + est_intermediate_key_overhead +
-             partition_byte_len + est_data_byte_len + safety_padding_bytes);
+      size_t(est_envelope_overhead + get_est_intermediate_key_overhead() +
+             partition_byte_len + est_data_byte_len + get_safety_padding_bytes());
   if (unlikely(verbose_flag)) {
     std::string log_msg =
         "estimate_asherah_output_size(" + std::to_string(data_byte_len) + ", " +
@@ -138,7 +137,7 @@ heap_allocate_cbuffer(const char *variable_name, size_t size_bytes) {
     return nullptr;
   }
   std::unique_ptr<char[]> cobhan_buffer_unique_ptr(cobhan_buffer);
-  configure_cbuffer(cobhan_buffer, size_bytes + safety_padding_bytes);
+  configure_cbuffer(cobhan_buffer, size_bytes + get_safety_padding_bytes());
   return cobhan_buffer_unique_ptr;
 }
 
