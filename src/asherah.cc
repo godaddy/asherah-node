@@ -556,8 +556,7 @@ Napi::Value decrypt(const Napi::CallbackInfo &info) {
     return log_error_and_throw(env, "decrypt", std::to_string(result));
   }
 
-  Napi::Buffer<unsigned char> output =
-      cbuffer_to_nbuffer(env, output_cobhan_buffer);
+  Napi::Value output = cbuffer_to_nbuffer(env, output_cobhan_buffer);
 
   if (unlikely(verbose_flag)) {
     debug_log("decrypt", "finished");
