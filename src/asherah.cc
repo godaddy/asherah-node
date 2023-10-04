@@ -45,7 +45,7 @@ void setup(const Napi::CallbackInfo &info) {
   Napi::String product_id = config_json.Get("ProductID").As<Napi::String>();
   Napi::String service_name = config_json.Get("ServiceName").As<Napi::String>();
 
-  set_est_intermediate_key_overhead(product_id.Utf8Value().length() + service_name.Utf8Value().length());
+  est_intermediate_key_overhead = product_id.Utf8Value().length() + service_name.Utf8Value().length();
 
   Napi::Value verbose = config_json.Get("Verbose");
   if (likely(verbose.IsBoolean())) {
@@ -744,7 +744,7 @@ void set_safety_padding_overhead(const Napi::CallbackInfo &info) {
 
   Napi::Number safety_padding_number = info[0].ToNumber();
 
-  set_safety_padding_bytes((size_t)safety_padding_number.Int32Value());
+  safety_padding_bytes = (size_t)safety_padding_number.Int32Value();
 }
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
