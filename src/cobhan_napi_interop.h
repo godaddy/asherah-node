@@ -6,8 +6,8 @@
 #include "logging.h"
 #include "hints.h"
 
-extern size_t est_intermediate_key_overhead;
-extern size_t safety_padding_bytes;
+extern "C" size_t est_intermediate_key_overhead;
+extern "C" size_t safety_padding_bytes;
 
 const size_t est_encryption_overhead = 48;
 const size_t est_envelope_overhead = 185;
