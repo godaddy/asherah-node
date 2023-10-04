@@ -234,7 +234,7 @@ __attribute__((always_inline)) inline Napi::Buffer<unsigned char>
 cbuffer_to_nbuffer(Napi::Env &env, char *cobhan_buffer) {
   size_t cobhan_buffer_byte_length = cbuffer_byte_length(cobhan_buffer);
 
-  if(verbose_flag) {
+  if (unlikely(verbose_flag)) {
     debug_log("cbuffer_to_nbuffer", "cbuffer_byte_length: " + std::to_string(cobhan_buffer_byte_length));
   }
 
@@ -242,7 +242,7 @@ cbuffer_to_nbuffer(Napi::Env &env, char *cobhan_buffer) {
       env, ((unsigned char *)cobhan_buffer) + cobhan_header_size_bytes,
       cbuffer_byte_length(cobhan_buffer));
 
-  if(verbose_flag) {
+  if (unlikely(verbose_flag)) {
     debug_log("cbuffer_to_nbuffer", "nbuffer.ByteLength(): " + std::to_string(nbuffer.ByteLength()));
   }
 

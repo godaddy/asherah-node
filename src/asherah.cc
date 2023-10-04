@@ -272,8 +272,14 @@ Napi::Value encrypt(const Napi::CallbackInfo &info) {
                             "Failed to copy input buffer to cobhan buffer");
   }
 
-  return encrypt_to_json(env, partition_copied_bytes, input_byte_length,
+  Napi::Value output = encrypt_to_json(env, partition_copied_bytes, input_byte_length,
                          partition_id_cobhan_buffer, input_cobhan_buffer);
+
+  if (unlikely(verbose_flag)) {
+    debug_log("encrypt", "finished");
+  }
+
+  return output;
 }
 
 Napi::Value encrypt_string(const Napi::CallbackInfo &info) {
@@ -384,8 +390,14 @@ Napi::Value encrypt_string(const Napi::CallbackInfo &info) {
                             "Failed to copy input to cobhan buffer");
   }
 
-  return encrypt_to_json(env, partition_copied_bytes, input_utf8_byte_length,
+  Napi::Value output = encrypt_to_json(env, partition_copied_bytes, input_utf8_byte_length,
                          partition_id_cobhan_buffer, input_cobhan_buffer);
+
+  if (unlikely(verbose_flag)) {
+    debug_log("encrypt_string", "finished");
+  }
+
+  return output;
 }
 
 Napi::Value decrypt(const Napi::CallbackInfo &info) {
@@ -538,7 +550,13 @@ Napi::Value decrypt(const Napi::CallbackInfo &info) {
     return log_error_and_throw(env, "decrypt", std::to_string(result));
   }
 
-  return cbuffer_to_nbuffer(env, output_cobhan_buffer);
+  Napi::Buffer<unsigned char> output = cbuffer_to_nbuffer(env, output_cobhan_buffer);
+
+  if (unlikely(verbose_flag)) {
+    debug_log("decrypt", "finished");
+  }
+
+  return output;
 }
 
 Napi::Value decrypt_string(const Napi::CallbackInfo &info) {
@@ -689,6 +707,11 @@ Napi::Value decrypt_string(const Napi::CallbackInfo &info) {
   }
 
   Napi::Value output = cbuffer_to_nstring(env, output_cobhan_buffer);
+
+  if (unlikely(verbose_flag)) {
+    debug_log("decrypt_string", "finished");
+  }
+
   return output;
 }
 
