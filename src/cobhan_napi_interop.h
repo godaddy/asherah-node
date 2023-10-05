@@ -2,17 +2,24 @@
 #define COBHAN_NAPI_INTEROP_H
 #include "hints.h"
 #include "logging.h"
-#include <string>
 #include <napi.h>
+#include <string>
 
-extern size_t est_intermediate_key_overhead;
-extern size_t safety_padding_bytes;
+// Stupid hack to get around extern issues
+size_t *get_est_intermediate_key_overhead_ptr();
+size_t *get_safety_padding_bytes_ptr();
+
+size_t *est_intermediate_key_overhead_ptr =
+    get_est_intermediate_key_overhead_ptr();
+size_t *safety_padding_bytes_ptr = get_safety_padding_bytes_ptr();
 
 const size_t est_encryption_overhead = 48;
 const size_t est_envelope_overhead = 185;
 const double base64_overhead = 1.34;
 
 const size_t cobhan_header_size_bytes = 64 / 8;
+const size_t canary_size = sizeof(int32_t) * 2;
+const int32_t canary_constant = 0xdeadbeef;
 
 std::string napi_status_to_string(napi_status status) {
   switch (status) {
@@ -81,8 +88,10 @@ log_error_and_throw(Napi::Env &env, const char *function_name,
 
 __attribute__((always_inline)) inline size_t
 calculate_cobhan_buffer_size_bytes(size_t data_len_bytes) {
-  return data_len_bytes + cobhan_header_size_bytes + safety_padding_bytes +
-         1; // Add one for possible NULL delimiter due to Node string functions
+  return data_len_bytes + cobhan_header_size_bytes +
+         1 + // Add one for possible NULL delimiter due to Node string functions
+         canary_size                  // Add space for canary value
+         + *safety_padding_bytes_ptr; // Add safety padding if configured
 }
 
 __attribute__((always_inline)) inline size_t
@@ -92,9 +101,9 @@ estimate_asherah_output_size_bytes(size_t data_byte_len,
   double est_data_byte_len =
       (double(data_byte_len + est_encryption_overhead) * base64_overhead) + 1;
 
-  size_t asherah_output_size_bytes =
-      size_t(est_envelope_overhead + est_intermediate_key_overhead +
-             partition_byte_len + est_data_byte_len + safety_padding_bytes);
+  size_t asherah_output_size_bytes = size_t(
+      est_envelope_overhead + *est_intermediate_key_overhead_ptr +
+      partition_byte_len + est_data_byte_len + *safety_padding_bytes_ptr);
   if (unlikely(verbose_flag)) {
     std::string log_msg =
         "estimate_asherah_output_size(" + std::to_string(data_byte_len) + ", " +
@@ -107,11 +116,68 @@ estimate_asherah_output_size_bytes(size_t data_byte_len,
   return asherah_output_size_bytes;
 }
 
+__attribute__((always_inline)) inline char* cbuffer_data_ptr(char *cobhan_buffer) {
+  return cobhan_buffer + cobhan_header_size_bytes;
+}
+
 __attribute__((always_inline)) inline void configure_cbuffer(char *buffer,
                                                              size_t length) {
+  if (verbose_flag) {
+    debug_log("configure_cbuffer", "configure_cbuffer(" +
+                                       std::to_string((intptr_t)buffer) + ", " +
+                                       std::to_string(length) + ")");
+  }
+
   *((int32_t *)buffer) = length;
   // Reserved for future use
   *((int32_t *)(buffer + sizeof(int32_t))) = 0;
+
+  // Write canary values
+  char *data_ptr = cbuffer_data_ptr(buffer);
+  if (verbose_flag) {
+    debug_log("configure_cbuffer",
+              "Writing first canary at " +
+                  std::to_string((intptr_t)(data_ptr + length + 1)));
+  }
+
+  // First canary value is a int32_t 0 which gives us four NULLs
+  *((int32_t *)(data_ptr + length + 1)) = 0;
+
+  if (verbose_flag) {
+    debug_log(
+        "configure_cbuffer",
+        "Writing second canary at " +
+            std::to_string((intptr_t)(data_ptr + length + 1 + sizeof(int32_t))));
+  }
+
+  // Second canary value is a int32_t 0xdeadbeef
+  *((int32_t *)(data_ptr + length + 1 + sizeof(int32_t))) = canary_constant;
+}
+
+__attribute__((always_inline)) inline char *
+get_canary_ptr(char *cobhan_buffer) {
+  int32_t cobhan_buffer_size_bytes = cbuffer_byte_length(cobhan_buffer);
+  return cbuffer_data_ptr(cobhan_buffer) + cobhan_buffer_size_bytes + 1;
+}
+
+__attribute__((always_inline)) inline bool
+check_canary_ptr(char *canary_ptr) {
+  int32_t zero_value = *((int32_t *)(canary_ptr));
+  if (zero_value != 0) {
+    std::string error_msg =
+        "Canary check failed: " + std::to_string(zero_value) + " != 0";
+    error_log("canary_check_cbuffer", error_msg);
+    return false;
+  }
+  int32_t canary_value = *((int32_t *)(canary_ptr + sizeof(int32_t)));
+  if (canary_value != canary_constant) {
+    std::string error_msg =
+        "Canary check failed: " + std::to_string(canary_value) +
+        " != " + std::to_string(canary_constant);
+    error_log("canary_check_cbuffer", error_msg);
+    return false;
+  }
+  return true;
 }
 
 __attribute__((always_inline)) inline std::unique_ptr<char[]>
@@ -134,7 +200,7 @@ heap_allocate_cbuffer(const char *variable_name, size_t size_bytes) {
     return nullptr;
   }
   std::unique_ptr<char[]> cobhan_buffer_unique_ptr(cobhan_buffer);
-  configure_cbuffer(cobhan_buffer, size_bytes + safety_padding_bytes);
+  configure_cbuffer(cobhan_buffer, size_bytes + *safety_padding_bytes_ptr);
   return cobhan_buffer_unique_ptr;
 }
 
@@ -194,6 +260,17 @@ copy_nstring_to_cbuffer(Napi::Env &env, Napi::String &str,
     log_error_and_throw(env, "copy_nstring_to_cbuffer",
                         "String too large for cobhan buffer");
     return nullptr;
+  }
+
+  if (unlikely(verbose_flag)) {
+    debug_log("copy_nstring_to_cbuffer",
+              "Copying " + std::to_string(str_utf8_byte_length) + " bytes to " +
+                  std::to_string(
+                      (intptr_t)(cobhan_buffer + cobhan_header_size_bytes)) +
+                      "-" +
+                      std::to_string((intptr_t)(cobhan_buffer +
+                                                cobhan_header_size_bytes +
+                                                str_utf8_byte_length)));
   }
 
   napi_status status;

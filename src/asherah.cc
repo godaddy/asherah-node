@@ -44,7 +44,7 @@ void setup(const Napi::CallbackInfo &info) {
   Napi::String product_id = config_json.Get("ProductID").As<Napi::String>();
   Napi::String service_name = config_json.Get("ServiceName").As<Napi::String>();
 
-  est_intermediate_key_overhead =
+  *est_intermediate_key_overhead_ptr =
       product_id.Utf8Value().length() + service_name.Utf8Value().length();
 
   Napi::Value verbose = config_json.Get("Verbose");
@@ -149,6 +149,22 @@ Napi::Value encrypt_to_json(Napi::Env &env, size_t partition_bytes,
                                "Failed to allocate cobhan output buffer");
   }
 
+  char *partition_id_canary_ptr = get_canary_ptr(partition_id_cobhan_buffer);
+  if(!check_canary_ptr(partition_id_canary_ptr)) {
+    return log_error_and_throw(env, "encrypt_to_json",
+                               "Failed initial canary check for partition_id_cobhan_buffer");
+  }
+  char *input_canary_ptr = get_canary_ptr(input_cobhan_buffer);
+  if(!check_canary_ptr(input_canary_ptr)) {
+    return log_error_and_throw(env, "encrypt_to_json",
+                               "Failed initial canary check for input_cobhan_buffer");
+  }
+  char *output_canary_ptr = get_canary_ptr(output_cobhan_buffer);
+  if(!check_canary_ptr(output_canary_ptr)) {
+    return log_error_and_throw(env, "encrypt_to_json",
+                               "Failed initial canary check for output_cobhan_buffer");
+  }
+
   if (unlikely(verbose_flag)) {
     debug_log("encrypt_to_json", "Calling asherah-cobhan EncryptToJson");
   }
@@ -160,6 +176,19 @@ Napi::Value encrypt_to_json(Napi::Env &env, size_t partition_bytes,
 
   if (unlikely(verbose_flag)) {
     debug_log("encrypt_to_json", "Returning from asherah-cobhan EncryptToJson");
+  }
+
+  if(!check_canary_ptr(partition_id_canary_ptr)) {
+    return log_error_and_throw(env, "encrypt_to_json",
+                               "Failed post-call canary check for partition_id_cobhan_buffer");
+  }
+  if(!check_canary_ptr(input_canary_ptr)) {
+    return log_error_and_throw(env, "encrypt_to_json",
+                               "Failed post-call canary check for input_cobhan_buffer");
+  }
+  if(!check_canary_ptr(output_canary_ptr)) {
+    return log_error_and_throw(env, "encrypt_to_json",
+                               "Failed post-call canary check for output_cobhan_buffer");
   }
 
   if (unlikely(result < 0)) {
@@ -537,6 +566,22 @@ Napi::Value decrypt(const Napi::CallbackInfo &info) {
                                "Failed to allocate cobhan output buffer");
   }
 
+  char *partition_id_canary_ptr = get_canary_ptr(partition_id_cobhan_buffer);
+  if(!check_canary_ptr(partition_id_canary_ptr)) {
+    return log_error_and_throw(env, "encrypt_to_json",
+                               "Failed initial canary check for partition_id_cobhan_buffer");
+  }
+  char *input_canary_ptr = get_canary_ptr(input_cobhan_buffer);
+  if(!check_canary_ptr(input_canary_ptr)) {
+    return log_error_and_throw(env, "encrypt_to_json",
+                               "Failed initial canary check for input_cobhan_buffer");
+  }
+  char *output_canary_ptr = get_canary_ptr(output_cobhan_buffer);
+  if(!check_canary_ptr(output_canary_ptr)) {
+    return log_error_and_throw(env, "encrypt_to_json",
+                               "Failed initial canary check for output_cobhan_buffer");
+  }
+
   if (unlikely(verbose_flag)) {
     debug_log("decrypt", "Calling asherah-cobhan DecryptFromJson");
   }
@@ -548,6 +593,19 @@ Napi::Value decrypt(const Napi::CallbackInfo &info) {
 
   if (unlikely(verbose_flag)) {
     debug_log("decrypt", "Returned from asherah-cobhan DecryptFromJson");
+  }
+
+  if(!check_canary_ptr(partition_id_canary_ptr)) {
+    return log_error_and_throw(env, "encrypt_to_json",
+                               "Failed post-call canary check for partition_id_cobhan_buffer");
+  }
+  if(!check_canary_ptr(input_canary_ptr)) {
+    return log_error_and_throw(env, "encrypt_to_json",
+                               "Failed post-call canary check for input_cobhan_buffer");
+  }
+  if(!check_canary_ptr(output_canary_ptr)) {
+    return log_error_and_throw(env, "encrypt_to_json",
+                               "Failed post-call canary check for output_cobhan_buffer");
   }
 
   if (unlikely(result < 0)) {
@@ -694,6 +752,22 @@ Napi::Value decrypt_string(const Napi::CallbackInfo &info) {
                                "Failed to allocate cobhan output buffer");
   }
 
+  char *partition_id_canary_ptr = get_canary_ptr(partition_id_cobhan_buffer);
+  if(!check_canary_ptr(partition_id_canary_ptr)) {
+    return log_error_and_throw(env, "encrypt_to_json",
+                               "Failed initial canary check for partition_id_cobhan_buffer");
+  }
+  char *input_canary_ptr = get_canary_ptr(input_cobhan_buffer);
+  if(!check_canary_ptr(input_canary_ptr)) {
+    return log_error_and_throw(env, "encrypt_to_json",
+                               "Failed initial canary check for input_cobhan_buffer");
+  }
+  char *output_canary_ptr = get_canary_ptr(output_cobhan_buffer);
+  if(!check_canary_ptr(output_canary_ptr)) {
+    return log_error_and_throw(env, "encrypt_to_json",
+                               "Failed initial canary check for output_cobhan_buffer");
+  }
+
   if (unlikely(verbose_flag)) {
     debug_log("decrypt_string", "Calling asherah-cobhan DecryptFromJson");
   }
@@ -705,6 +779,19 @@ Napi::Value decrypt_string(const Napi::CallbackInfo &info) {
 
   if (unlikely(verbose_flag)) {
     debug_log("decrypt_string", "Returned from asherah-cobhan DecryptFromJson");
+  }
+
+  if(!check_canary_ptr(partition_id_canary_ptr)) {
+    return log_error_and_throw(env, "encrypt_to_json",
+                               "Failed post-call canary check for partition_id_cobhan_buffer");
+  }
+  if(!check_canary_ptr(input_canary_ptr)) {
+    return log_error_and_throw(env, "encrypt_to_json",
+                               "Failed post-call canary check for input_cobhan_buffer");
+  }
+  if(!check_canary_ptr(output_canary_ptr)) {
+    return log_error_and_throw(env, "encrypt_to_json",
+                               "Failed post-call canary check for output_cobhan_buffer");
   }
 
   if (unlikely(result < 0)) {
@@ -773,7 +860,7 @@ void set_safety_padding_overhead(const Napi::CallbackInfo &info) {
 
   Napi::Number safety_padding_number = info[0].ToNumber();
 
-  safety_padding_bytes = (size_t)safety_padding_number.Int32Value();
+  *safety_padding_bytes_ptr = (size_t)safety_padding_number.Int32Value();
 }
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
