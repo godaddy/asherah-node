@@ -5,8 +5,12 @@
 #include <napi.h>
 #include <string>
 
-extern size_t est_intermediate_key_overhead;
-extern size_t safety_padding_bytes;
+// Stupid hack to get around extern issues
+size_t* get_est_intermediate_key_overhead_ptr();
+size_t* get_safety_padding_bytes_ptr();
+
+size_t *est_intermediate_key_overhead_ptr = get_est_intermediate_key_overhead_ptr();
+size_t *safety_padding_bytes_ptr = get_safety_padding_bytes_ptr();
 
 const size_t est_encryption_overhead = 48;
 const size_t est_envelope_overhead = 185;
@@ -83,7 +87,7 @@ log_error_and_throw(Napi::Env &env, const char *function_name,
 
 __attribute__((always_inline)) inline size_t
 calculate_cobhan_buffer_size_bytes(size_t data_len_bytes) {
-  return data_len_bytes + cobhan_header_size_bytes + safety_padding_bytes +
+  return data_len_bytes + cobhan_header_size_bytes + *safety_padding_bytes_ptr +
          1 + // Add one for possible NULL delimiter due to Node string functions
          canary_size; // Add space for canary value
 }
@@ -92,13 +96,12 @@ __attribute__((always_inline)) inline size_t
 estimate_asherah_output_size_bytes(size_t data_byte_len,
                                    size_t partition_byte_len) {
   // Add one rather than using std::ceil to round up
-  size_t est_data_byte_len =
-      (size_t)((double(data_byte_len + est_encryption_overhead) *
-                base64_overhead) +
-               1);
-  size_t asherah_output_size_bytes = est_envelope_overhead +
-                                     est_intermediate_key_overhead +
-                                     partition_byte_len + est_data_byte_len;
+  double est_data_byte_len =
+      (double(data_byte_len + est_encryption_overhead) * base64_overhead) + 1;
+
+  size_t asherah_output_size_bytes =
+      size_t(est_envelope_overhead + *est_intermediate_key_overhead_ptr +
+             partition_byte_len + est_data_byte_len + *safety_padding_bytes_ptr);
   if (unlikely(verbose_flag)) {
     std::string log_msg =
         "estimate_asherah_output_size(" + std::to_string(data_byte_len) + ", " +
@@ -172,7 +175,7 @@ heap_allocate_cbuffer(const char *variable_name, size_t size_bytes) {
     return nullptr;
   }
   std::unique_ptr<char[]> cobhan_buffer_unique_ptr(cobhan_buffer);
-  configure_cbuffer(cobhan_buffer, size_bytes + safety_padding_bytes);
+  configure_cbuffer(cobhan_buffer, size_bytes + *safety_padding_bytes_ptr);
   return cobhan_buffer_unique_ptr;
 }
 
