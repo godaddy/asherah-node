@@ -149,6 +149,22 @@ Napi::Value encrypt_to_json(Napi::Env &env, size_t partition_bytes,
                                "Failed to allocate cobhan output buffer");
   }
 
+  char *partition_id_canary_ptr = get_canary_ptr(partition_id_cobhan_buffer);
+  if(!check_canary_ptr(partition_id_canary_ptr)) {
+    return log_error_and_throw(env, "encrypt_to_json",
+                               "Failed initial canary check for partition_id_cobhan_buffer");
+  }
+  char *input_canary_ptr = get_canary_ptr(input_cobhan_buffer);
+  if(!check_canary_ptr(input_canary_ptr)) {
+    return log_error_and_throw(env, "encrypt_to_json",
+                               "Failed initial canary check for input_cobhan_buffer");
+  }
+  char *output_canary_ptr = get_canary_ptr(output_cobhan_buffer);
+  if(!check_canary_ptr(output_canary_ptr)) {
+    return log_error_and_throw(env, "encrypt_to_json",
+                               "Failed initial canary check for output_cobhan_buffer");
+  }
+
   if (unlikely(verbose_flag)) {
     debug_log("encrypt_to_json", "Calling asherah-cobhan EncryptToJson");
   }
@@ -160,6 +176,19 @@ Napi::Value encrypt_to_json(Napi::Env &env, size_t partition_bytes,
 
   if (unlikely(verbose_flag)) {
     debug_log("encrypt_to_json", "Returning from asherah-cobhan EncryptToJson");
+  }
+
+  if(!check_canary_ptr(partition_id_canary_ptr)) {
+    return log_error_and_throw(env, "encrypt_to_json",
+                               "Failed post-call canary check for partition_id_cobhan_buffer");
+  }
+  if(!check_canary_ptr(input_canary_ptr)) {
+    return log_error_and_throw(env, "encrypt_to_json",
+                               "Failed post-call canary check for input_cobhan_buffer");
+  }
+  if(!check_canary_ptr(output_canary_ptr)) {
+    return log_error_and_throw(env, "encrypt_to_json",
+                               "Failed post-call canary check for output_cobhan_buffer");
   }
 
   if (unlikely(result < 0)) {

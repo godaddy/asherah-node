@@ -13,7 +13,8 @@ const size_t est_envelope_overhead = 185;
 const double base64_overhead = 1.34;
 
 const size_t cobhan_header_size_bytes = 64 / 8;
-const size_t canary_size = 0;
+const size_t canary_size = sizeof(int32_t) * 2;
+const int32_t canary_constant = 0xdeadbeef;
 
 std::string napi_status_to_string(napi_status status) {
   switch (status) {
@@ -115,6 +116,40 @@ __attribute__((always_inline)) inline void configure_cbuffer(char *buffer,
   *((int32_t *)buffer) = length;
   // Reserved for future use
   *((int32_t *)(buffer + sizeof(int32_t))) = 0;
+
+  // Write canary values
+
+  // First canary value is a int32_t 0 which gives us four NULLs
+  *((int32_t *)(buffer + length)) = 0;
+
+  // Second canary value is a int32_t 0xdeadbeef
+  *((int32_t *)(buffer + length + sizeof(int32_t))) = canary_constant;
+}
+
+__attribute__((always_inline)) inline char* get_canary_ptr(char *cobhan_buffer) {
+  int32_t cobhan_buffer_size_bytes = cbuffer_byte_length(cobhan_buffer);
+  return cobhan_buffer + cobhan_buffer_size_bytes + 1;
+}
+
+__attribute__((always_inline)) inline bool check_canary_ptr(char *cobhan_buffer) {
+  int32_t cobhan_buffer_size_bytes = cbuffer_byte_length(cobhan_buffer);
+  int32_t zero_value = *((int32_t *)(cobhan_buffer + cobhan_buffer_size_bytes + 1));
+  if(zero_value != 0) {
+    std::string error_msg =
+        "Canary check failed: " + std::to_string(zero_value) +
+        " != 0";
+    error_log("canary_check_cbuffer", error_msg);
+    return false;
+  }
+  int32_t canary_value = *((int32_t *)(cobhan_buffer + cobhan_buffer_size_bytes + 1 + sizeof(int32_t)));
+  if (canary_value != canary_constant) {
+    std::string error_msg =
+        "Canary check failed: " + std::to_string(canary_value) +
+        " != " + std::to_string(canary_constant);
+    error_log("canary_check_cbuffer", error_msg);
+    return false;
+  }
+  return true;
 }
 
 __attribute__((always_inline)) inline std::unique_ptr<char[]>
