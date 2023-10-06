@@ -358,4 +358,163 @@ cbuffer_to_nbuffer(Napi::Env &env, char *cobhan_buffer) {
   return nbuffer;
 }
 
+#define NAPI_STRING_TO_CBUFFER_VOID(napi_string, cobhan_buffer, bytes_copied,  \
+                                    function_name)                             \
+  std::unique_ptr<char[]> napi_string##_cobhan_buffer_unique_ptr;              \
+  do {                                                                         \
+    /* Determine size */                                                       \
+    size_t napi_string##_utf8_byte_length;                                     \
+    napi_string##_utf8_byte_length =                                           \
+        nstring_utf8_byte_length(env, napi_string);                            \
+    if (unlikely(napi_string##_utf8_byte_length == (size_t)(-1))) {            \
+      log_error_and_throw(env, function_name,                                  \
+                          "Failed to get " #napi_string " utf8 length");       \
+      return;                                                                  \
+    }                                                                          \
+    if (unlikely(napi_string##_utf8_byte_length == 0)) {                       \
+      log_error_and_throw(env, function_name, #napi_string " is empty");       \
+      return;                                                                  \
+    }                                                                          \
+    /* Allocate */                                                             \
+    if (napi_string##_utf8_byte_length < max_stack_alloc_size) {               \
+      /* If the buffer is small enough, allocate it on the stack  */           \
+      size_t napi_string##_cobhan_buffer_size_bytes =                          \
+          calculate_cobhan_buffer_size_bytes(napi_string##_utf8_byte_length);  \
+      debug_log_alloca(function_name, #napi_string "_cobhan_buffer",           \
+                       napi_string##_cobhan_buffer_size_bytes);                \
+      cobhan_buffer = (char *)alloca(napi_string##_cobhan_buffer_size_bytes);  \
+      configure_cbuffer(cobhan_buffer, napi_string##_utf8_byte_length);        \
+    } else {                                                                   \
+      /* Otherwise, allocate it on the heap */                                 \
+      napi_string##_cobhan_buffer_unique_ptr = heap_allocate_cbuffer(          \
+          cobhan_buffer, napi_string##_utf8_byte_length);                      \
+      cobhan_buffer = napi_string##_cobhan_buffer_unique_ptr.get();            \
+    }                                                                          \
+    if (unlikely(cobhan_buffer == nullptr)) {                                  \
+      log_error_and_throw(env, function_name,                                  \
+                          "Failed to allocate " #napi_string                   \
+                          " cobhan buffer");                                   \
+      return;                                                                  \
+    }                                                                          \
+    /* Copy */                                                                 \
+    cobhan_buffer = copy_nstring_to_cbuffer(env, napi_string,                  \
+                                            napi_string##_utf8_byte_length,    \
+                                            cobhan_buffer, &bytes_copied);     \
+    if (unlikely(cobhan_buffer == nullptr)) {                                  \
+      log_error_and_throw(env, function_name,                                  \
+                          "Failed to copy " #napi_string " to cobhan buffer"); \
+      return;                                                                  \
+    }                                                                          \
+  } while (0);
+
+#define NAPI_STRING_TO_CBUFFER(napi_string, cobhan_buffer, bytes_copied,       \
+                               function_name)                                  \
+  std::unique_ptr<char[]> napi_string##_cobhan_buffer_unique_ptr;              \
+  do {                                                                         \
+    /* Determine size */                                                       \
+    size_t napi_string##_utf8_byte_length;                                     \
+    napi_string##_utf8_byte_length =                                           \
+        nstring_utf8_byte_length(env, napi_string);                            \
+    if (unlikely(napi_string##_utf8_byte_length == (size_t)(-1))) {            \
+      return log_error_and_throw(                                              \
+          env, function_name, "Failed to get " #napi_string " utf8 length");   \
+    }                                                                          \
+    if (unlikely(napi_string##_utf8_byte_length == 0)) {                       \
+      return log_error_and_throw(env, function_name,                           \
+                                 #napi_string " is empty");                    \
+    }                                                                          \
+    /* Allocate */                                                             \
+    if (napi_string##_utf8_byte_length < max_stack_alloc_size) {               \
+      /* If the buffer is small enough, allocate it on the stack  */           \
+      size_t napi_string##_cobhan_buffer_size_bytes =                          \
+          calculate_cobhan_buffer_size_bytes(napi_string##_utf8_byte_length);  \
+      debug_log_alloca(function_name, #napi_string "_cobhan_buffer",           \
+                       napi_string##_cobhan_buffer_size_bytes);                \
+      cobhan_buffer = (char *)alloca(napi_string##_cobhan_buffer_size_bytes);  \
+      configure_cbuffer(cobhan_buffer, napi_string##_utf8_byte_length);        \
+    } else {                                                                   \
+      /* Otherwise, allocate it on the heap */                                 \
+      napi_string##_cobhan_buffer_unique_ptr = heap_allocate_cbuffer(          \
+          cobhan_buffer, napi_string##_utf8_byte_length);                      \
+      cobhan_buffer = napi_string##_cobhan_buffer_unique_ptr.get();            \
+    }                                                                          \
+    if (unlikely(cobhan_buffer == nullptr)) {                                  \
+      return log_error_and_throw(env, function_name,                           \
+                                 "Failed to allocate " #napi_string            \
+                                 " cobhan buffer");                            \
+    }                                                                          \
+    /* Copy */                                                                 \
+    cobhan_buffer = copy_nstring_to_cbuffer(env, napi_string,                  \
+                                            napi_string##_utf8_byte_length,    \
+                                            cobhan_buffer, &bytes_copied);     \
+    if (unlikely(cobhan_buffer == nullptr)) {                                  \
+      return log_error_and_throw(env, function_name,                           \
+                                 "Failed to copy " #napi_string                \
+                                 " to cobhan buffer");                         \
+    }                                                                          \
+  } while (0);
+
+#define NAPI_BUFFER_TO_CBUFFER(napi_buffer, cobhan_buffer, bytes_copied,       \
+                               function_name)                                  \
+  std::unique_ptr<char[]> napi_buffer##_unique_ptr;                            \
+  do {                                                                         \
+    /* Determine size */                                                       \
+    size_t napi_buffer##_byte_length = napi_buffer.ByteLength();               \
+    if (unlikely(napi_buffer##_byte_length == 0)) {                            \
+      return log_error_and_throw(env, function_name,                           \
+                                 #napi_buffer " is empty");                    \
+    }                                                                          \
+    /* Allocate */                                                             \
+    if (napi_buffer##_byte_length < max_stack_alloc_size) {                    \
+      /* If the buffer is small enough, allocate it on the stack */            \
+      size_t napi_buffer##_cobhan_buffer_size_bytes =                          \
+          calculate_cobhan_buffer_size_bytes(napi_buffer##_byte_length);       \
+      debug_log_alloca(function_name, #cobhan_buffer,                          \
+                       napi_buffer##_cobhan_buffer_size_bytes);                \
+      cobhan_buffer = (char *)alloca(napi_buffer##_cobhan_buffer_size_bytes);  \
+      configure_cbuffer(cobhan_buffer, napi_buffer##_byte_length);             \
+    } else {                                                                   \
+      /* Otherwise, allocate it on the heap */                                 \
+      napi_buffer##_unique_ptr =                                               \
+          heap_allocate_cbuffer(#cobhan_buffer, napi_buffer##_byte_length);    \
+      cobhan_buffer = napi_buffer##_unique_ptr.get();                          \
+    }                                                                          \
+    if (unlikely(cobhan_buffer == nullptr)) {                                  \
+      return log_error_and_throw(                                              \
+          env, function_name,                                                  \
+          "Failed to allocate cobhan buffer for " #napi_buffer);               \
+    }                                                                          \
+    /* Copy */                                                                 \
+    cobhan_buffer = copy_nbuffer_to_cbuffer(env, napi_buffer, cobhan_buffer);  \
+    if (unlikely(cobhan_buffer == nullptr)) {                                  \
+      return log_error_and_throw(env, function_name,                           \
+                                 "Failed to copy " #napi_buffer                \
+                                 " to cobhan buffer");                         \
+    }                                                                          \
+    bytes_copied = napi_buffer##_byte_length;                                  \
+  } while (0);
+
+#define ALLOCATE_OUTPUT_CBUFFER(cobhan_buffer, buffer_size, function_name)     \
+  std::unique_ptr<char[]> cobhan_buffer##_unique_ptr;                          \
+  do {                                                                         \
+    if (buffer_size < max_stack_alloc_size) {                                  \
+      /* If the buffer is small enough, allocate it on the stack */            \
+      size_t cobhan_buffer##_buffer_size_bytes =                               \
+          calculate_cobhan_buffer_size_bytes(buffer_size);                     \
+      debug_log_alloca(function_name, #cobhan_buffer,                          \
+                       cobhan_buffer##_buffer_size_bytes);                     \
+      cobhan_buffer = (char *)alloca(cobhan_buffer##_buffer_size_bytes);       \
+      configure_cbuffer(cobhan_buffer, buffer_size);                           \
+    } else {                                                                   \
+      /* Otherwise, allocate it on the heap */                                 \
+      cobhan_buffer##_unique_ptr =                                             \
+          heap_allocate_cbuffer(#cobhan_buffer, buffer_size);                  \
+      cobhan_buffer = output_cobhan_buffer_unique_ptr.get();                   \
+    }                                                                          \
+    if (unlikely(cobhan_buffer == nullptr)) {                                  \
+      return log_error_and_throw(env, function_name,                           \
+                                 "Failed to allocate " #cobhan_buffer);        \
+    }                                                                          \
+  } while (0);
+
 #endif
