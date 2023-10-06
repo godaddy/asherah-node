@@ -37,7 +37,7 @@ calculate_cobhan_buffer_allocation_size(size_t data_len_bytes) {
 __attribute__((always_inline)) inline void
 configure_cbuffer(char *cobhan_buffer, size_t length) {
   if (unlikely(verbose_flag)) {
-    debug_log("configure_cbuffer", "configure_cbuffer(" +
+    debug_log(__func__, "configure_cbuffer(" +
                                        format_ptr(cobhan_buffer) + ", " +
                                        std::to_string(length) + ")");
   }
@@ -48,22 +48,9 @@ configure_cbuffer(char *cobhan_buffer, size_t length) {
 
   // Write canary values
   char *data_ptr = cbuffer_data_ptr(cobhan_buffer);
-#ifdef LOG_CANARY_WRITES
-  if (unlikely(verbose_flag)) {
-    debug_log("configure_cbuffer",
-              "Writing first canary at " + format_ptr(data_ptr + length + 1));
-  }
-#endif
 
   // First canary value is a int32_t 0 which gives us four NULLs
   *((int32_t *)(data_ptr + length + 1)) = 0;
-#ifdef LOG_CANARY_WRITES
-  if (unlikely(verbose_flag)) {
-    debug_log("configure_cbuffer",
-              "Writing second canary at " +
-                  format_ptr(data_ptr + length + 1 + sizeof(int32_t)));
-  }
-#endif
 
   // Second canary value is a int32_t 0xdeadbeef
   *((int32_t *)(data_ptr + length + 1 + sizeof(int32_t))) = canary_constant;
@@ -80,7 +67,7 @@ __attribute__((always_inline)) inline bool check_canary_ptr(char *canary_ptr) {
   if (zero_value != 0) {
     std::string error_msg =
         "Canary check failed: " + std::to_string(zero_value) + " != 0";
-    error_log("canary_check_cbuffer", error_msg);
+    error_log(__func__, error_msg);
     return false;
   }
   int32_t canary_value = *((int32_t *)(canary_ptr + sizeof(int32_t)));
@@ -88,7 +75,7 @@ __attribute__((always_inline)) inline bool check_canary_ptr(char *canary_ptr) {
     std::string error_msg =
         "Canary check failed: " + std::to_string(canary_value) +
         " != " + std::to_string(canary_constant);
-    error_log("canary_check_cbuffer", error_msg);
+    error_log(__func__, error_msg);
     return false;
   }
   return true;
@@ -98,12 +85,10 @@ __attribute__((always_inline)) inline std::unique_ptr<char[]>
 heap_allocate_cbuffer(const char *variable_name, size_t size_bytes) {
   size_t cobhan_buffer_allocation_size =
       calculate_cobhan_buffer_allocation_size(size_bytes);
+
   if (unlikely(verbose_flag)) {
-    std::string log_msg =
-        "heap_allocate_cbuffer(" + std::to_string(size_bytes) +
-        ") (heap) cobhan_buffer_allocation_size: " +
-        std::to_string(cobhan_buffer_allocation_size) + " for " + variable_name;
-    debug_log("allocate_cbuffer", log_msg);
+    debug_log_new(__func__, variable_name,
+                  cobhan_buffer_allocation_size);
   }
 
   char *cobhan_buffer = new (std::nothrow) char[cobhan_buffer_allocation_size];
@@ -111,7 +96,7 @@ heap_allocate_cbuffer(const char *variable_name, size_t size_bytes) {
     std::string error_msg = "new[" +
                             std::to_string(cobhan_buffer_allocation_size) +
                             "] returned null";
-    error_log("allocate_cbuffer", error_msg);
+    error_log(__func__, error_msg);
     return nullptr;
   }
   std::unique_ptr<char[]> cobhan_buffer_unique_ptr(cobhan_buffer);
@@ -120,7 +105,7 @@ heap_allocate_cbuffer(const char *variable_name, size_t size_bytes) {
 }
 
 #define ALLOCATE_CBUFFER_UNIQUE_PTR(cobhan_buffer, buffer_size, unique_ptr,    \
-                                    function_name)                             \
+                                    max_stack_alloc_size, function_name)       \
   do {                                                                         \
     if (buffer_size < max_stack_alloc_size) {                                  \
       /* If the buffer is small enough, allocate it on the stack */            \
@@ -142,9 +127,11 @@ heap_allocate_cbuffer(const char *variable_name, size_t size_bytes) {
     }                                                                          \
   } while (0);
 
-#define ALLOCATE_CBUFFER(cobhan_buffer, buffer_size, function_name)            \
+#define ALLOCATE_CBUFFER(cobhan_buffer, buffer_size, max_stack_alloc_size,     \
+                         function_name)                                        \
   std::unique_ptr<char[]> cobhan_buffer##_unique_ptr;                          \
   ALLOCATE_CBUFFER_UNIQUE_PTR(cobhan_buffer, buffer_size,                      \
-                              cobhan_buffer##_unique_ptr, function_name);
+                              cobhan_buffer##_unique_ptr,                      \
+                              max_stack_alloc_size, function_name);
 
 #endif
