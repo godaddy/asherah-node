@@ -3,12 +3,16 @@
 #include "hints.h"
 #include "logging.h"
 #include <iostream>
+#include <mutex>
 #include <napi.h>
 
 size_t max_stack_alloc_size = 2048;
 int32_t setup_state = 0;
+std::mutex asherah_lock;
 
 void setup(const Napi::CallbackInfo &info) {
+  std::lock_guard<std::mutex> lock(asherah_lock);
+
   if (unlikely(verbose_flag)) {
     debug_log("setup", "called");
   }
@@ -156,6 +160,8 @@ Napi::String encrypt_to_json(Napi::Env &env, size_t partition_bytes,
 }
 
 Napi::String encrypt(const Napi::CallbackInfo &info) {
+  std::lock_guard<std::mutex> lock(asherah_lock);
+
   if (unlikely(verbose_flag)) {
     debug_log("encrypt", "called");
   }
@@ -199,6 +205,8 @@ Napi::String encrypt(const Napi::CallbackInfo &info) {
 }
 
 Napi::String encrypt_string(const Napi::CallbackInfo &info) {
+  std::lock_guard<std::mutex> lock(asherah_lock);
+
   if (unlikely(verbose_flag)) {
     debug_log("encrypt_string", "called");
   }
@@ -241,6 +249,8 @@ Napi::String encrypt_string(const Napi::CallbackInfo &info) {
 }
 
 Napi::Buffer<unsigned char> decrypt(const Napi::CallbackInfo &info) {
+  std::lock_guard<std::mutex> lock(asherah_lock);
+
   if (unlikely(verbose_flag)) {
     debug_log("decrypt", "called");
   }
@@ -336,6 +346,8 @@ Napi::Buffer<unsigned char> decrypt(const Napi::CallbackInfo &info) {
 }
 
 Napi::String decrypt_string(const Napi::CallbackInfo &info) {
+  std::lock_guard<std::mutex> lock(asherah_lock);
+
   if (unlikely(verbose_flag)) {
     debug_log("decrypt_string", "called");
   }
@@ -430,6 +442,8 @@ Napi::String decrypt_string(const Napi::CallbackInfo &info) {
 }
 
 void shutdown(const Napi::CallbackInfo &info) {
+  std::lock_guard<std::mutex> lock(asherah_lock);
+
   if (unlikely(verbose_flag)) {
     debug_log("shutdown", "called");
   }
@@ -449,6 +463,8 @@ void shutdown(const Napi::CallbackInfo &info) {
 }
 
 void set_max_stack_alloc_item_size(const Napi::CallbackInfo &info) {
+  std::lock_guard<std::mutex> lock(asherah_lock);
+
   if (unlikely(verbose_flag)) {
     debug_log("set_max_stack_alloc_item_size", "called");
   }
@@ -464,6 +480,8 @@ void set_max_stack_alloc_item_size(const Napi::CallbackInfo &info) {
 }
 
 void set_safety_padding_overhead(const Napi::CallbackInfo &info) {
+  std::lock_guard<std::mutex> lock(asherah_lock);
+
   if (unlikely(verbose_flag)) {
     debug_log("set_safety_padding_overhead", "called");
   }
