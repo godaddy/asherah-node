@@ -12,7 +12,7 @@ const size_t est_encryption_overhead = 48;
 const size_t est_envelope_overhead = 185;
 const double base64_overhead = 1.34;
 
-size_t max_stack_alloc_size = 2048;
+size_t maximum_stack_alloc_size = 2048;
 int32_t setup_state = 0;
 std::mutex asherah_lock;
 
@@ -87,7 +87,7 @@ void setup(const Napi::CallbackInfo &info) {
   char *config_cobhan_buffer;
   size_t config_copied_bytes;
   NAPI_STRING_TO_CBUFFER(env, config, config_cobhan_buffer, config_copied_bytes,
-                         "setup");
+                         maximum_stack_alloc_size, "setup");
 
   char *config_canary_ptr = get_canary_ptr(config_cobhan_buffer);
   if (unlikely(!check_canary_ptr(config_canary_ptr))) {
@@ -130,7 +130,7 @@ Napi::String encrypt_to_json(Napi::Env &env, size_t partition_bytes,
 
   char *output_cobhan_buffer;
   ALLOCATE_CBUFFER(output_cobhan_buffer, asherah_output_size_bytes,
-                   "encrypt_to_json");
+                   maximum_stack_alloc_size, "encrypt_to_json");
 
   char *partition_id_canary_ptr = get_canary_ptr(partition_id_cobhan_buffer);
   if (unlikely(!check_canary_ptr(partition_id_canary_ptr))) {
@@ -212,14 +212,16 @@ Napi::String encrypt(const Napi::CallbackInfo &info) {
   char *partition_id_cobhan_buffer;
   size_t partition_id_copied_bytes;
   NAPI_STRING_TO_CBUFFER(env, partition_id, partition_id_cobhan_buffer,
-                         partition_id_copied_bytes, "encrypt");
+                         partition_id_copied_bytes, maximum_stack_alloc_size,
+                         "encrypt");
 
   Napi::Buffer<unsigned char> input_napi_buffer =
       info[1].As<Napi::Buffer<unsigned char>>();
   char *input_cobhan_buffer;
   size_t input_copied_bytes;
   NAPI_BUFFER_TO_CBUFFER(env, input_napi_buffer, input_cobhan_buffer,
-                         input_copied_bytes, "encrypt");
+                         input_copied_bytes, maximum_stack_alloc_size,
+                         "encrypt");
 
   Napi::String output =
       encrypt_to_json(env, partition_id_copied_bytes, input_copied_bytes,
@@ -257,13 +259,14 @@ Napi::String encrypt_string(const Napi::CallbackInfo &info) {
   char *partition_id_cobhan_buffer;
   size_t partition_id_copied_bytes;
   NAPI_STRING_TO_CBUFFER(env, partition_id, partition_id_cobhan_buffer,
-                         partition_id_copied_bytes, "encrypt_string");
+                         partition_id_copied_bytes, maximum_stack_alloc_size,
+                         "encrypt_string");
 
   Napi::String input = info[1].As<Napi::String>();
   char *input_cobhan_buffer;
   size_t input_copied_bytes;
   NAPI_STRING_TO_CBUFFER(env, input, input_cobhan_buffer, input_copied_bytes,
-                         "encrypt_string");
+                         maximum_stack_alloc_size, "encrypt_string");
 
   Napi::String output =
       encrypt_to_json(env, partition_id_copied_bytes, input_copied_bytes,
@@ -301,16 +304,18 @@ Napi::Buffer<unsigned char> decrypt(const Napi::CallbackInfo &info) {
   char *partition_id_cobhan_buffer;
   size_t partition_id_copied_bytes;
   NAPI_STRING_TO_CBUFFER(env, partition_id, partition_id_cobhan_buffer,
-                         partition_id_copied_bytes, "decrypt");
+                         partition_id_copied_bytes, maximum_stack_alloc_size,
+                         "decrypt");
 
   Napi::String input = info[1].As<Napi::String>();
   char *input_cobhan_buffer;
   size_t input_copied_bytes;
   NAPI_STRING_TO_CBUFFER(env, input, input_cobhan_buffer, input_copied_bytes,
-                         "decrypt");
+                         maximum_stack_alloc_size, "decrypt");
 
   char *output_cobhan_buffer;
-  ALLOCATE_CBUFFER(output_cobhan_buffer, input_copied_bytes, "decrypt");
+  ALLOCATE_CBUFFER(output_cobhan_buffer, input_copied_bytes,
+                   maximum_stack_alloc_size, "decrypt");
 
   char *partition_id_canary_ptr = get_canary_ptr(partition_id_cobhan_buffer);
   if (unlikely(!check_canary_ptr(partition_id_canary_ptr))) {
@@ -398,16 +403,18 @@ Napi::String decrypt_string(const Napi::CallbackInfo &info) {
   char *partition_id_cobhan_buffer;
   size_t partition_id_copied_bytes;
   NAPI_STRING_TO_CBUFFER(env, partition_id, partition_id_cobhan_buffer,
-                         partition_id_copied_bytes, "decrypt_string");
+                         partition_id_copied_bytes, maximum_stack_alloc_size,
+                         "decrypt_string");
 
   Napi::String input = info[1].As<Napi::String>();
   char *input_cobhan_buffer;
   size_t input_copied_bytes;
   NAPI_STRING_TO_CBUFFER(env, input, input_cobhan_buffer, input_copied_bytes,
-                         "decrypt_string");
+                         maximum_stack_alloc_size, "decrypt_string");
 
   char *output_cobhan_buffer;
-  ALLOCATE_CBUFFER(output_cobhan_buffer, input_copied_bytes, "decrypt_string");
+  ALLOCATE_CBUFFER(output_cobhan_buffer, input_copied_bytes,
+                   maximum_stack_alloc_size, "decrypt_string");
 
   char *partition_id_canary_ptr = get_canary_ptr(partition_id_cobhan_buffer);
   if (unlikely(!check_canary_ptr(partition_id_canary_ptr))) {
@@ -504,7 +511,7 @@ void set_max_stack_alloc_item_size(const Napi::CallbackInfo &info) {
 
   Napi::Number item_size = info[0].ToNumber();
 
-  max_stack_alloc_size = (size_t)item_size.Int32Value();
+  maximum_stack_alloc_size = (size_t)item_size.Int32Value();
 }
 
 void set_safety_padding_overhead(const Napi::CallbackInfo &info) {
