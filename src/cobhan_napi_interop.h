@@ -216,8 +216,7 @@ cbuffer_to_nstring(Napi::Env &env, char *cobhan_buffer) {
 
   // Using C function because it allows length delimited input
   napi_status status = napi_create_string_utf8(
-      env, cbuffer_data_ptr(cobhan_buffer),
-      cobhan_buffer_size_bytes, &output);
+      env, cbuffer_data_ptr(cobhan_buffer), cobhan_buffer_size_bytes, &output);
 
   if (unlikely(status != napi_ok)) {
     log_error_and_throw(env, "cbuffer_to_nstring",
@@ -263,14 +262,12 @@ copy_nstring_to_cbuffer(Napi::Env &env, Napi::String &str,
   }
 
   if (unlikely(verbose_flag)) {
-    debug_log(
-        "copy_nstring_to_cbuffer",
-        "Copying " + std::to_string(str_utf8_byte_length) + " bytes to " +
-            std::to_string(
-                (intptr_t)cbuffer_data_ptr(cobhan_buffer)) +
-            "-" +
-            std::to_string((intptr_t)(cbuffer_data_ptr(cobhan_buffer) +
-                                      str_utf8_byte_length)));
+    debug_log("copy_nstring_to_cbuffer",
+              "Copying " + std::to_string(str_utf8_byte_length) + " bytes to " +
+                  std::to_string((intptr_t)cbuffer_data_ptr(cobhan_buffer)) +
+                  "-" +
+                  std::to_string((intptr_t)(cbuffer_data_ptr(cobhan_buffer) +
+                                            str_utf8_byte_length)));
   }
 
   napi_status status;
@@ -278,8 +275,7 @@ copy_nstring_to_cbuffer(Napi::Env &env, Napi::String &str,
   // NOTE: This implementation relies on the additional byte that is reserved
   // upon allocation for a NULL delimiter as methods like
   // napi_get_value_string_utf8 append a NULL delimiter
-  status = napi_get_value_string_utf8(env, str,
-                                      cbuffer_data_ptr(cobhan_buffer),
+  status = napi_get_value_string_utf8(env, str, cbuffer_data_ptr(cobhan_buffer),
                                       str_utf8_byte_length + 1, &copied_bytes);
   if (unlikely(status != napi_ok)) {
     log_error_and_throw(env, "copy_nstring_to_cbuffer",
@@ -321,8 +317,7 @@ copy_nbuffer_to_cbuffer(Napi::Env &env, Napi::Buffer<unsigned char> &nbuffer,
                         "Buffer too large for cobhan buffer");
     return nullptr;
   }
-  memcpy(cbuffer_data_ptr(cobhan_buffer), nbuffer.Data(),
-         nbuffer_byte_length);
+  memcpy(cbuffer_data_ptr(cobhan_buffer), nbuffer.Data(), nbuffer_byte_length);
   configure_cbuffer(cobhan_buffer, nbuffer_byte_length);
   return cobhan_buffer;
 }
@@ -347,7 +342,7 @@ cbuffer_to_nbuffer(Napi::Env &env, char *cobhan_buffer) {
   }
 
   Napi::Buffer<unsigned char> nbuffer = Napi::Buffer<unsigned char>::Copy(
-      env, (const unsigned char*)cbuffer_data_ptr(cobhan_buffer),
+      env, (const unsigned char *)cbuffer_data_ptr(cobhan_buffer),
       cobhan_buffer_byte_length);
 
   if (unlikely(verbose_flag)) {
@@ -365,8 +360,7 @@ cbuffer_to_nbuffer(Napi::Env &env, char *cobhan_buffer) {
   std::unique_ptr<char[]> napi_string##_cobhan_buffer_unique_ptr;              \
   do {                                                                         \
     /* Determine size */                                                       \
-    size_t napi_string##_utf8_byte_length;                                     \
-    napi_string##_utf8_byte_length =                                           \
+    size_t napi_string##_utf8_byte_length =                                    \
         nstring_utf8_byte_length(env, napi_string);                            \
     if (unlikely(napi_string##_utf8_byte_length == (size_t)(-1))) {            \
       log_error_and_throw(env, function_name,                                  \
@@ -389,7 +383,7 @@ cbuffer_to_nbuffer(Napi::Env &env, char *cobhan_buffer) {
     } else {                                                                   \
       /* Otherwise, allocate it on the heap */                                 \
       napi_string##_cobhan_buffer_unique_ptr = heap_allocate_cbuffer(          \
-          #cobhan_buffer, napi_string##_utf8_byte_length);                      \
+          #cobhan_buffer, napi_string##_utf8_byte_length);                     \
       cobhan_buffer = napi_string##_cobhan_buffer_unique_ptr.get();            \
     }                                                                          \
     if (unlikely(cobhan_buffer == nullptr)) {                                  \
