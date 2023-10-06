@@ -4,8 +4,8 @@ echo "Downloading Asherah libraries"
 
 source .asherah-version
 
-rm -rf lib
-mkdir lib
+#rm -rf lib
+mkdir -p lib
 cd lib || exit 1
 
 OS=$(uname)
@@ -51,5 +51,5 @@ curl -s -L --fail -O --retry 999 --retry-max-time 0 "https://github.com/godaddy/
 grep -e "${ARCHIVE}" -e "${HEADER}" "${SUMS}" > ./SHA256SUM
 #shasum -a 256 -c ./SHA256SUM || (echo 'SHA256 mismatch!' ; rm -f ./*.a ./*.h ; exit 1)
 
-mv "${ARCHIVE}" libasherah.a
-mv "${HEADER}" libasherah.h
+mv -f "${ARCHIVE}" libasherah.a
+mv -f "${HEADER}" libasherah.h
