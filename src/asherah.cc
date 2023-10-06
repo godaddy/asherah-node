@@ -54,7 +54,7 @@ void setup(const Napi::CallbackInfo &info) {
   }
 
   char *config_cobhan_buffer;
-  size_t config_copied_bytes;
+  size_t config_copied_bytes = 0;
   NAPI_STRING_TO_CBUFFER(config, config_cobhan_buffer, config_copied_bytes,
                          "setup");
 
@@ -177,14 +177,14 @@ Napi::String encrypt(const Napi::CallbackInfo &info) {
 
   Napi::String partition_id = info[0].As<Napi::String>();
   char *partition_id_cobhan_buffer;
-  size_t partition_id_copied_bytes;
+  size_t partition_id_copied_bytes = 0;
   NAPI_STRING_TO_CBUFFER(partition_id, partition_id_cobhan_buffer,
                          partition_id_copied_bytes, "encrypt");
 
   Napi::Buffer<unsigned char> input_napi_buffer =
       info[1].As<Napi::Buffer<unsigned char>>();
   char *input_cobhan_buffer;
-  size_t input_copied_bytes;
+  size_t input_copied_bytes = 0;
   NAPI_BUFFER_TO_CBUFFER(input_napi_buffer, input_cobhan_buffer,
                          input_copied_bytes, "encrypt");
 
@@ -220,13 +220,13 @@ Napi::String encrypt_string(const Napi::CallbackInfo &info) {
 
   Napi::String partition_id = info[0].As<Napi::String>();
   char *partition_id_cobhan_buffer;
-  size_t partition_id_copied_bytes;
+  size_t partition_id_copied_bytes = 0;
   NAPI_STRING_TO_CBUFFER(partition_id, partition_id_cobhan_buffer,
                          partition_id_copied_bytes, "encrypt_string");
 
   Napi::String input = info[1].As<Napi::String>();
   char *input_cobhan_buffer;
-  size_t input_copied_bytes;
+  size_t input_copied_bytes = 0;
   NAPI_STRING_TO_CBUFFER(input, input_cobhan_buffer, input_copied_bytes,
                          "encrypt_string");
 
@@ -262,13 +262,13 @@ Napi::Buffer<unsigned char> decrypt(const Napi::CallbackInfo &info) {
 
   Napi::String partition_id = info[0].As<Napi::String>();
   char *partition_id_cobhan_buffer;
-  size_t partition_id_copied_bytes;
+  size_t partition_id_copied_bytes = 0;
   NAPI_STRING_TO_CBUFFER(partition_id, partition_id_cobhan_buffer,
                          partition_id_copied_bytes, "decrypt");
 
   Napi::String input = info[1].As<Napi::String>();
   char *input_cobhan_buffer;
-  size_t input_copied_bytes;
+  size_t input_copied_bytes = 0;
   NAPI_STRING_TO_CBUFFER(input, input_cobhan_buffer, input_copied_bytes,
                          "decrypt");
 
@@ -357,13 +357,13 @@ Napi::String decrypt_string(const Napi::CallbackInfo &info) {
 
   Napi::String partition_id = info[0].As<Napi::String>();
   char *partition_id_cobhan_buffer;
-  size_t partition_id_copied_bytes;
+  size_t partition_id_copied_bytes = 0;
   NAPI_STRING_TO_CBUFFER(partition_id, partition_id_cobhan_buffer,
                          partition_id_copied_bytes, "decrypt_string");
 
   Napi::String input = info[1].As<Napi::String>();
   char *input_cobhan_buffer;
-  size_t input_copied_bytes;
+  size_t input_copied_bytes = 0;
   NAPI_STRING_TO_CBUFFER(input, input_cobhan_buffer, input_copied_bytes,
                          "decrypt_string");
 
