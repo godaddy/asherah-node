@@ -38,6 +38,45 @@ estimate_asherah_output_size_bytes(size_t data_byte_len,
   return asherah_output_size_bytes;
 }
 
+__attribute__((always_inline)) inline const char* asherah_cobhan_error_to_string(int32_t error) {
+  switch(error) {
+    case 0:
+      return "Success";
+    case -1:
+      return "Cobhan error: NULL pointer";
+    case -2:
+      return "Cobhan error: Buffer too large";
+    case -3:
+      return "Cobhan error: Buffer too small";
+    case -4:
+      return "Cobhan error: Copy failed";
+    case -5:
+      return "Cobhan error: JSON decode failed";
+    case -6:
+      return "Cobhan error: JSON encode failed";
+    case -7:
+      return "Cobhan error: Invalid UTF-8";
+    case -8:
+      return "Cobhan error: Read temp file failed";
+    case -9:
+      return "Cobhan error: Write temp file failed";
+    case -100:
+      return "Asherah error: Not initialized";
+    case -101:
+      return "Asherah error: Already initialized";
+    case -102:
+      return "Asherah error: Failed to get session";
+    case -103:
+      return "Asherah error: Encrypt operation failed";
+    case -104:
+      return "Asherah error: Decrypt operation failed";
+    case -105:
+      return "Asherah error: Invalid configuration";
+    default:
+      return "Unknown error";
+  }
+}
+
 void setup(const Napi::CallbackInfo &info) {
   std::lock_guard<std::mutex> lock(asherah_lock);
 
@@ -109,8 +148,7 @@ void setup(const Napi::CallbackInfo &info) {
   }
 
   if (unlikely(result < 0)) {
-    // TODO: Convert this to a proper error message
-    log_error_and_throw(__func__, std::to_string(result));
+    log_error_and_throw(__func__, asherah_cobhan_error_to_string(result));
   }
   setup_state = 1;
 }
@@ -175,8 +213,7 @@ Napi::String encrypt_to_json(Napi::Env &env, size_t partition_bytes,
   }
 
   if (unlikely(result < 0)) {
-    // TODO: Convert this to a proper error message
-    log_error_and_throw(__func__, std::to_string(result));
+    log_error_and_throw(__func__, asherah_cobhan_error_to_string(result));
   }
 
   Napi::String output = cbuffer_to_nstring(env, output_cobhan_buffer);
@@ -357,8 +394,7 @@ Napi::Buffer<unsigned char> decrypt(const Napi::CallbackInfo &info) {
   }
 
   if (unlikely(result < 0)) {
-    // TODO: Convert this to a proper error message
-    log_error_and_throw(__func__, std::to_string(result));
+    log_error_and_throw(__func__, asherah_cobhan_error_to_string(result));
   }
 
   Napi::Buffer<unsigned char> output =
@@ -453,8 +489,7 @@ Napi::String decrypt_string(const Napi::CallbackInfo &info) {
   }
 
   if (unlikely(result < 0)) {
-    // TODO: Convert this to a proper error message
-    log_error_and_throw(__func__, std::to_string(result));
+    log_error_and_throw(__func__, asherah_cobhan_error_to_string(result));
   }
 
   Napi::String output = cbuffer_to_nstring(env, output_cobhan_buffer);
