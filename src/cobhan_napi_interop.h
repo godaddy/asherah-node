@@ -389,7 +389,7 @@ cbuffer_to_nbuffer(Napi::Env &env, char *cobhan_buffer) {
     } else {                                                                   \
       /* Otherwise, allocate it on the heap */                                 \
       napi_string##_cobhan_buffer_unique_ptr = heap_allocate_cbuffer(          \
-          cobhan_buffer, napi_string##_utf8_byte_length);                      \
+          #cobhan_buffer, napi_string##_utf8_byte_length);                      \
       cobhan_buffer = napi_string##_cobhan_buffer_unique_ptr.get();            \
     }                                                                          \
     if (unlikely(cobhan_buffer == nullptr)) {                                  \
