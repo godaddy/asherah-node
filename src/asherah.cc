@@ -7,18 +7,18 @@
 #include <napi.h>
 
 size_t est_intermediate_key_overhead;
-
-const size_t est_encryption_overhead = 48;
-const size_t est_envelope_overhead = 185;
-const double base64_overhead = 1.34;
-
 size_t maximum_stack_alloc_size = 2048;
+
 int32_t setup_state = 0;
 std::mutex asherah_lock;
 
 __attribute__((always_inline)) inline size_t
 estimate_asherah_output_size_bytes(size_t data_byte_len,
                                    size_t partition_byte_len) {
+  const size_t est_encryption_overhead = 48;
+  const size_t est_envelope_overhead = 185;
+  const double base64_overhead = 1.34;
+
   // Add one rather than using std::ceil to round up
   double est_data_byte_len =
       (double(data_byte_len + est_encryption_overhead) * base64_overhead) + 1;
