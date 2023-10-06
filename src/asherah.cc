@@ -33,7 +33,7 @@ estimate_asherah_output_size_bytes(size_t data_byte_len,
         ") est_data_byte_len: " + std::to_string(est_data_byte_len) +
         " asherah_output_size_bytes: " +
         std::to_string(asherah_output_size_bytes);
-    debug_log("estimate_asherah_output_size", log_msg);
+    debug_log(__func__, log_msg);
   }
   return asherah_output_size_bytes;
 }
