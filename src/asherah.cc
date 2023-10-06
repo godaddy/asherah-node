@@ -17,12 +17,10 @@ void setup(const Napi::CallbackInfo &info) {
 
   if (unlikely(setup_state == 1)) {
     log_error_and_throw(env, "setup", "setup called twice");
-    return;
   }
 
   if (unlikely(info.Length() < 1)) {
     log_error_and_throw(env, "setup", "Wrong number of arguments");
-    return;
   }
 
   Napi::String config;
@@ -38,7 +36,6 @@ void setup(const Napi::CallbackInfo &info) {
     config_json = parse.Call(json, {config}).As<Napi::Object>();
   } else {
     log_error_and_throw(env, "setup", "Wrong argument type");
-    return;
   }
 
   Napi::String product_id = config_json.Get("ProductID").As<Napi::String>();
@@ -58,14 +55,13 @@ void setup(const Napi::CallbackInfo &info) {
 
   char *config_cobhan_buffer;
   size_t config_copied_bytes;
-  NAPI_STRING_TO_CBUFFER_VOID(config, config_cobhan_buffer, config_copied_bytes,
-                              "setup");
+  NAPI_STRING_TO_CBUFFER(config, config_cobhan_buffer, config_copied_bytes,
+                         "setup");
 
   char *config_canary_ptr = get_canary_ptr(config_cobhan_buffer);
-  if (!check_canary_ptr(config_canary_ptr)) {
+  if (unlikely(!check_canary_ptr(config_canary_ptr))) {
     log_error_and_throw(env, "encrypt_to_json",
                         "Failed initial canary check for config_cobhan_buffer");
-    return;
   }
 
   // extern GoInt32 SetupJson(void* configJson);
@@ -75,24 +71,23 @@ void setup(const Napi::CallbackInfo &info) {
     debug_log("setup", "Returned from asherah-cobhan SetupJson");
   }
 
-  if (!check_canary_ptr(config_canary_ptr)) {
+  if (unlikely(!check_canary_ptr(config_canary_ptr))) {
     log_error_and_throw(
         env, "encrypt_to_json",
         "Failed post-call canary check for config_cobhan_buffer");
-    return;
   }
 
   if (unlikely(result < 0)) {
     // TODO: Convert this to a proper error message
     log_error_and_throw(env, "setup", std::to_string(result));
-    return;
   }
   setup_state = 1;
 }
 
-Napi::Value encrypt_to_json(Napi::Env &env, size_t partition_bytes,
-                            size_t data_bytes, char *partition_id_cobhan_buffer,
-                            char *input_cobhan_buffer) {
+Napi::String encrypt_to_json(Napi::Env &env, size_t partition_bytes,
+                             size_t data_bytes,
+                             char *partition_id_cobhan_buffer,
+                             char *input_cobhan_buffer) {
 
   size_t asherah_output_size_bytes =
       estimate_asherah_output_size_bytes(data_bytes, partition_bytes);
@@ -107,22 +102,20 @@ Napi::Value encrypt_to_json(Napi::Env &env, size_t partition_bytes,
                           "encrypt_to_json");
 
   char *partition_id_canary_ptr = get_canary_ptr(partition_id_cobhan_buffer);
-  if (!check_canary_ptr(partition_id_canary_ptr)) {
-    return log_error_and_throw(
+  if (unlikely(!check_canary_ptr(partition_id_canary_ptr))) {
+    log_error_and_throw(
         env, "encrypt_to_json",
         "Failed initial canary check for partition_id_cobhan_buffer");
   }
   char *input_canary_ptr = get_canary_ptr(input_cobhan_buffer);
-  if (!check_canary_ptr(input_canary_ptr)) {
-    return log_error_and_throw(
-        env, "encrypt_to_json",
-        "Failed initial canary check for input_cobhan_buffer");
+  if (unlikely(!check_canary_ptr(input_canary_ptr))) {
+    log_error_and_throw(env, "encrypt_to_json",
+                        "Failed initial canary check for input_cobhan_buffer");
   }
   char *output_canary_ptr = get_canary_ptr(output_cobhan_buffer);
-  if (!check_canary_ptr(output_canary_ptr)) {
-    return log_error_and_throw(
-        env, "encrypt_to_json",
-        "Failed initial canary check for output_cobhan_buffer");
+  if (unlikely(!check_canary_ptr(output_canary_ptr))) {
+    log_error_and_throw(env, "encrypt_to_json",
+                        "Failed initial canary check for output_cobhan_buffer");
   }
 
   if (unlikely(verbose_flag)) {
@@ -138,32 +131,32 @@ Napi::Value encrypt_to_json(Napi::Env &env, size_t partition_bytes,
     debug_log("encrypt_to_json", "Returning from asherah-cobhan EncryptToJson");
   }
 
-  if (!check_canary_ptr(partition_id_canary_ptr)) {
-    return log_error_and_throw(
+  if (unlikely(!check_canary_ptr(partition_id_canary_ptr))) {
+    log_error_and_throw(
         env, "encrypt_to_json",
         "Failed post-call canary check for partition_id_cobhan_buffer");
   }
-  if (!check_canary_ptr(input_canary_ptr)) {
-    return log_error_and_throw(
+  if (unlikely(!check_canary_ptr(input_canary_ptr))) {
+    log_error_and_throw(
         env, "encrypt_to_json",
         "Failed post-call canary check for input_cobhan_buffer");
   }
-  if (!check_canary_ptr(output_canary_ptr)) {
-    return log_error_and_throw(
+  if (unlikely(!check_canary_ptr(output_canary_ptr))) {
+    log_error_and_throw(
         env, "encrypt_to_json",
         "Failed post-call canary check for output_cobhan_buffer");
   }
 
   if (unlikely(result < 0)) {
     // TODO: Convert this to a proper error message
-    return log_error_and_throw(env, "encrypt_to_json", std::to_string(result));
+    log_error_and_throw(env, "encrypt_to_json", std::to_string(result));
   }
 
-  Napi::Value output = cbuffer_to_nstring(env, output_cobhan_buffer);
+  Napi::String output = cbuffer_to_nstring(env, output_cobhan_buffer);
   return output;
 }
 
-Napi::Value encrypt(const Napi::CallbackInfo &info) {
+Napi::String encrypt(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   if (unlikely(verbose_flag)) {
@@ -171,15 +164,15 @@ Napi::Value encrypt(const Napi::CallbackInfo &info) {
   }
 
   if (unlikely(setup_state == 0)) {
-    return log_error_and_throw(env, "encrypt", "setup() not called");
+    log_error_and_throw(env, "encrypt", "setup() not called");
   }
 
   if (unlikely(info.Length() < 2)) {
-    return log_error_and_throw(env, "encrypt", "Wrong number of arguments");
+    log_error_and_throw(env, "encrypt", "Wrong number of arguments");
   }
 
   if (unlikely(!info[0].IsString() || !info[1].IsBuffer())) {
-    return log_error_and_throw(env, "encrypt", "Wrong argument types");
+    log_error_and_throw(env, "encrypt", "Wrong argument types");
   }
 
   Napi::String partition_id = info[0].As<Napi::String>();
@@ -195,7 +188,7 @@ Napi::Value encrypt(const Napi::CallbackInfo &info) {
   NAPI_BUFFER_TO_CBUFFER(input_napi_buffer, input_cobhan_buffer,
                          input_copied_bytes, "encrypt");
 
-  Napi::Value output =
+  Napi::String output =
       encrypt_to_json(env, partition_id_copied_bytes, input_copied_bytes,
                       partition_id_cobhan_buffer, input_cobhan_buffer);
 
@@ -206,7 +199,7 @@ Napi::Value encrypt(const Napi::CallbackInfo &info) {
   return output;
 }
 
-Napi::Value encrypt_string(const Napi::CallbackInfo &info) {
+Napi::String encrypt_string(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   if (unlikely(verbose_flag)) {
@@ -214,16 +207,15 @@ Napi::Value encrypt_string(const Napi::CallbackInfo &info) {
   }
 
   if (unlikely(setup_state == 0)) {
-    return log_error_and_throw(env, "encrypt_string", "setup() not called");
+    log_error_and_throw(env, "encrypt_string", "setup() not called");
   }
 
   if (unlikely(info.Length() < 2)) {
-    return log_error_and_throw(env, "encrypt_string",
-                               "Wrong number of arguments");
+    log_error_and_throw(env, "encrypt_string", "Wrong number of arguments");
   }
 
   if (unlikely(!info[0].IsString() || !info[1].IsString())) {
-    return log_error_and_throw(env, "encrypt_string", "Wrong argument types");
+    log_error_and_throw(env, "encrypt_string", "Wrong argument types");
   }
 
   Napi::String partition_id = info[0].As<Napi::String>();
@@ -238,7 +230,7 @@ Napi::Value encrypt_string(const Napi::CallbackInfo &info) {
   NAPI_STRING_TO_CBUFFER(input, input_cobhan_buffer, input_copied_bytes,
                          "encrypt_string");
 
-  Napi::Value output =
+  Napi::String output =
       encrypt_to_json(env, partition_id_copied_bytes, input_copied_bytes,
                       partition_id_cobhan_buffer, input_cobhan_buffer);
 
@@ -249,7 +241,7 @@ Napi::Value encrypt_string(const Napi::CallbackInfo &info) {
   return output;
 }
 
-Napi::Value decrypt(const Napi::CallbackInfo &info) {
+Napi::Buffer<unsigned char> decrypt(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   if (unlikely(verbose_flag)) {
@@ -257,15 +249,15 @@ Napi::Value decrypt(const Napi::CallbackInfo &info) {
   }
 
   if (unlikely(setup_state == 0)) {
-    return log_error_and_throw(env, "decrypt", "setup() not called");
+    log_error_and_throw(env, "decrypt", "setup() not called");
   }
 
   if (unlikely(info.Length() < 2)) {
-    return log_error_and_throw(env, "decrypt", "Wrong number of arguments");
+    log_error_and_throw(env, "decrypt", "Wrong number of arguments");
   }
 
   if (unlikely(!info[0].IsString() || !info[1].IsString())) {
-    return log_error_and_throw(env, "decrypt", "Wrong argument types");
+    log_error_and_throw(env, "decrypt", "Wrong argument types");
   }
 
   Napi::String partition_id = info[0].As<Napi::String>();
@@ -284,22 +276,20 @@ Napi::Value decrypt(const Napi::CallbackInfo &info) {
   ALLOCATE_OUTPUT_CBUFFER(output_cobhan_buffer, input_copied_bytes, "decrypt");
 
   char *partition_id_canary_ptr = get_canary_ptr(partition_id_cobhan_buffer);
-  if (!check_canary_ptr(partition_id_canary_ptr)) {
-    return log_error_and_throw(
+  if (unlikely(!check_canary_ptr(partition_id_canary_ptr))) {
+    log_error_and_throw(
         env, "encrypt_to_json",
         "Failed initial canary check for partition_id_cobhan_buffer");
   }
   char *input_canary_ptr = get_canary_ptr(input_cobhan_buffer);
-  if (!check_canary_ptr(input_canary_ptr)) {
-    return log_error_and_throw(
-        env, "encrypt_to_json",
-        "Failed initial canary check for input_cobhan_buffer");
+  if (unlikely(!check_canary_ptr(input_canary_ptr))) {
+    log_error_and_throw(env, "encrypt_to_json",
+                        "Failed initial canary check for input_cobhan_buffer");
   }
   char *output_canary_ptr = get_canary_ptr(output_cobhan_buffer);
-  if (!check_canary_ptr(output_canary_ptr)) {
-    return log_error_and_throw(
-        env, "encrypt_to_json",
-        "Failed initial canary check for output_cobhan_buffer");
+  if (unlikely(!check_canary_ptr(output_canary_ptr))) {
+    log_error_and_throw(env, "encrypt_to_json",
+                        "Failed initial canary check for output_cobhan_buffer");
   }
 
   if (unlikely(verbose_flag)) {
@@ -315,28 +305,29 @@ Napi::Value decrypt(const Napi::CallbackInfo &info) {
     debug_log("decrypt", "Returned from asherah-cobhan DecryptFromJson");
   }
 
-  if (!check_canary_ptr(partition_id_canary_ptr)) {
-    return log_error_and_throw(
+  if (unlikely(!check_canary_ptr(partition_id_canary_ptr))) {
+    log_error_and_throw(
         env, "encrypt_to_json",
         "Failed post-call canary check for partition_id_cobhan_buffer");
   }
-  if (!check_canary_ptr(input_canary_ptr)) {
-    return log_error_and_throw(
+  if (unlikely(!check_canary_ptr(input_canary_ptr))) {
+    log_error_and_throw(
         env, "encrypt_to_json",
         "Failed post-call canary check for input_cobhan_buffer");
   }
-  if (!check_canary_ptr(output_canary_ptr)) {
-    return log_error_and_throw(
+  if (unlikely(!check_canary_ptr(output_canary_ptr))) {
+    log_error_and_throw(
         env, "encrypt_to_json",
         "Failed post-call canary check for output_cobhan_buffer");
   }
 
   if (unlikely(result < 0)) {
     // TODO: Convert this to a proper error message
-    return log_error_and_throw(env, "decrypt", std::to_string(result));
+    log_error_and_throw(env, "decrypt", std::to_string(result));
   }
 
-  Napi::Value output = cbuffer_to_nbuffer(env, output_cobhan_buffer);
+  Napi::Buffer<unsigned char> output =
+      cbuffer_to_nbuffer(env, output_cobhan_buffer);
 
   if (unlikely(verbose_flag)) {
     debug_log("decrypt", "finished");
@@ -345,7 +336,7 @@ Napi::Value decrypt(const Napi::CallbackInfo &info) {
   return output;
 }
 
-Napi::Value decrypt_string(const Napi::CallbackInfo &info) {
+Napi::String decrypt_string(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   if (unlikely(verbose_flag)) {
@@ -353,16 +344,15 @@ Napi::Value decrypt_string(const Napi::CallbackInfo &info) {
   }
 
   if (unlikely(setup_state == 0)) {
-    return log_error_and_throw(env, "decrypt_string", "setup() not called");
+    log_error_and_throw(env, "decrypt_string", "setup() not called");
   }
 
   if (unlikely(info.Length() < 2)) {
-    return log_error_and_throw(env, "decrypt_string",
-                               "Wrong number of arguments");
+    log_error_and_throw(env, "decrypt_string", "Wrong number of arguments");
   }
 
   if (unlikely(!info[0].IsString() || !info[1].IsString())) {
-    return log_error_and_throw(env, "decrypt_string", "Wrong argument types");
+    log_error_and_throw(env, "decrypt_string", "Wrong argument types");
   }
 
   Napi::String partition_id = info[0].As<Napi::String>();
@@ -382,22 +372,20 @@ Napi::Value decrypt_string(const Napi::CallbackInfo &info) {
                           "decrypt_string");
 
   char *partition_id_canary_ptr = get_canary_ptr(partition_id_cobhan_buffer);
-  if (!check_canary_ptr(partition_id_canary_ptr)) {
-    return log_error_and_throw(
+  if (unlikely(!check_canary_ptr(partition_id_canary_ptr))) {
+    log_error_and_throw(
         env, "encrypt_to_json",
         "Failed initial canary check for partition_id_cobhan_buffer");
   }
   char *input_canary_ptr = get_canary_ptr(input_cobhan_buffer);
-  if (!check_canary_ptr(input_canary_ptr)) {
-    return log_error_and_throw(
-        env, "encrypt_to_json",
-        "Failed initial canary check for input_cobhan_buffer");
+  if (unlikely(!check_canary_ptr(input_canary_ptr))) {
+    log_error_and_throw(env, "encrypt_to_json",
+                        "Failed initial canary check for input_cobhan_buffer");
   }
   char *output_canary_ptr = get_canary_ptr(output_cobhan_buffer);
-  if (!check_canary_ptr(output_canary_ptr)) {
-    return log_error_and_throw(
-        env, "encrypt_to_json",
-        "Failed initial canary check for output_cobhan_buffer");
+  if (unlikely(!check_canary_ptr(output_canary_ptr))) {
+    log_error_and_throw(env, "encrypt_to_json",
+                        "Failed initial canary check for output_cobhan_buffer");
   }
 
   if (unlikely(verbose_flag)) {
@@ -413,28 +401,28 @@ Napi::Value decrypt_string(const Napi::CallbackInfo &info) {
     debug_log("decrypt_string", "Returned from asherah-cobhan DecryptFromJson");
   }
 
-  if (!check_canary_ptr(partition_id_canary_ptr)) {
-    return log_error_and_throw(
+  if (unlikely(!check_canary_ptr(partition_id_canary_ptr))) {
+    log_error_and_throw(
         env, "encrypt_to_json",
         "Failed post-call canary check for partition_id_cobhan_buffer");
   }
-  if (!check_canary_ptr(input_canary_ptr)) {
-    return log_error_and_throw(
+  if (unlikely(!check_canary_ptr(input_canary_ptr))) {
+    log_error_and_throw(
         env, "encrypt_to_json",
         "Failed post-call canary check for input_cobhan_buffer");
   }
-  if (!check_canary_ptr(output_canary_ptr)) {
-    return log_error_and_throw(
+  if (unlikely(!check_canary_ptr(output_canary_ptr))) {
+    log_error_and_throw(
         env, "encrypt_to_json",
         "Failed post-call canary check for output_cobhan_buffer");
   }
 
   if (unlikely(result < 0)) {
     // TODO: Convert this to a proper error message
-    return log_error_and_throw(env, "decrypt_string", std::to_string(result));
+    log_error_and_throw(env, "decrypt_string", std::to_string(result));
   }
 
-  Napi::Value output = cbuffer_to_nstring(env, output_cobhan_buffer);
+  Napi::String output = cbuffer_to_nstring(env, output_cobhan_buffer);
 
   if (unlikely(verbose_flag)) {
     debug_log("decrypt_string", "finished");
@@ -472,7 +460,6 @@ void set_max_stack_alloc_item_size(const Napi::CallbackInfo &info) {
   if (unlikely(info.Length() < 1)) {
     log_error_and_throw(env, "set_max_stack_alloc_item_size",
                         "Wrong number of arguments");
-    return;
   }
 
   Napi::Number item_size = info[0].ToNumber();
@@ -490,7 +477,6 @@ void set_safety_padding_overhead(const Napi::CallbackInfo &info) {
   if (unlikely(info.Length() < 1)) {
     log_error_and_throw(env, "set_safety_padding_overhead",
                         "Wrong number of arguments");
-    return;
   }
 
   Napi::Number safety_padding_number = info[0].ToNumber();
