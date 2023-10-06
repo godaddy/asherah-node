@@ -10,6 +10,15 @@
 extern int32_t verbose_flag;
 
 __attribute__((always_inline)) inline void debug_log(const char *function_name,
+                                                     const char *message) {
+  if (unlikely(verbose_flag)) {
+    std::cerr << "asherah-node: [DEBUG] " << function_name << ": " << message
+              << std::endl
+              << std::flush;
+  }
+}
+
+__attribute__((always_inline)) inline void debug_log(const char *function_name,
                                                      std::string message) {
   if (unlikely(verbose_flag)) {
     std::cerr << "asherah-node: [DEBUG] " << function_name << ": " << message
