@@ -64,7 +64,7 @@ nstring_utf8_byte_length(Napi::Env &env, Napi::String &str) {
 
   status = napi_get_value_string_utf8(env, str, nullptr, 0, &utf8_length);
   if (unlikely(status != napi_ok)) {
-    error_log("nstring_utf8_length",
+    error_log(__func__,
               "napi_get_value_string_utf8 length check failed: " +
                   napi_status_to_string(status));
     return (size_t)(-1);
@@ -80,17 +80,17 @@ copy_nstring_to_cbuffer(Napi::Env &env, Napi::String &str,
 
   size_t cobhan_buffer_size_bytes = cbuffer_byte_length(cobhan_buffer);
   if (unlikely(cobhan_buffer_size_bytes <= 0)) {
-    error_log("copy_nstring_to_cbuffer", "Invalid cobhan buffer byte length");
+    error_log(__func__, "Invalid cobhan buffer byte length");
     return nullptr;
   }
 
   if (cobhan_buffer_size_bytes < str_utf8_byte_length) {
-    error_log("copy_nstring_to_cbuffer", "String too large for cobhan buffer");
+    error_log(__func__, "String too large for cobhan buffer");
     return nullptr;
   }
 
   if (unlikely(verbose_flag)) {
-    debug_log("copy_nstring_to_cbuffer",
+    debug_log(__func__,
               "Copying " + std::to_string(str_utf8_byte_length) + " bytes to " +
                   format_ptr(cbuffer_data_ptr(cobhan_buffer)) + " - " +
                   format_ptr((cbuffer_data_ptr(cobhan_buffer) +
@@ -105,14 +105,14 @@ copy_nstring_to_cbuffer(Napi::Env &env, Napi::String &str,
   status = napi_get_value_string_utf8(env, str, cbuffer_data_ptr(cobhan_buffer),
                                       str_utf8_byte_length + 1, &copied_bytes);
   if (unlikely(status != napi_ok)) {
-    error_log("copy_nstring_to_cbuffer",
+    error_log(__func__,
               "Napi utf8 string conversion failure: " +
                   napi_status_to_string(status));
     return nullptr;
   }
 
   if (unlikely(copied_bytes != str_utf8_byte_length)) {
-    error_log("copy_nstring_to_cbuffer",
+    error_log(__func__,
               "Did not copy expected number of bytes " +
                   std::to_string(str_utf8_byte_length) + " copied " +
                   std::to_string(copied_bytes));
@@ -131,7 +131,7 @@ cbuffer_to_nstring(Napi::Env &env, char *cobhan_buffer) {
 
   int32_t cobhan_buffer_size_bytes = cbuffer_byte_length(cobhan_buffer);
   if (cobhan_buffer_size_bytes <= 0) {
-    log_error_and_throw("cbuffer_to_nstring",
+    log_error_and_throw(__func__,
                         "Invalid cobhan buffer byte length");
   }
 
@@ -140,7 +140,7 @@ cbuffer_to_nstring(Napi::Env &env, char *cobhan_buffer) {
       env, cbuffer_data_ptr(cobhan_buffer), cobhan_buffer_size_bytes, &output);
 
   if (unlikely(status != napi_ok)) {
-    log_error_and_throw("cbuffer_to_nstring",
+    log_error_and_throw(__func__,
                         "napi_create_string_utf8 failed: " +
                             napi_status_to_string(status));
   }
@@ -152,7 +152,7 @@ __attribute__((always_inline)) inline Napi::Buffer<unsigned char>
 cbuffer_to_nbuffer(Napi::Env &env, char *cobhan_buffer) {
   int32_t cobhan_buffer_byte_length = cbuffer_byte_length(cobhan_buffer);
   if (unlikely(cobhan_buffer_byte_length <= 0)) {
-    log_error_and_throw("cbuffer_to_nbuffer",
+    log_error_and_throw(__func__,
                         "Invalid cobhan buffer byte length");
   }
 
@@ -161,7 +161,7 @@ cbuffer_to_nbuffer(Napi::Env &env, char *cobhan_buffer) {
       cobhan_buffer_byte_length);
 
   if (unlikely(nbuffer.ByteLength() != (size_t)cobhan_buffer_byte_length)) {
-    log_error_and_throw("cbuffer_to_nbuffer",
+    log_error_and_throw(__func__,
                         "Failed to copy cobhan buffer to napi buffer");
   }
 
@@ -174,19 +174,19 @@ copy_nbuffer_to_cbuffer(Napi::Env &env, Napi::Buffer<unsigned char> &nbuffer,
 
   int32_t cobhan_buffer_size_bytes = cbuffer_byte_length(cobhan_buffer);
   if (unlikely(cobhan_buffer_size_bytes <= 0)) {
-    error_log("copy_nbuffer_to_cbuffer", "Invalid cobhan buffer byte length");
+    error_log(__func__, "Invalid cobhan buffer byte length");
     return nullptr;
   }
 
   size_t nbuffer_byte_length = nbuffer.ByteLength();
   if (nbuffer_byte_length > INT32_MAX ||
       cobhan_buffer_size_bytes < (int32_t)nbuffer_byte_length) {
-    error_log("copy_nbuffer_to_cbuffer", "Buffer too large for cobhan buffer");
+    error_log(__func__, "Buffer too large for cobhan buffer");
     return nullptr;
   }
 
   if (unlikely(verbose_flag)) {
-    debug_log("copy_nbuffer_to_cbuffer",
+    debug_log(__func__,
               "Copying " + std::to_string(nbuffer_byte_length) + " bytes to " +
                   format_ptr(cbuffer_data_ptr(cobhan_buffer)) + " - " +
                   format_ptr((cbuffer_data_ptr(cobhan_buffer) +

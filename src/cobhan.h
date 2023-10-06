@@ -37,7 +37,7 @@ calculate_cobhan_buffer_allocation_size(size_t data_len_bytes) {
 __attribute__((always_inline)) inline void
 configure_cbuffer(char *cobhan_buffer, size_t length) {
   if (unlikely(verbose_flag)) {
-    debug_log("configure_cbuffer", "configure_cbuffer(" +
+    debug_log(__func__, "configure_cbuffer(" +
                                        format_ptr(cobhan_buffer) + ", " +
                                        std::to_string(length) + ")");
   }
@@ -67,7 +67,7 @@ __attribute__((always_inline)) inline bool check_canary_ptr(char *canary_ptr) {
   if (zero_value != 0) {
     std::string error_msg =
         "Canary check failed: " + std::to_string(zero_value) + " != 0";
-    error_log("canary_check_cbuffer", error_msg);
+    error_log(__func__, error_msg);
     return false;
   }
   int32_t canary_value = *((int32_t *)(canary_ptr + sizeof(int32_t)));
@@ -75,7 +75,7 @@ __attribute__((always_inline)) inline bool check_canary_ptr(char *canary_ptr) {
     std::string error_msg =
         "Canary check failed: " + std::to_string(canary_value) +
         " != " + std::to_string(canary_constant);
-    error_log("canary_check_cbuffer", error_msg);
+    error_log(__func__, error_msg);
     return false;
   }
   return true;
@@ -87,7 +87,7 @@ heap_allocate_cbuffer(const char *variable_name, size_t size_bytes) {
       calculate_cobhan_buffer_allocation_size(size_bytes);
 
   if (unlikely(verbose_flag)) {
-    debug_log_new("allocate_cbuffer", variable_name,
+    debug_log_new(__func__, variable_name,
                   cobhan_buffer_allocation_size);
   }
 
@@ -96,7 +96,7 @@ heap_allocate_cbuffer(const char *variable_name, size_t size_bytes) {
     std::string error_msg = "new[" +
                             std::to_string(cobhan_buffer_allocation_size) +
                             "] returned null";
-    error_log("allocate_cbuffer", error_msg);
+    error_log(__func__, error_msg);
     return nullptr;
   }
   std::unique_ptr<char[]> cobhan_buffer_unique_ptr(cobhan_buffer);
