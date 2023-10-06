@@ -6,9 +6,37 @@
 #include <mutex>
 #include <napi.h>
 
+size_t est_intermediate_key_overhead;
+
+const size_t est_encryption_overhead = 48;
+const size_t est_envelope_overhead = 185;
+const double base64_overhead = 1.34;
+
 size_t max_stack_alloc_size = 2048;
 int32_t setup_state = 0;
 std::mutex asherah_lock;
+
+__attribute__((always_inline)) inline size_t
+estimate_asherah_output_size_bytes(size_t data_byte_len,
+                                   size_t partition_byte_len) {
+  // Add one rather than using std::ceil to round up
+  double est_data_byte_len =
+      (double(data_byte_len + est_encryption_overhead) * base64_overhead) + 1;
+
+  size_t asherah_output_size_bytes =
+      size_t(est_envelope_overhead + est_intermediate_key_overhead +
+             partition_byte_len + est_data_byte_len);
+  if (unlikely(verbose_flag)) {
+    std::string log_msg =
+        "estimate_asherah_output_size(" + std::to_string(data_byte_len) + ", " +
+        std::to_string(partition_byte_len) +
+        ") est_data_byte_len: " + std::to_string(est_data_byte_len) +
+        " asherah_output_size_bytes: " +
+        std::to_string(asherah_output_size_bytes);
+    debug_log("estimate_asherah_output_size", log_msg);
+  }
+  return asherah_output_size_bytes;
+}
 
 void setup(const Napi::CallbackInfo &info) {
   std::lock_guard<std::mutex> lock(asherah_lock);

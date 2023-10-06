@@ -6,12 +6,6 @@
 #include <napi.h>
 #include <string>
 
-extern size_t est_intermediate_key_overhead;
-
-const size_t est_encryption_overhead = 48;
-const size_t est_envelope_overhead = 185;
-const double base64_overhead = 1.34;
-
 std::string napi_status_to_string(napi_status status) {
   switch (status) {
   case napi_ok:
@@ -61,28 +55,6 @@ std::string napi_status_to_string(napi_status status) {
   default:
     return "Unknown napi_status";
   }
-}
-
-__attribute__((always_inline)) inline size_t
-estimate_asherah_output_size_bytes(size_t data_byte_len,
-                                   size_t partition_byte_len) {
-  // Add one rather than using std::ceil to round up
-  double est_data_byte_len =
-      (double(data_byte_len + est_encryption_overhead) * base64_overhead) + 1;
-
-  size_t asherah_output_size_bytes =
-      size_t(est_envelope_overhead + est_intermediate_key_overhead +
-             partition_byte_len + est_data_byte_len);
-  if (unlikely(verbose_flag)) {
-    std::string log_msg =
-        "estimate_asherah_output_size(" + std::to_string(data_byte_len) + ", " +
-        std::to_string(partition_byte_len) +
-        ") est_data_byte_len: " + std::to_string(est_data_byte_len) +
-        " asherah_output_size_bytes: " +
-        std::to_string(asherah_output_size_bytes);
-    debug_log("estimate_asherah_output_size", log_msg);
-  }
-  return asherah_output_size_bytes;
 }
 
 __attribute__((always_inline)) inline size_t

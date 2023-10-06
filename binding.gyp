@@ -22,7 +22,6 @@
         'src/asherah.cc',
         'src/logging.cc',
         'src/logging.h',
-        'src/cobhan_napi_interop.cc',
         'src/cobhan_napi_interop.h',
         'src/cobhan.h',
         'src/cobhan.cc',
