@@ -204,7 +204,7 @@ copy_nbuffer_to_cbuffer(Napi::Env &env, Napi::Buffer<unsigned char> &nbuffer,
 // These are macros due to the use of alloca()
 
 #define NAPI_STRING_TO_CBUFFER(env, napi_string, cobhan_buffer, bytes_copied,  \
-                               function_name)                                  \
+                               max_stack_alloc_size, function_name)            \
   std::unique_ptr<char[]> napi_string##_unique_ptr;                            \
   do {                                                                         \
     /* Determine size */                                                       \
@@ -219,7 +219,8 @@ copy_nbuffer_to_cbuffer(Napi::Env &env, Napi::Buffer<unsigned char> &nbuffer,
     }                                                                          \
     /* Allocate */                                                             \
     ALLOCATE_CBUFFER_UNIQUE_PTR(cobhan_buffer, napi_string##_utf8_byte_length, \
-                                napi_string##_unique_ptr, function_name);      \
+                                napi_string##_unique_ptr,                      \
+                                max_stack_alloc_size, function_name);          \
     /* Copy */                                                                 \
     cobhan_buffer = copy_nstring_to_cbuffer(env, napi_string,                  \
                                             napi_string##_utf8_byte_length,    \
@@ -231,7 +232,7 @@ copy_nbuffer_to_cbuffer(Napi::Env &env, Napi::Buffer<unsigned char> &nbuffer,
   } while (0);
 
 #define NAPI_BUFFER_TO_CBUFFER(env, napi_buffer, cobhan_buffer, bytes_copied,  \
-                               function_name)                                  \
+                               max_stack_alloc_size, function_name)            \
   std::unique_ptr<char[]> napi_buffer##_unique_ptr;                            \
   do {                                                                         \
     /* Determine size */                                                       \
@@ -241,7 +242,8 @@ copy_nbuffer_to_cbuffer(Napi::Env &env, Napi::Buffer<unsigned char> &nbuffer,
     }                                                                          \
     /* Allocate */                                                             \
     ALLOCATE_CBUFFER_UNIQUE_PTR(cobhan_buffer, napi_buffer##_byte_length,      \
-                                napi_buffer##_unique_ptr, function_name);      \
+                                napi_buffer##_unique_ptr,                      \
+                                max_stack_alloc_size, function_name);          \
     /* Copy */                                                                 \
     cobhan_buffer = copy_nbuffer_to_cbuffer(env, napi_buffer, cobhan_buffer);  \
     if (unlikely(cobhan_buffer == nullptr)) {                                  \

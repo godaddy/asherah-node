@@ -120,7 +120,7 @@ heap_allocate_cbuffer(const char *variable_name, size_t size_bytes) {
 }
 
 #define ALLOCATE_CBUFFER_UNIQUE_PTR(cobhan_buffer, buffer_size, unique_ptr,    \
-                                    function_name)                             \
+                                    max_stack_alloc_size, function_name)       \
   do {                                                                         \
     if (buffer_size < max_stack_alloc_size) {                                  \
       /* If the buffer is small enough, allocate it on the stack */            \
@@ -142,9 +142,11 @@ heap_allocate_cbuffer(const char *variable_name, size_t size_bytes) {
     }                                                                          \
   } while (0);
 
-#define ALLOCATE_CBUFFER(cobhan_buffer, buffer_size, function_name)            \
+#define ALLOCATE_CBUFFER(cobhan_buffer, buffer_size, max_stack_alloc_size,     \
+                         function_name)                                        \
   std::unique_ptr<char[]> cobhan_buffer##_unique_ptr;                          \
   ALLOCATE_CBUFFER_UNIQUE_PTR(cobhan_buffer, buffer_size,                      \
-                              cobhan_buffer##_unique_ptr, function_name);
+                              cobhan_buffer##_unique_ptr,                      \
+                              max_stack_alloc_size, function_name);
 
 #endif
