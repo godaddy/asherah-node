@@ -47,7 +47,7 @@ __attribute__((always_inline)) inline std::string format_ptr(char *ptr) {
 __attribute__((always_inline, noreturn)) inline void
 log_error_and_throw(const char *function_name, std::string error_msg) {
   error_log(function_name, error_msg);
-  throw function_name + (": " + error_msg);
+  throw new std::runtime_error(function_name + (": " + error_msg));
 }
 
 #endif
