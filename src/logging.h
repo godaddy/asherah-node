@@ -39,6 +39,15 @@ debug_log_alloca(const char *function_name, const char *variable_name,
 }
 
 __attribute__((always_inline)) inline void error_log(const char *function_name,
+                                                     const char *message) {
+  if (unlikely(verbose_flag)) {
+    std::cerr << "asherah-node: [ERROR] " << function_name << ": " << message
+              << std::endl
+              << std::flush;
+  }
+}
+
+__attribute__((always_inline)) inline void error_log(const char *function_name,
                                                      std::string message) {
   if (unlikely(verbose_flag)) {
     std::cerr << "asherah-node: [ERROR] " << function_name << ": " << message
