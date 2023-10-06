@@ -1,3 +1,4 @@
+#include "asherah.h"
 #include "../lib/libasherah.h"
 #include "cobhan_napi_interop.h"
 #include "hints.h"
@@ -11,71 +12,6 @@ size_t maximum_stack_alloc_size = 2048;
 
 int32_t setup_state = 0;
 std::mutex asherah_lock;
-
-__attribute__((always_inline)) inline size_t
-estimate_asherah_output_size_bytes(size_t data_byte_len,
-                                   size_t partition_byte_len) {
-  const size_t est_encryption_overhead = 48;
-  const size_t est_envelope_overhead = 185;
-  const double base64_overhead = 1.34;
-
-  // Add one rather than using std::ceil to round up
-  double est_data_byte_len =
-      (double(data_byte_len + est_encryption_overhead) * base64_overhead) + 1;
-
-  size_t asherah_output_size_bytes =
-      size_t(est_envelope_overhead + est_intermediate_key_overhead +
-             partition_byte_len + est_data_byte_len);
-  if (unlikely(verbose_flag)) {
-    std::string log_msg =
-        "estimate_asherah_output_size(" + std::to_string(data_byte_len) + ", " +
-        std::to_string(partition_byte_len) +
-        ") est_data_byte_len: " + std::to_string(est_data_byte_len) +
-        " asherah_output_size_bytes: " +
-        std::to_string(asherah_output_size_bytes);
-    debug_log(__func__, log_msg);
-  }
-  return asherah_output_size_bytes;
-}
-
-__attribute__((always_inline)) inline const char* asherah_cobhan_error_to_string(int32_t error) {
-  switch(error) {
-    case 0:
-      return "Success";
-    case -1:
-      return "Cobhan error: NULL pointer";
-    case -2:
-      return "Cobhan error: Buffer too large";
-    case -3:
-      return "Cobhan error: Buffer too small";
-    case -4:
-      return "Cobhan error: Copy failed";
-    case -5:
-      return "Cobhan error: JSON decode failed";
-    case -6:
-      return "Cobhan error: JSON encode failed";
-    case -7:
-      return "Cobhan error: Invalid UTF-8";
-    case -8:
-      return "Cobhan error: Read temp file failed";
-    case -9:
-      return "Cobhan error: Write temp file failed";
-    case -100:
-      return "Asherah error: Not initialized";
-    case -101:
-      return "Asherah error: Already initialized";
-    case -102:
-      return "Asherah error: Failed to get session";
-    case -103:
-      return "Asherah error: Encrypt operation failed";
-    case -104:
-      return "Asherah error: Decrypt operation failed";
-    case -105:
-      return "Asherah error: Invalid configuration";
-    default:
-      return "Unknown error";
-  }
-}
 
 void setup(const Napi::CallbackInfo &info) {
   std::lock_guard<std::mutex> lock(asherah_lock);
@@ -143,81 +79,13 @@ void setup(const Napi::CallbackInfo &info) {
 
   if (unlikely(!check_canary_ptr(config_canary_ptr))) {
     log_error_and_throw(
-        __func__,
-        "Failed post-call canary check for config_cobhan_buffer");
+        __func__, "Failed post-call canary check for config_cobhan_buffer");
   }
 
   if (unlikely(result < 0)) {
     log_error_and_throw(__func__, asherah_cobhan_error_to_string(result));
   }
   setup_state = 1;
-}
-
-Napi::String encrypt_to_json(Napi::Env &env, size_t partition_bytes,
-                             size_t data_bytes,
-                             char *partition_id_cobhan_buffer,
-                             char *input_cobhan_buffer) {
-
-  size_t asherah_output_size_bytes =
-      estimate_asherah_output_size_bytes(data_bytes, partition_bytes);
-
-  if (unlikely(verbose_flag)) {
-    debug_log(__func__, " asherah_output_size_bytes " +
-                                     std::to_string(asherah_output_size_bytes));
-  }
-
-  char *output_cobhan_buffer;
-  ALLOCATE_CBUFFER(output_cobhan_buffer, asherah_output_size_bytes,
-                   maximum_stack_alloc_size, __func__);
-
-  char *partition_id_canary_ptr = get_canary_ptr(partition_id_cobhan_buffer);
-  if (unlikely(!check_canary_ptr(partition_id_canary_ptr))) {
-    log_error_and_throw(__func__,
-        "Failed initial canary check for partition_id_cobhan_buffer");
-  }
-  char *input_canary_ptr = get_canary_ptr(input_cobhan_buffer);
-  if (unlikely(!check_canary_ptr(input_canary_ptr))) {
-    log_error_and_throw(__func__,
-                        "Failed initial canary check for input_cobhan_buffer");
-  }
-  char *output_canary_ptr = get_canary_ptr(output_cobhan_buffer);
-  if (unlikely(!check_canary_ptr(output_canary_ptr))) {
-    log_error_and_throw(__func__,
-                        "Failed initial canary check for output_cobhan_buffer");
-  }
-
-  if (unlikely(verbose_flag)) {
-    debug_log(__func__, "Calling asherah-cobhan EncryptToJson");
-  }
-
-  // extern GoInt32 EncryptToJson(void* partitionIdPtr, void* dataPtr, void*
-  // jsonPtr);
-  GoInt32 result = EncryptToJson(partition_id_cobhan_buffer,
-                                 input_cobhan_buffer, output_cobhan_buffer);
-
-  if (unlikely(verbose_flag)) {
-    debug_log(__func__, "Returning from asherah-cobhan EncryptToJson");
-  }
-
-  if (unlikely(!check_canary_ptr(partition_id_canary_ptr))) {
-    log_error_and_throw(__func__,
-        "Failed post-call canary check for partition_id_cobhan_buffer");
-  }
-  if (unlikely(!check_canary_ptr(input_canary_ptr))) {
-    log_error_and_throw(__func__,
-        "Failed post-call canary check for input_cobhan_buffer");
-  }
-  if (unlikely(!check_canary_ptr(output_canary_ptr))) {
-    log_error_and_throw(__func__,
-        "Failed post-call canary check for output_cobhan_buffer");
-  }
-
-  if (unlikely(result < 0)) {
-    log_error_and_throw(__func__, asherah_cobhan_error_to_string(result));
-  }
-
-  Napi::String output = cbuffer_to_nstring(env, output_cobhan_buffer);
-  return output;
 }
 
 Napi::String encrypt(const Napi::CallbackInfo &info) {
@@ -312,6 +180,74 @@ Napi::String encrypt_string(const Napi::CallbackInfo &info) {
   return output;
 }
 
+Napi::String encrypt_to_json(Napi::Env &env, size_t partition_bytes,
+                             size_t data_bytes,
+                             char *partition_id_cobhan_buffer,
+                             char *input_cobhan_buffer) {
+
+  size_t asherah_output_size_bytes =
+      estimate_asherah_output_size_bytes(data_bytes, partition_bytes);
+
+  if (unlikely(verbose_flag)) {
+    debug_log(__func__, " asherah_output_size_bytes " +
+                            std::to_string(asherah_output_size_bytes));
+  }
+
+  char *output_cobhan_buffer;
+  ALLOCATE_CBUFFER(output_cobhan_buffer, asherah_output_size_bytes,
+                   maximum_stack_alloc_size, __func__);
+
+  char *partition_id_canary_ptr = get_canary_ptr(partition_id_cobhan_buffer);
+  if (unlikely(!check_canary_ptr(partition_id_canary_ptr))) {
+    log_error_and_throw(
+        __func__, "Failed initial canary check for partition_id_cobhan_buffer");
+  }
+  char *input_canary_ptr = get_canary_ptr(input_cobhan_buffer);
+  if (unlikely(!check_canary_ptr(input_canary_ptr))) {
+    log_error_and_throw(__func__,
+                        "Failed initial canary check for input_cobhan_buffer");
+  }
+  char *output_canary_ptr = get_canary_ptr(output_cobhan_buffer);
+  if (unlikely(!check_canary_ptr(output_canary_ptr))) {
+    log_error_and_throw(__func__,
+                        "Failed initial canary check for output_cobhan_buffer");
+  }
+
+  if (unlikely(verbose_flag)) {
+    debug_log(__func__, "Calling asherah-cobhan EncryptToJson");
+  }
+
+  // extern GoInt32 EncryptToJson(void* partitionIdPtr, void* dataPtr, void*
+  // jsonPtr);
+  GoInt32 result = EncryptToJson(partition_id_cobhan_buffer,
+                                 input_cobhan_buffer, output_cobhan_buffer);
+
+  if (unlikely(verbose_flag)) {
+    debug_log(__func__, "Returning from asherah-cobhan EncryptToJson");
+  }
+
+  if (unlikely(!check_canary_ptr(partition_id_canary_ptr))) {
+    log_error_and_throw(
+        __func__,
+        "Failed post-call canary check for partition_id_cobhan_buffer");
+  }
+  if (unlikely(!check_canary_ptr(input_canary_ptr))) {
+    log_error_and_throw(
+        __func__, "Failed post-call canary check for input_cobhan_buffer");
+  }
+  if (unlikely(!check_canary_ptr(output_canary_ptr))) {
+    log_error_and_throw(
+        __func__, "Failed post-call canary check for output_cobhan_buffer");
+  }
+
+  if (unlikely(result < 0)) {
+    log_error_and_throw(__func__, asherah_cobhan_error_to_string(result));
+  }
+
+  Napi::String output = cbuffer_to_nstring(env, output_cobhan_buffer);
+  return output;
+}
+
 Napi::Buffer<unsigned char> decrypt(const Napi::CallbackInfo &info) {
   std::lock_guard<std::mutex> lock(asherah_lock);
 
@@ -353,8 +289,7 @@ Napi::Buffer<unsigned char> decrypt(const Napi::CallbackInfo &info) {
   char *partition_id_canary_ptr = get_canary_ptr(partition_id_cobhan_buffer);
   if (unlikely(!check_canary_ptr(partition_id_canary_ptr))) {
     log_error_and_throw(
-        __func__,
-        "Failed initial canary check for partition_id_cobhan_buffer");
+        __func__, "Failed initial canary check for partition_id_cobhan_buffer");
   }
   char *input_canary_ptr = get_canary_ptr(input_cobhan_buffer);
   if (unlikely(!check_canary_ptr(input_canary_ptr))) {
@@ -381,16 +316,17 @@ Napi::Buffer<unsigned char> decrypt(const Napi::CallbackInfo &info) {
   }
 
   if (unlikely(!check_canary_ptr(partition_id_canary_ptr))) {
-    log_error_and_throw(__func__,
+    log_error_and_throw(
+        __func__,
         "Failed post-call canary check for partition_id_cobhan_buffer");
   }
   if (unlikely(!check_canary_ptr(input_canary_ptr))) {
-    log_error_and_throw(__func__,
-        "Failed post-call canary check for input_cobhan_buffer");
+    log_error_and_throw(
+        __func__, "Failed post-call canary check for input_cobhan_buffer");
   }
   if (unlikely(!check_canary_ptr(output_canary_ptr))) {
-    log_error_and_throw(__func__,
-        "Failed post-call canary check for output_cobhan_buffer");
+    log_error_and_throw(
+        __func__, "Failed post-call canary check for output_cobhan_buffer");
   }
 
   if (unlikely(result < 0)) {
@@ -448,8 +384,7 @@ Napi::String decrypt_string(const Napi::CallbackInfo &info) {
   char *partition_id_canary_ptr = get_canary_ptr(partition_id_cobhan_buffer);
   if (unlikely(!check_canary_ptr(partition_id_canary_ptr))) {
     log_error_and_throw(
-        __func__,
-        "Failed initial canary check for partition_id_cobhan_buffer");
+        __func__, "Failed initial canary check for partition_id_cobhan_buffer");
   }
   char *input_canary_ptr = get_canary_ptr(input_cobhan_buffer);
   if (unlikely(!check_canary_ptr(input_canary_ptr))) {
@@ -476,16 +411,17 @@ Napi::String decrypt_string(const Napi::CallbackInfo &info) {
   }
 
   if (unlikely(!check_canary_ptr(partition_id_canary_ptr))) {
-    log_error_and_throw(__func__,
+    log_error_and_throw(
+        __func__,
         "Failed post-call canary check for partition_id_cobhan_buffer");
   }
   if (unlikely(!check_canary_ptr(input_canary_ptr))) {
-    log_error_and_throw(__func__,
-        "Failed post-call canary check for input_cobhan_buffer");
+    log_error_and_throw(
+        __func__, "Failed post-call canary check for input_cobhan_buffer");
   }
   if (unlikely(!check_canary_ptr(output_canary_ptr))) {
-    log_error_and_throw(__func__,
-        "Failed post-call canary check for output_cobhan_buffer");
+    log_error_and_throw(
+        __func__, "Failed post-call canary check for output_cobhan_buffer");
   }
 
   if (unlikely(result < 0)) {
@@ -530,8 +466,7 @@ void set_max_stack_alloc_item_size(const Napi::CallbackInfo &info) {
   }
 
   if (unlikely(info.Length() < 1)) {
-    log_error_and_throw(__func__,
-                        "Wrong number of arguments");
+    log_error_and_throw(__func__, "Wrong number of arguments");
   }
 
   Napi::Number item_size = info[0].ToNumber();
@@ -547,13 +482,78 @@ void set_safety_padding_overhead(const Napi::CallbackInfo &info) {
   }
 
   if (unlikely(info.Length() < 1)) {
-    log_error_and_throw(__func__,
-                        "Wrong number of arguments");
+    log_error_and_throw(__func__, "Wrong number of arguments");
   }
 
   Napi::Number safety_padding_number = info[0].ToNumber();
 
   set_safety_padding_bytes((size_t)safety_padding_number.Int32Value());
+}
+
+__attribute__((always_inline)) inline size_t
+estimate_asherah_output_size_bytes(size_t data_byte_len,
+                                   size_t partition_byte_len) {
+  const size_t est_encryption_overhead = 48;
+  const size_t est_envelope_overhead = 185;
+  const double base64_overhead = 1.34;
+
+  // Add one rather than using std::ceil to round up
+  double est_data_byte_len =
+      (double(data_byte_len + est_encryption_overhead) * base64_overhead) + 1;
+
+  size_t asherah_output_size_bytes =
+      size_t(est_envelope_overhead + est_intermediate_key_overhead +
+             partition_byte_len + est_data_byte_len);
+  if (unlikely(verbose_flag)) {
+    std::string log_msg =
+        "estimate_asherah_output_size(" + std::to_string(data_byte_len) + ", " +
+        std::to_string(partition_byte_len) +
+        ") est_data_byte_len: " + std::to_string(est_data_byte_len) +
+        " asherah_output_size_bytes: " +
+        std::to_string(asherah_output_size_bytes);
+    debug_log(__func__, log_msg);
+  }
+  return asherah_output_size_bytes;
+}
+
+__attribute__((always_inline)) inline const char *
+asherah_cobhan_error_to_string(int32_t error) {
+  switch (error) {
+  case 0:
+    return "Success";
+  case -1:
+    return "Cobhan error: NULL pointer";
+  case -2:
+    return "Cobhan error: Buffer too large";
+  case -3:
+    return "Cobhan error: Buffer too small";
+  case -4:
+    return "Cobhan error: Copy failed";
+  case -5:
+    return "Cobhan error: JSON decode failed";
+  case -6:
+    return "Cobhan error: JSON encode failed";
+  case -7:
+    return "Cobhan error: Invalid UTF-8";
+  case -8:
+    return "Cobhan error: Read temp file failed";
+  case -9:
+    return "Cobhan error: Write temp file failed";
+  case -100:
+    return "Asherah error: Not initialized";
+  case -101:
+    return "Asherah error: Already initialized";
+  case -102:
+    return "Asherah error: Failed to get session";
+  case -103:
+    return "Asherah error: Encrypt operation failed";
+  case -104:
+    return "Asherah error: Decrypt operation failed";
+  case -105:
+    return "Asherah error: Invalid configuration";
+  default:
+    return "Unknown error";
+  }
 }
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {

@@ -37,9 +37,8 @@ calculate_cobhan_buffer_allocation_size(size_t data_len_bytes) {
 __attribute__((always_inline)) inline void
 configure_cbuffer(char *cobhan_buffer, size_t length) {
   if (unlikely(verbose_flag)) {
-    debug_log(__func__, "configure_cbuffer(" +
-                                       format_ptr(cobhan_buffer) + ", " +
-                                       std::to_string(length) + ")");
+    debug_log(__func__, "configure_cbuffer(" + format_ptr(cobhan_buffer) +
+                            ", " + std::to_string(length) + ")");
   }
 
   *((int32_t *)cobhan_buffer) = length;
@@ -87,8 +86,7 @@ heap_allocate_cbuffer(const char *variable_name, size_t size_bytes) {
       calculate_cobhan_buffer_allocation_size(size_bytes);
 
   if (unlikely(verbose_flag)) {
-    debug_log_new(__func__, variable_name,
-                  cobhan_buffer_allocation_size);
+    debug_log_new(__func__, variable_name, cobhan_buffer_allocation_size);
   }
 
   char *cobhan_buffer = new (std::nothrow) char[cobhan_buffer_allocation_size];
