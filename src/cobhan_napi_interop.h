@@ -216,7 +216,7 @@ cbuffer_to_nstring(Napi::Env &env, char *cobhan_buffer) {
 
   // Using C function because it allows length delimited input
   napi_status status = napi_create_string_utf8(
-      env, ((const char *)cobhan_buffer) + cobhan_header_size_bytes,
+      env, cbuffer_data_ptr(cobhan_buffer),
       cobhan_buffer_size_bytes, &output);
 
   if (unlikely(status != napi_ok)) {
@@ -267,9 +267,9 @@ copy_nstring_to_cbuffer(Napi::Env &env, Napi::String &str,
         "copy_nstring_to_cbuffer",
         "Copying " + std::to_string(str_utf8_byte_length) + " bytes to " +
             std::to_string(
-                (intptr_t)(cobhan_buffer + cobhan_header_size_bytes)) +
+                (intptr_t)cbuffer_data_ptr(cobhan_buffer)) +
             "-" +
-            std::to_string((intptr_t)(cobhan_buffer + cobhan_header_size_bytes +
+            std::to_string((intptr_t)(cbuffer_data_ptr(cobhan_buffer) +
                                       str_utf8_byte_length)));
   }
 
@@ -279,7 +279,7 @@ copy_nstring_to_cbuffer(Napi::Env &env, Napi::String &str,
   // upon allocation for a NULL delimiter as methods like
   // napi_get_value_string_utf8 append a NULL delimiter
   status = napi_get_value_string_utf8(env, str,
-                                      cobhan_buffer + cobhan_header_size_bytes,
+                                      cbuffer_data_ptr(cobhan_buffer),
                                       str_utf8_byte_length + 1, &copied_bytes);
   if (unlikely(status != napi_ok)) {
     log_error_and_throw(env, "copy_nstring_to_cbuffer",
@@ -321,7 +321,7 @@ copy_nbuffer_to_cbuffer(Napi::Env &env, Napi::Buffer<unsigned char> &nbuffer,
                         "Buffer too large for cobhan buffer");
     return nullptr;
   }
-  memcpy(cobhan_buffer + cobhan_header_size_bytes, nbuffer.Data(),
+  memcpy(cbuffer_data_ptr(cobhan_buffer), nbuffer.Data(),
          nbuffer_byte_length);
   configure_cbuffer(cobhan_buffer, nbuffer_byte_length);
   return cobhan_buffer;
@@ -347,7 +347,7 @@ cbuffer_to_nbuffer(Napi::Env &env, char *cobhan_buffer) {
   }
 
   Napi::Buffer<unsigned char> nbuffer = Napi::Buffer<unsigned char>::Copy(
-      env, ((unsigned char *)cobhan_buffer) + cobhan_header_size_bytes,
+      env, (const unsigned char*)cbuffer_data_ptr(cobhan_buffer),
       cobhan_buffer_byte_length);
 
   if (unlikely(verbose_flag)) {
