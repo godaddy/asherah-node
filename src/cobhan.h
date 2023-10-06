@@ -48,22 +48,9 @@ configure_cbuffer(char *cobhan_buffer, size_t length) {
 
   // Write canary values
   char *data_ptr = cbuffer_data_ptr(cobhan_buffer);
-#ifdef LOG_CANARY_WRITES
-  if (unlikely(verbose_flag)) {
-    debug_log("configure_cbuffer",
-              "Writing first canary at " + format_ptr(data_ptr + length + 1));
-  }
-#endif
 
   // First canary value is a int32_t 0 which gives us four NULLs
   *((int32_t *)(data_ptr + length + 1)) = 0;
-#ifdef LOG_CANARY_WRITES
-  if (unlikely(verbose_flag)) {
-    debug_log("configure_cbuffer",
-              "Writing second canary at " +
-                  format_ptr(data_ptr + length + 1 + sizeof(int32_t)));
-  }
-#endif
 
   // Second canary value is a int32_t 0xdeadbeef
   *((int32_t *)(data_ptr + length + 1 + sizeof(int32_t))) = canary_constant;
@@ -98,12 +85,10 @@ __attribute__((always_inline)) inline std::unique_ptr<char[]>
 heap_allocate_cbuffer(const char *variable_name, size_t size_bytes) {
   size_t cobhan_buffer_allocation_size =
       calculate_cobhan_buffer_allocation_size(size_bytes);
+
   if (unlikely(verbose_flag)) {
-    std::string log_msg =
-        "heap_allocate_cbuffer(" + std::to_string(size_bytes) +
-        ") (heap) cobhan_buffer_allocation_size: " +
-        std::to_string(cobhan_buffer_allocation_size) + " for " + variable_name;
-    debug_log("allocate_cbuffer", log_msg);
+    debug_log_new("allocate_cbuffer", variable_name,
+                  cobhan_buffer_allocation_size);
   }
 
   char *cobhan_buffer = new (std::nothrow) char[cobhan_buffer_allocation_size];

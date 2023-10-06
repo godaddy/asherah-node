@@ -76,7 +76,7 @@ nstring_utf8_byte_length(Napi::Env &env, Napi::String &str) {
 __attribute__((always_inline)) inline char *
 copy_nstring_to_cbuffer(Napi::Env &env, Napi::String &str,
                         size_t str_utf8_byte_length, char *cobhan_buffer,
-                        size_t *byte_length = nullptr) {
+                        size_t *byte_length) {
 
   size_t cobhan_buffer_size_bytes = cbuffer_byte_length(cobhan_buffer);
   if (unlikely(cobhan_buffer_size_bytes <= 0)) {
@@ -121,8 +121,7 @@ copy_nstring_to_cbuffer(Napi::Env &env, Napi::String &str,
 
   configure_cbuffer(cobhan_buffer, copied_bytes);
 
-  if (byte_length != nullptr)
-    *byte_length = copied_bytes;
+  *byte_length = copied_bytes;
   return cobhan_buffer;
 }
 
@@ -157,24 +156,13 @@ cbuffer_to_nbuffer(Napi::Env &env, char *cobhan_buffer) {
                         "Invalid cobhan buffer byte length");
   }
 
-  if (unlikely(verbose_flag)) {
-    debug_log("cbuffer_to_nbuffer",
-              "cbuffer_byte_length: " +
-                  std::to_string(cobhan_buffer_byte_length));
-  }
-
-  if (unlikely(cobhan_buffer_byte_length <= 0)) {
-    log_error_and_throw("cbuffer_to_nbuffer",
-                        "Invalid cobhan buffer byte length");
-  }
-
   Napi::Buffer<unsigned char> nbuffer = Napi::Buffer<unsigned char>::Copy(
       env, (const unsigned char *)cbuffer_data_ptr(cobhan_buffer),
       cobhan_buffer_byte_length);
 
-  if (unlikely(verbose_flag)) {
-    debug_log("cbuffer_to_nbuffer",
-              "nbuffer.ByteLength(): " + std::to_string(nbuffer.ByteLength()));
+  if (unlikely(nbuffer.ByteLength() != (size_t)cobhan_buffer_byte_length)) {
+    log_error_and_throw("cbuffer_to_nbuffer",
+                        "Failed to copy cobhan buffer to napi buffer");
   }
 
   return nbuffer;
@@ -196,6 +184,15 @@ copy_nbuffer_to_cbuffer(Napi::Env &env, Napi::Buffer<unsigned char> &nbuffer,
     error_log("copy_nbuffer_to_cbuffer", "Buffer too large for cobhan buffer");
     return nullptr;
   }
+
+  if (unlikely(verbose_flag)) {
+    debug_log("copy_nbuffer_to_cbuffer",
+              "Copying " + std::to_string(nbuffer_byte_length) + " bytes to " +
+                  format_ptr(cbuffer_data_ptr(cobhan_buffer)) + " - " +
+                  format_ptr((cbuffer_data_ptr(cobhan_buffer) +
+                              nbuffer_byte_length)));
+  }
+
   memcpy(cbuffer_data_ptr(cobhan_buffer), nbuffer.Data(), nbuffer_byte_length);
   configure_cbuffer(cobhan_buffer, nbuffer_byte_length);
   return cobhan_buffer;
