@@ -22,6 +22,7 @@
   "license": "MIT",
   "files": [
     "binding.gyp",
+    "src/asherah.h",
     "src/asherah.cc",
     "src/hints.h",
     "src/logging.h",
