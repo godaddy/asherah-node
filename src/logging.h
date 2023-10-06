@@ -2,8 +2,10 @@
 #define LOGGING_H
 #include "hints.h"
 #include <cstdint>
-#include <string>
+#include <iomanip>
 #include <iostream>
+#include <sstream>
+#include <string>
 
 extern int32_t verbose_flag;
 
@@ -34,6 +36,18 @@ __attribute__((always_inline)) inline void error_log(const char *function_name,
               << std::endl
               << std::flush;
   }
+}
+
+__attribute__((always_inline)) inline std::string format_ptr(char *ptr) {
+  std::ostringstream ss;
+  ss << "0x" << std::hex << (intptr_t)ptr;
+  return ss.str();
+}
+
+__attribute__((always_inline, noreturn)) inline void
+log_error_and_throw(const char *function_name, std::string error_msg) {
+  error_log(function_name, error_msg);
+  throw function_name + (": " + error_msg);
 }
 
 #endif

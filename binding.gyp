@@ -24,6 +24,8 @@
         'src/logging.h',
         'src/cobhan_napi_interop.cc',
         'src/cobhan_napi_interop.h',
+        'src/cobhan.h',
+        'src/cobhan.cc',
         'src/hints.h'
       ],
       'libraries': [ '../lib/libasherah.a' ]
