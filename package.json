@@ -11,6 +11,7 @@
   },
   "scripts": {
     "preinstall": "scripts/download-libraries.sh",
+    "load": "node --max-old-space-size=500 scripts/dumpster-fire.js",
     "install": "scripts/build.sh",
     "test:mocha": "mocha",
     "test": "nyc npm run test:mocha",
