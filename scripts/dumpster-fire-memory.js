@@ -1,29 +1,5 @@
-const asherah = require('../')
+const asherah = require('../dist/asherah.node')
 const crypto = require('crypto');
-
-/* LOCAL DDB
-https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.DownloadingAndRunning.html#DynamoDBLocal.DownloadingAndRunning.title
-*/
-
-/* SETUP CREDS (any key & secret will do)
-aws configure --profile local
-*/
-
-/* CREATE TABLE
-aws dynamodb create-table \
-    --table-name METASTORE_TABLE_NAME \
-    --attribute-definitions \
-        AttributeName=Id,AttributeType=S \
-        AttributeName=Created,AttributeType=N \
-    --key-schema AttributeName=Id,KeyType=HASH AttributeName=Created,KeyType=RANGE \
-    --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1 \
-    --table-class STANDARD \
-    --endpoint-url http://localhost:8000
-*/
-
-/* VERIFY
-aws dynamodb list-tables --endpoint-url http://localhost:8000
-*/
 
 const TESTS_PER_CYCLE = 10;
 const RANDOM_INPUT_MIN_LENGTH = 1;
@@ -31,7 +7,7 @@ const RANDOM_INPUT_MAX_LENGTH = 100_000_000;
 
 const CONFIG = {
   KMS: 'static',
-  Metastore: 'dynamodb',
+  Metastore: 'memory',
   DynamoDBRegion: 'us-west-2' || null,
   DynamoDBTableName: 'METASTORE_TABLE_NAME',
   DynamoDBEndpoint: 'http://localhost:8000',

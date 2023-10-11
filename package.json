@@ -2,7 +2,6 @@
   "name": "asherah",
   "version": "0.0.0",
   "description": "Asherah envelope encryption and key rotation library",
-  "main": "dist/asherah",
   "exports": {
     "node-addons": "./dist/asherah.node"
   },
