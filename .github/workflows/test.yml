@@ -62,3 +62,15 @@ jobs:
       run: scripts/integration-test.sh
     - name: Publish (dry-run)
       run: npm publish --dry-run
+  test-multi-arch:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [ amd64, arm32v5, arm32v7, arm64v8, i386, mips64le, ppc64le, riscv64, s390x ]
+    steps:
+    - name: Setup Multi-Architecture Support
+      run: scripts/setup-multi-arch.sh
+    - name: Test Multi-Architecture
+      run: scripts/test-multi-arch.sh
+      env:
+        TEST_ARCH: ${{ matrix.arch }}
