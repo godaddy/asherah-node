@@ -20,29 +20,51 @@ public:
                  InstanceMethod("set_max_stack_alloc_item_size",
                                 &Asherah::SetMaxStackAllocItemSize),
                  InstanceMethod("set_safety_padding_overhead",
-                                &Asherah::SetSafetyPaddingOverhead)});
+                                &Asherah::SetSafetyPaddingOverhead),
+                 InstanceMethod("set_log_hook", &Asherah::SetLogHook)});
   }
 
 private:
   size_t est_intermediate_key_overhead;
   size_t maximum_stack_alloc_size = 2048;
 
+  int32_t verbose_flag = 0;
   int32_t setup_state = 0;
   std::mutex asherah_lock;
+  Napi::FunctionReference log_hook;
+  Logger logger;
+
+  void SetLogHook(const Napi::CallbackInfo &info) {
+    std::lock_guard<std::mutex> lock(asherah_lock);
+
+    if (unlikely(verbose_flag)) {
+      logger.debug_log(__func__, "called");
+    }
+
+    if (unlikely(info.Length() < 1)) {
+      logger.log_error_and_throw(__func__, "Wrong number of arguments");
+    }
+
+    if (unlikely(!info[0].IsFunction())) {
+      logger.log_error_and_throw(__func__, "Wrong argument type");
+    }
+
+    logger.set_log_hook(info[0].As<Napi::Function>());
+  }
 
   void SetupAsherah(const Napi::CallbackInfo &info) {
     std::lock_guard<std::mutex> lock(asherah_lock);
 
     if (unlikely(verbose_flag)) {
-      debug_log(__func__, "called");
+      logger.debug_log(__func__, "called");
     }
 
     if (unlikely(setup_state == 1)) {
-      log_error_and_throw(__func__, "setup called twice");
+      logger.log_error_and_throw(__func__, "setup called twice");
     }
 
     if (unlikely(info.Length() < 1)) {
-      log_error_and_throw(__func__, "Wrong number of arguments");
+      logger.log_error_and_throw(__func__, "Wrong number of arguments");
     }
 
     Napi::String config;
@@ -58,7 +80,7 @@ private:
       Napi::Function parse = json.Get("parse").As<Napi::Function>();
       config_json = parse.Call(json, {config}).As<Napi::Object>();
     } else {
-      log_error_and_throw(__func__, "Wrong argument type");
+      logger.log_error_and_throw(__func__, "Wrong argument type");
     }
 
     Napi::String product_id = config_json.Get("ProductID").As<Napi::String>();
@@ -71,21 +93,24 @@ private:
     Napi::Value verbose = config_json.Get("Verbose");
     if (likely(verbose.IsBoolean())) {
       verbose_flag = verbose.As<Napi::Boolean>().Value();
-      debug_log(__func__, "verbose_flag: " + std::to_string(verbose_flag));
+      logger.set_verbose_flag(verbose_flag);
+      logger.debug_log(__func__,
+                       "verbose_flag: " + std::to_string(verbose_flag));
     } else {
       verbose_flag = 0;
-      debug_log(__func__, "verbose_flag: defaulting to false");
+      logger.set_verbose_flag(verbose_flag);
+      logger.debug_log(__func__, "verbose_flag: defaulting to false");
     }
 
     char *config_cobhan_buffer;
     size_t config_copied_bytes;
-    NAPI_STRING_TO_CBUFFER(env, config, config_cobhan_buffer,
+    NAPI_STRING_TO_CBUFFER(env, logger, config, config_cobhan_buffer,
                            config_copied_bytes, maximum_stack_alloc_size,
                            __func__);
 
     char *config_canary_ptr = get_canary_ptr(config_cobhan_buffer);
-    if (unlikely(!check_canary_ptr(config_canary_ptr))) {
-      log_error_and_throw(
+    if (unlikely(!check_canary_ptr(logger, config_canary_ptr))) {
+      logger.log_error_and_throw(
           __func__, "Failed initial canary check for config_cobhan_buffer");
     }
 
@@ -93,16 +118,16 @@ private:
     GoInt32 result = SetupJson(config_cobhan_buffer);
 
     if (unlikely(verbose_flag)) {
-      debug_log(__func__, "Returned from asherah-cobhan SetupJson");
+      logger.debug_log(__func__, "Returned from asherah-cobhan SetupJson");
     }
 
-    if (unlikely(!check_canary_ptr(config_canary_ptr))) {
-      log_error_and_throw(
+    if (unlikely(!check_canary_ptr(logger, config_canary_ptr))) {
+      logger.log_error_and_throw(
           __func__, "Failed post-call canary check for config_cobhan_buffer");
     }
 
     if (unlikely(result < 0)) {
-      log_error_and_throw(__func__, AsherahCobhanErrorToString(result));
+      logger.log_error_and_throw(__func__, AsherahCobhanErrorToString(result));
     }
     setup_state = 1;
   }
@@ -111,19 +136,19 @@ private:
     std::lock_guard<std::mutex> lock(asherah_lock);
 
     if (unlikely(verbose_flag)) {
-      debug_log(__func__, "called");
+      logger.debug_log(__func__, "called");
     }
 
     if (unlikely(setup_state == 0)) {
-      log_error_and_throw(__func__, "setup() not called");
+      logger.log_error_and_throw(__func__, "setup() not called");
     }
 
     if (unlikely(info.Length() < 2)) {
-      log_error_and_throw(__func__, "Wrong number of arguments");
+      logger.log_error_and_throw(__func__, "Wrong number of arguments");
     }
 
     if (unlikely(!info[0].IsString() || !info[1].IsBuffer())) {
-      log_error_and_throw(__func__, "Wrong argument types");
+      logger.log_error_and_throw(__func__, "Wrong argument types");
     }
 
     Napi::Env env = info.Env();
@@ -131,15 +156,15 @@ private:
     Napi::String partition_id = info[0].As<Napi::String>();
     char *partition_id_cobhan_buffer;
     size_t partition_id_copied_bytes;
-    NAPI_STRING_TO_CBUFFER(env, partition_id, partition_id_cobhan_buffer,
-                           partition_id_copied_bytes, maximum_stack_alloc_size,
-                           __func__);
+    NAPI_STRING_TO_CBUFFER(
+        env, logger, partition_id, partition_id_cobhan_buffer,
+        partition_id_copied_bytes, maximum_stack_alloc_size, __func__);
 
     Napi::Buffer<unsigned char> input_napi_buffer =
         info[1].As<Napi::Buffer<unsigned char>>();
     char *input_cobhan_buffer;
     size_t input_copied_bytes;
-    NAPI_BUFFER_TO_CBUFFER(env, input_napi_buffer, input_cobhan_buffer,
+    NAPI_BUFFER_TO_CBUFFER(env, logger, input_napi_buffer, input_cobhan_buffer,
                            input_copied_bytes, maximum_stack_alloc_size,
                            __func__);
 
@@ -148,7 +173,7 @@ private:
         partition_id_cobhan_buffer, input_cobhan_buffer);
 
     if (unlikely(verbose_flag)) {
-      debug_log(__func__, "finished");
+      logger.debug_log(__func__, "finished");
     }
 
     return output;
@@ -158,19 +183,19 @@ private:
     std::lock_guard<std::mutex> lock(asherah_lock);
 
     if (unlikely(verbose_flag)) {
-      debug_log(__func__, "called");
+      logger.debug_log(__func__, "called");
     }
 
     if (unlikely(setup_state == 0)) {
-      log_error_and_throw(__func__, "setup() not called");
+      logger.log_error_and_throw(__func__, "setup() not called");
     }
 
     if (unlikely(info.Length() < 2)) {
-      log_error_and_throw(__func__, "Wrong number of arguments");
+      logger.log_error_and_throw(__func__, "Wrong number of arguments");
     }
 
     if (unlikely(!info[0].IsString() || !info[1].IsString())) {
-      log_error_and_throw(__func__, "Wrong argument types");
+      logger.log_error_and_throw(__func__, "Wrong argument types");
     }
 
     Napi::Env env = info.Env();
@@ -178,22 +203,23 @@ private:
     Napi::String partition_id = info[0].As<Napi::String>();
     char *partition_id_cobhan_buffer;
     size_t partition_id_copied_bytes;
-    NAPI_STRING_TO_CBUFFER(env, partition_id, partition_id_cobhan_buffer,
-                           partition_id_copied_bytes, maximum_stack_alloc_size,
-                           __func__);
+    NAPI_STRING_TO_CBUFFER(
+        env, logger, partition_id, partition_id_cobhan_buffer,
+        partition_id_copied_bytes, maximum_stack_alloc_size, __func__);
 
     Napi::String input = info[1].As<Napi::String>();
     char *input_cobhan_buffer;
     size_t input_copied_bytes;
-    NAPI_STRING_TO_CBUFFER(env, input, input_cobhan_buffer, input_copied_bytes,
-                           maximum_stack_alloc_size, __func__);
+    NAPI_STRING_TO_CBUFFER(env, logger, input, input_cobhan_buffer,
+                           input_copied_bytes, maximum_stack_alloc_size,
+                           __func__);
 
     Napi::String output = EncryptCobhanBufferToJson(
         env, partition_id_copied_bytes, input_copied_bytes,
         partition_id_cobhan_buffer, input_cobhan_buffer);
 
     if (unlikely(verbose_flag)) {
-      debug_log(__func__, "finished");
+      logger.debug_log(__func__, "finished");
     }
 
     return output;
@@ -208,33 +234,33 @@ private:
         EstimateAsherahOutputSize(data_bytes, partition_bytes);
 
     if (unlikely(verbose_flag)) {
-      debug_log(__func__, " asherah_output_size_bytes " +
-                              std::to_string(asherah_output_size_bytes));
+      logger.debug_log(__func__, " asherah_output_size_bytes " +
+                                     std::to_string(asherah_output_size_bytes));
     }
 
     char *output_cobhan_buffer;
-    ALLOCATE_CBUFFER(output_cobhan_buffer, asherah_output_size_bytes,
+    ALLOCATE_CBUFFER(logger, output_cobhan_buffer, asherah_output_size_bytes,
                      maximum_stack_alloc_size, __func__);
 
     char *partition_id_canary_ptr = get_canary_ptr(partition_id_cobhan_buffer);
-    if (unlikely(!check_canary_ptr(partition_id_canary_ptr))) {
-      log_error_and_throw(
+    if (unlikely(!check_canary_ptr(logger, partition_id_canary_ptr))) {
+      logger.log_error_and_throw(
           __func__,
           "Failed initial canary check for partition_id_cobhan_buffer");
     }
     char *input_canary_ptr = get_canary_ptr(input_cobhan_buffer);
-    if (unlikely(!check_canary_ptr(input_canary_ptr))) {
-      log_error_and_throw(
+    if (unlikely(!check_canary_ptr(logger, input_canary_ptr))) {
+      logger.log_error_and_throw(
           __func__, "Failed initial canary check for input_cobhan_buffer");
     }
     char *output_canary_ptr = get_canary_ptr(output_cobhan_buffer);
-    if (unlikely(!check_canary_ptr(output_canary_ptr))) {
-      log_error_and_throw(
+    if (unlikely(!check_canary_ptr(logger, output_canary_ptr))) {
+      logger.log_error_and_throw(
           __func__, "Failed initial canary check for output_cobhan_buffer");
     }
 
     if (unlikely(verbose_flag)) {
-      debug_log(__func__, "Calling asherah-cobhan EncryptToJson");
+      logger.debug_log(__func__, "Calling asherah-cobhan EncryptToJson");
     }
 
     // extern GoInt32 EncryptToJson(void* partitionIdPtr, void* dataPtr, void*
@@ -243,28 +269,28 @@ private:
                                    input_cobhan_buffer, output_cobhan_buffer);
 
     if (unlikely(verbose_flag)) {
-      debug_log(__func__, "Returning from asherah-cobhan EncryptToJson");
+      logger.debug_log(__func__, "Returning from asherah-cobhan EncryptToJson");
     }
 
-    if (unlikely(!check_canary_ptr(partition_id_canary_ptr))) {
-      log_error_and_throw(
+    if (unlikely(!check_canary_ptr(logger, partition_id_canary_ptr))) {
+      logger.log_error_and_throw(
           __func__,
           "Failed post-call canary check for partition_id_cobhan_buffer");
     }
-    if (unlikely(!check_canary_ptr(input_canary_ptr))) {
-      log_error_and_throw(
+    if (unlikely(!check_canary_ptr(logger, input_canary_ptr))) {
+      logger.log_error_and_throw(
           __func__, "Failed post-call canary check for input_cobhan_buffer");
     }
-    if (unlikely(!check_canary_ptr(output_canary_ptr))) {
-      log_error_and_throw(
+    if (unlikely(!check_canary_ptr(logger, output_canary_ptr))) {
+      logger.log_error_and_throw(
           __func__, "Failed post-call canary check for output_cobhan_buffer");
     }
 
     if (unlikely(result < 0)) {
-      log_error_and_throw(__func__, AsherahCobhanErrorToString(result));
+      logger.log_error_and_throw(__func__, AsherahCobhanErrorToString(result));
     }
 
-    Napi::String output = cbuffer_to_nstring(env, output_cobhan_buffer);
+    Napi::String output = cbuffer_to_nstring(env, logger, output_cobhan_buffer);
     return output;
   }
 
@@ -272,19 +298,19 @@ private:
     std::lock_guard<std::mutex> lock(asherah_lock);
 
     if (unlikely(verbose_flag)) {
-      debug_log(__func__, "called");
+      logger.debug_log(__func__, "called");
     }
 
     if (unlikely(setup_state == 0)) {
-      log_error_and_throw(__func__, "setup() not called");
+      logger.log_error_and_throw(__func__, "setup() not called");
     }
 
     if (unlikely(info.Length() < 2)) {
-      log_error_and_throw(__func__, "Wrong number of arguments");
+      logger.log_error_and_throw(__func__, "Wrong number of arguments");
     }
 
     if (unlikely(!info[0].IsString() || !info[1].IsString())) {
-      log_error_and_throw(__func__, "Wrong argument types");
+      logger.log_error_and_throw(__func__, "Wrong argument types");
     }
 
     Napi::Env env = info.Env();
@@ -292,39 +318,40 @@ private:
     Napi::String partition_id = info[0].As<Napi::String>();
     char *partition_id_cobhan_buffer;
     size_t partition_id_copied_bytes;
-    NAPI_STRING_TO_CBUFFER(env, partition_id, partition_id_cobhan_buffer,
-                           partition_id_copied_bytes, maximum_stack_alloc_size,
-                           __func__);
+    NAPI_STRING_TO_CBUFFER(
+        env, logger, partition_id, partition_id_cobhan_buffer,
+        partition_id_copied_bytes, maximum_stack_alloc_size, __func__);
 
     Napi::String input = info[1].As<Napi::String>();
     char *input_cobhan_buffer;
     size_t input_copied_bytes;
-    NAPI_STRING_TO_CBUFFER(env, input, input_cobhan_buffer, input_copied_bytes,
-                           maximum_stack_alloc_size, __func__);
+    NAPI_STRING_TO_CBUFFER(env, logger, input, input_cobhan_buffer,
+                           input_copied_bytes, maximum_stack_alloc_size,
+                           __func__);
 
     char *output_cobhan_buffer;
-    ALLOCATE_CBUFFER(output_cobhan_buffer, input_copied_bytes,
+    ALLOCATE_CBUFFER(logger, output_cobhan_buffer, input_copied_bytes,
                      maximum_stack_alloc_size, __func__);
 
     char *partition_id_canary_ptr = get_canary_ptr(partition_id_cobhan_buffer);
-    if (unlikely(!check_canary_ptr(partition_id_canary_ptr))) {
-      log_error_and_throw(
+    if (unlikely(!check_canary_ptr(logger, partition_id_canary_ptr))) {
+      logger.log_error_and_throw(
           __func__,
           "Failed initial canary check for partition_id_cobhan_buffer");
     }
     char *input_canary_ptr = get_canary_ptr(input_cobhan_buffer);
-    if (unlikely(!check_canary_ptr(input_canary_ptr))) {
-      log_error_and_throw(
+    if (unlikely(!check_canary_ptr(logger, input_canary_ptr))) {
+      logger.log_error_and_throw(
           __func__, "Failed initial canary check for input_cobhan_buffer");
     }
     char *output_canary_ptr = get_canary_ptr(output_cobhan_buffer);
-    if (unlikely(!check_canary_ptr(output_canary_ptr))) {
-      log_error_and_throw(
+    if (unlikely(!check_canary_ptr(logger, output_canary_ptr))) {
+      logger.log_error_and_throw(
           __func__, "Failed initial canary check for output_cobhan_buffer");
     }
 
     if (unlikely(verbose_flag)) {
-      debug_log(__func__, "Calling asherah-cobhan DecryptFromJson");
+      logger.debug_log(__func__, "Calling asherah-cobhan DecryptFromJson");
     }
 
     // extern GoInt32 DecryptFromJson(void* partitionIdPtr, void* jsonPtr, void*
@@ -333,32 +360,33 @@ private:
                                      input_cobhan_buffer, output_cobhan_buffer);
 
     if (unlikely(verbose_flag)) {
-      debug_log(__func__, "Returned from asherah-cobhan DecryptFromJson");
+      logger.debug_log(__func__,
+                       "Returned from asherah-cobhan DecryptFromJson");
     }
 
-    if (unlikely(!check_canary_ptr(partition_id_canary_ptr))) {
-      log_error_and_throw(
+    if (unlikely(!check_canary_ptr(logger, partition_id_canary_ptr))) {
+      logger.log_error_and_throw(
           __func__,
           "Failed post-call canary check for partition_id_cobhan_buffer");
     }
-    if (unlikely(!check_canary_ptr(input_canary_ptr))) {
-      log_error_and_throw(
+    if (unlikely(!check_canary_ptr(logger, input_canary_ptr))) {
+      logger.log_error_and_throw(
           __func__, "Failed post-call canary check for input_cobhan_buffer");
     }
-    if (unlikely(!check_canary_ptr(output_canary_ptr))) {
-      log_error_and_throw(
+    if (unlikely(!check_canary_ptr(logger, output_canary_ptr))) {
+      logger.log_error_and_throw(
           __func__, "Failed post-call canary check for output_cobhan_buffer");
     }
 
     if (unlikely(result < 0)) {
-      log_error_and_throw(__func__, AsherahCobhanErrorToString(result));
+      logger.log_error_and_throw(__func__, AsherahCobhanErrorToString(result));
     }
 
     Napi::Buffer<unsigned char> output =
-        cbuffer_to_nbuffer(env, output_cobhan_buffer);
+        cbuffer_to_nbuffer(env, logger, output_cobhan_buffer);
 
     if (unlikely(verbose_flag)) {
-      debug_log(__func__, "finished");
+      logger.debug_log(__func__, "finished");
     }
 
     return output;
@@ -368,19 +396,19 @@ private:
     std::lock_guard<std::mutex> lock(asherah_lock);
 
     if (unlikely(verbose_flag)) {
-      debug_log(__func__, "called");
+      logger.debug_log(__func__, "called");
     }
 
     if (unlikely(setup_state == 0)) {
-      log_error_and_throw(__func__, "setup() not called");
+      logger.log_error_and_throw(__func__, "setup() not called");
     }
 
     if (unlikely(info.Length() < 2)) {
-      log_error_and_throw(__func__, "Wrong number of arguments");
+      logger.log_error_and_throw(__func__, "Wrong number of arguments");
     }
 
     if (unlikely(!info[0].IsString() || !info[1].IsString())) {
-      log_error_and_throw(__func__, "Wrong argument types");
+      logger.log_error_and_throw(__func__, "Wrong argument types");
     }
 
     Napi::Env env = info.Env();
@@ -388,39 +416,40 @@ private:
     Napi::String partition_id = info[0].As<Napi::String>();
     char *partition_id_cobhan_buffer;
     size_t partition_id_copied_bytes;
-    NAPI_STRING_TO_CBUFFER(env, partition_id, partition_id_cobhan_buffer,
-                           partition_id_copied_bytes, maximum_stack_alloc_size,
-                           __func__);
+    NAPI_STRING_TO_CBUFFER(
+        env, logger, partition_id, partition_id_cobhan_buffer,
+        partition_id_copied_bytes, maximum_stack_alloc_size, __func__);
 
     Napi::String input = info[1].As<Napi::String>();
     char *input_cobhan_buffer;
     size_t input_copied_bytes;
-    NAPI_STRING_TO_CBUFFER(env, input, input_cobhan_buffer, input_copied_bytes,
-                           maximum_stack_alloc_size, __func__);
+    NAPI_STRING_TO_CBUFFER(env, logger, input, input_cobhan_buffer,
+                           input_copied_bytes, maximum_stack_alloc_size,
+                           __func__);
 
     char *output_cobhan_buffer;
-    ALLOCATE_CBUFFER(output_cobhan_buffer, input_copied_bytes,
+    ALLOCATE_CBUFFER(logger, output_cobhan_buffer, input_copied_bytes,
                      maximum_stack_alloc_size, __func__);
 
     char *partition_id_canary_ptr = get_canary_ptr(partition_id_cobhan_buffer);
-    if (unlikely(!check_canary_ptr(partition_id_canary_ptr))) {
-      log_error_and_throw(
+    if (unlikely(!check_canary_ptr(logger, partition_id_canary_ptr))) {
+      logger.log_error_and_throw(
           __func__,
           "Failed initial canary check for partition_id_cobhan_buffer");
     }
     char *input_canary_ptr = get_canary_ptr(input_cobhan_buffer);
-    if (unlikely(!check_canary_ptr(input_canary_ptr))) {
-      log_error_and_throw(
+    if (unlikely(!check_canary_ptr(logger, input_canary_ptr))) {
+      logger.log_error_and_throw(
           __func__, "Failed initial canary check for input_cobhan_buffer");
     }
     char *output_canary_ptr = get_canary_ptr(output_cobhan_buffer);
-    if (unlikely(!check_canary_ptr(output_canary_ptr))) {
-      log_error_and_throw(
+    if (unlikely(!check_canary_ptr(logger, output_canary_ptr))) {
+      logger.log_error_and_throw(
           __func__, "Failed initial canary check for output_cobhan_buffer");
     }
 
     if (unlikely(verbose_flag)) {
-      debug_log(__func__, "Calling asherah-cobhan DecryptFromJson");
+      logger.debug_log(__func__, "Calling asherah-cobhan DecryptFromJson");
     }
 
     // extern GoInt32 DecryptFromJson(void* partitionIdPtr, void* jsonPtr, void*
@@ -429,31 +458,32 @@ private:
                                      input_cobhan_buffer, output_cobhan_buffer);
 
     if (unlikely(verbose_flag)) {
-      debug_log(__func__, "Returned from asherah-cobhan DecryptFromJson");
+      logger.debug_log(__func__,
+                       "Returned from asherah-cobhan DecryptFromJson");
     }
 
-    if (unlikely(!check_canary_ptr(partition_id_canary_ptr))) {
-      log_error_and_throw(
+    if (unlikely(!check_canary_ptr(logger, partition_id_canary_ptr))) {
+      logger.log_error_and_throw(
           __func__,
           "Failed post-call canary check for partition_id_cobhan_buffer");
     }
-    if (unlikely(!check_canary_ptr(input_canary_ptr))) {
-      log_error_and_throw(
+    if (unlikely(!check_canary_ptr(logger, input_canary_ptr))) {
+      logger.log_error_and_throw(
           __func__, "Failed post-call canary check for input_cobhan_buffer");
     }
-    if (unlikely(!check_canary_ptr(output_canary_ptr))) {
-      log_error_and_throw(
+    if (unlikely(!check_canary_ptr(logger, output_canary_ptr))) {
+      logger.log_error_and_throw(
           __func__, "Failed post-call canary check for output_cobhan_buffer");
     }
 
     if (unlikely(result < 0)) {
-      log_error_and_throw(__func__, AsherahCobhanErrorToString(result));
+      logger.log_error_and_throw(__func__, AsherahCobhanErrorToString(result));
     }
 
-    Napi::String output = cbuffer_to_nstring(env, output_cobhan_buffer);
+    Napi::String output = cbuffer_to_nstring(env, logger, output_cobhan_buffer);
 
     if (unlikely(verbose_flag)) {
-      debug_log(__func__, "finished");
+      logger.debug_log(__func__, "finished");
     }
 
     return output;
@@ -463,20 +493,20 @@ private:
     std::lock_guard<std::mutex> lock(asherah_lock);
 
     if (unlikely(verbose_flag)) {
-      debug_log(__func__, "called");
+      logger.debug_log(__func__, "called");
     }
 
     setup_state = 0;
 
     if (unlikely(verbose_flag)) {
-      debug_log(__func__, "Calling asherah-cobhan Shutdown");
+      logger.debug_log(__func__, "Calling asherah-cobhan Shutdown");
     }
 
     // extern void Shutdown();
     Shutdown();
 
     if (unlikely(verbose_flag)) {
-      debug_log(__func__, "Returned from asherah-cobhan Shutdown");
+      logger.debug_log(__func__, "Returned from asherah-cobhan Shutdown");
     }
   }
 
@@ -484,11 +514,11 @@ private:
     std::lock_guard<std::mutex> lock(asherah_lock);
 
     if (unlikely(verbose_flag)) {
-      debug_log(__func__, "called");
+      logger.debug_log(__func__, "called");
     }
 
     if (unlikely(info.Length() < 1)) {
-      log_error_and_throw(__func__, "Wrong number of arguments");
+      logger.log_error_and_throw(__func__, "Wrong number of arguments");
     }
 
     Napi::Number item_size = info[0].ToNumber();
@@ -500,11 +530,11 @@ private:
     std::lock_guard<std::mutex> lock(asherah_lock);
 
     if (unlikely(verbose_flag)) {
-      debug_log(__func__, "called");
+      logger.debug_log(__func__, "called");
     }
 
     if (unlikely(info.Length() < 1)) {
-      log_error_and_throw(__func__, "Wrong number of arguments");
+      logger.log_error_and_throw(__func__, "Wrong number of arguments");
     }
 
     Napi::Number safety_padding_number = info[0].ToNumber();
@@ -532,7 +562,7 @@ private:
           ") est_data_byte_len: " + std::to_string(est_data_byte_len) +
           " asherah_output_size_bytes: " +
           std::to_string(asherah_output_size_bytes);
-      debug_log(__func__, log_msg);
+      logger.debug_log(__func__, log_msg);
     }
     return asherah_output_size_bytes;
   }

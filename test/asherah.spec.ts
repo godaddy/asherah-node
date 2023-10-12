@@ -1,20 +1,29 @@
 import { assert } from 'chai';
-import { AsherahConfig, decrypt, encrypt, decrypt_string, setup, shutdown, encrypt_string, set_max_stack_alloc_item_size, set_safety_padding_overhead } from '../dist/asherah'
+import { AsherahConfig, decrypt, encrypt, decrypt_string, setup, shutdown, encrypt_string, set_max_stack_alloc_item_size, set_safety_padding_overhead, set_log_hook } from '../dist/asherah'
 import crypto from 'crypto';
 import Benchmark = require('benchmark');
+import { env } from 'process';
 
-const benchmark = true;
+const benchmark = (env['BENCHMARK'] == '1' || env['BENCHMARK'] == 'true');
 
 function get_sample_json(): string {
   return JSON.stringify({ key1: 'value1b', nested: { secret: crypto.randomBytes(1024).toString('base64') } }, ['nested.secret']);
 }
 
-// Fails at 1623 or larger
 function get_big_string(): string {
   return 'x'.repeat(16384);
 }
 
-function setup_asherah_static_memory(verbose: boolean, session_cache: boolean) {
+function setup_asherah_static_memory(verbose: boolean, session_cache: boolean): void {
+  set_log_hook((level: number, message: string): void => {
+    if(level == 3) {
+      console.error(message);
+    } else if(level == 7) {
+      console.log(message);
+    } else {
+      console.error('Unknown log level ' + level + ' message: ' + message);
+    }
+  });
   setup({
     KMS: 'static',
     Metastore: 'memory',
@@ -37,7 +46,7 @@ function setup_asherah_static_memory(verbose: boolean, session_cache: boolean) {
   });
 }
 
-function round_trip_buffers(inputBuffer: Buffer) {
+function round_trip_buffers(inputBuffer: Buffer): void {
   try {
     console.error("encrypt buffer");
     const encrypted = encrypt('partition', inputBuffer);
@@ -57,7 +66,7 @@ function round_trip_buffers(inputBuffer: Buffer) {
   }
 }
 
-function round_trip_strings(input: string) {
+function round_trip_strings(input: string): void {
   try {
     const encrypted = encrypt_string('partition', input);
 
@@ -485,7 +494,7 @@ it('Benchmark Decrypt Strings (stack) (big)', function () {
 const benchmark_seconds = 3.5;
 const benchmark_for_cycles = 1;
 
-function benchmark_roundtrip_buffer(name: string, input: string) {
+function benchmark_roundtrip_buffer(name: string, input: string): void {
   try {
     const suite = new Benchmark.Suite(name, { maxTime: 3 }).on('complete', function () {
       const fastest = suite.filter('fastest');
@@ -506,7 +515,7 @@ function benchmark_roundtrip_buffer(name: string, input: string) {
   }
 }
 
-function benchmark_encrypt_buffer(name: string, input: string) {
+function benchmark_encrypt_buffer(name: string, input: string): void {
   try {
     const suite = new Benchmark.Suite(name, { maxTime: 3 }).on('complete', function () {
       const fastest = suite.filter('fastest');
@@ -526,7 +535,7 @@ function benchmark_encrypt_buffer(name: string, input: string) {
   }
 }
 
-function benchmark_decrypt_buffer(name: string, input: string) {
+function benchmark_decrypt_buffer(name: string, input: string): void {
   try {
     const suite = new Benchmark.Suite(name, { maxTime: 3 }).on('complete', function () {
       const fastest = suite.filter('fastest');
@@ -547,7 +556,7 @@ function benchmark_decrypt_buffer(name: string, input: string) {
   }
 }
 
-function benchmark_roundtrip_string(name: string, input: string) {
+function benchmark_roundtrip_string(name: string, input: string): void {
   try {
     const suite = new Benchmark.Suite(name, { maxTime: 3 }).on('complete', function () {
       const fastest = suite.filter('fastest');
@@ -567,7 +576,7 @@ function benchmark_roundtrip_string(name: string, input: string) {
   }
 }
 
-function benchmark_encrypt_string(name: string, input: string) {
+function benchmark_encrypt_string(name: string, input: string): void {
   try {
     const suite = new Benchmark.Suite(name, { maxTime: 3 }).on('complete', function () {
       const fastest = suite.filter('fastest');
@@ -586,7 +595,7 @@ function benchmark_encrypt_string(name: string, input: string) {
   }
 }
 
-function benchmark_decrypt_string(name: string, input: string) {
+function benchmark_decrypt_string(name: string, input: string): void {
   try {
     const suite = new Benchmark.Suite(name, { maxTime: 3 }).on('complete', function () {
       const fastest = suite.filter('fastest');

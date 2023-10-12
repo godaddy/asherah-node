@@ -4,78 +4,51 @@
 #include <cstdint>
 #include <iomanip>
 #include <iostream>
+#include <napi.h>
 #include <sstream>
 #include <string>
 
-extern int32_t verbose_flag;
+class Logger {
+public:
+  Logger();
+  Logger(Napi::Function new_log_hook);
+  ~Logger();
 
-__attribute__((always_inline)) inline void debug_log(const char *function_name,
-                                                     const char *message) {
-  if (unlikely(verbose_flag)) {
-    std::cerr << "asherah-node: [DEBUG] " << function_name << ": " << message
-              << std::endl
-              << std::flush;
-  }
-}
+  void set_log_hook(Napi::Function new_log_hook);
+  void set_verbose_flag(int32_t verbose_flag);
 
-__attribute__((always_inline)) inline void debug_log(const char *function_name,
-                                                     std::string message) {
-  if (unlikely(verbose_flag)) {
-    std::cerr << "asherah-node: [DEBUG] " << function_name << ": " << message
-              << std::endl
-              << std::flush;
-  }
-}
+  void debug_log(const char *function_name, const char *message);
+  void debug_log(const char *function_name, std::string message);
+  void debug_log_alloca(const char *function_name, const char *variable_name,
+                        size_t length);
 
-__attribute__((always_inline)) inline void
-debug_log_alloca(const char *function_name, const char *variable_name,
-                 size_t length) {
-  if (unlikely(verbose_flag)) {
-    std::cerr << "asherah-node: [DEBUG] " << function_name
-              << ": Calling alloca(" << length << ") (stack) for "
-              << variable_name << std::endl
-              << std::flush;
-  }
-}
+  void debug_log_new(const char *function_name, const char *variable_name,
+                     size_t length);
+  void debug_log_copy_buffer(const char *function_name,
+                             const char *variable_name, size_t length);
+  void debug_log_configure_cbuffer(const char *function_name,
+                                   const char *variable_name, size_t length);
+  void error_log(const char *function_name, const char *message);
+  void error_log(const char *function_name, std::string message);
+  void log_error_and_throw(const char *function_name, std::string error_msg);
 
-__attribute__((always_inline)) inline void
-debug_log_new(const char *function_name, const char *variable_name,
-              size_t length) {
-  if (unlikely(verbose_flag)) {
-    std::cerr << "asherah-node: [DEBUG] " << function_name << ": Calling new["
-              << length << "] (heap) for " << variable_name << std::endl
-              << std::flush;
-  }
-}
+private:
+  void stderr_debug_log(const char *function_name, const char *message);
+  void stderr_debug_log(const char *function_name, std::string message);
+  void stderr_debug_log_alloca(const char *function_name,
+                               const char *variable_name, size_t length);
+  void stderr_debug_log_new(const char *function_name,
+                            const char *variable_name, size_t length);
+  void stderr_error_log(const char *function_name, const char *message);
+  void stderr_error_log(const char *function_name, std::string message);
 
-__attribute__((always_inline)) inline void error_log(const char *function_name,
-                                                     const char *message) {
-  if (unlikely(verbose_flag)) {
-    std::cerr << "asherah-node: [ERROR] " << function_name << ": " << message
-              << std::endl
-              << std::flush;
-  }
-}
+  std::string format_ptr(const char *ptr);
 
-__attribute__((always_inline)) inline void error_log(const char *function_name,
-                                                     std::string message) {
-  if (unlikely(verbose_flag)) {
-    std::cerr << "asherah-node: [ERROR] " << function_name << ": " << message
-              << std::endl
-              << std::flush;
-  }
-}
-
-__attribute__((always_inline)) inline std::string format_ptr(char *ptr) {
-  std::ostringstream ss;
-  ss << "0x" << std::hex << (intptr_t)ptr;
-  return ss.str();
-}
-
-__attribute__((always_inline, noreturn)) inline void
-log_error_and_throw(const char *function_name, std::string error_msg) {
-  error_log(function_name, error_msg);
-  throw new std::runtime_error(function_name + (": " + error_msg));
-}
+  int32_t verbose_flag = 0;
+  Napi::FunctionReference log_hook;
+  std::string asherah_node_prefix = "asherah-node: ";
+  const int posix_log_level_error = 3;
+  const int posix_log_level_debug = 7;
+};
 
 #endif
