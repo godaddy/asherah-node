@@ -9,6 +9,6 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "asherah": "^1.2.4"
+    "asherah": "*"
   }
 }
