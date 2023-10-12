@@ -10,4 +10,4 @@
 #docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 
 echo "Testing ${TEST_ARCH} emulation"
-docker run --rm -v "$(pwd):/build" --platform "${TEST_ARCH}" "${TEST_ARCH}/node:bookworm" /build/runs-on-emulated.sh
+docker run --rm -v "$(pwd):/build" --platform "linux/${TEST_ARCH}" "${TEST_ARCH}/node:bookworm" /build/runs-on-emulated.sh
