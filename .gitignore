@@ -110,3 +110,4 @@ integration/go
 
 .vscode/
 .tool-versions
+examples/docker/package-lock.json
