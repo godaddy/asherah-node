@@ -9,5 +9,5 @@
 #echo "Register qemu support with docker"
 #docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 
-echo "Testing ${TEST_ARCH} emulation"
-docker run --rm -v "$(pwd):/build" --platform "linux/${TEST_ARCH}" --entrypoint /build/scripts/runs-on-emulated.sh "${TEST_ARCH}/node:bookworm"
+echo "Testing ${TEST_TAG} emulation"
+docker run --rm -v "$(pwd):/build" --platform "${TEST_PLATFORM}" --entrypoint /build/scripts/runs-on-emulated.sh "${TEST_TAG}/node:bookworm"
