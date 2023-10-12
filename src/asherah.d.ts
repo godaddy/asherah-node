@@ -39,6 +39,9 @@ export type AsherahConfig = {
     /** Enable verbose logging output */
     Verbose: boolean | null;
 };
+
+type LogHookCallback = (level: number, message: string) => void;
+
 export declare function setup(config: AsherahConfig): void;
 export declare function shutdown(): void;
 export declare function decrypt(partitionId: string, dataRowRecord: string): Buffer;
@@ -47,3 +50,4 @@ export declare function decrypt_string(partitionId: string, dataRowRecord: strin
 export declare function encrypt_string(partitionId: string, data: string): string;
 export declare function set_max_stack_alloc_item_size(max_item_size: number): void;
 export declare function set_safety_padding_overhead(safety_padding_overhead: number): void;
+export declare function set_log_hook(logHook: LogHookCallback): void;
