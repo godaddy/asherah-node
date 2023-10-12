@@ -70,8 +70,8 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Setup Multi-Architecture Support
-      run: scripts/setup-multi-arch.sh
+      run: scripts/setup-multiarch.sh
     - name: Test Multi-Architecture
-      run: scripts/test-multi-arch.sh
+      run: scripts/test-arch.sh
       env:
         TEST_ARCH: ${{ matrix.arch }}
