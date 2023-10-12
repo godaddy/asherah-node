@@ -25,8 +25,8 @@ function setup_asherah_static_memory(verbose: boolean, session_cache: boolean): 
     }
   });
   setup({
-    KMS: 'static',
-    Metastore: 'memory',
+    KMS: 'test-debug-static',
+    Metastore: 'test-debug-memory',
     ServiceName: 'TestService',
     ProductID: 'TestProduct',
     Verbose: verbose,
@@ -244,7 +244,7 @@ describe('Asherah', function () {
   it('Test RegionMap', function () {
     const config: AsherahConfig = {
       KMS: 'aws',
-      Metastore: 'memory',
+      Metastore: 'test-debug-memory',
       ServiceName: 'TestService',
       ProductID: 'TestProduct',
       Verbose: true,
