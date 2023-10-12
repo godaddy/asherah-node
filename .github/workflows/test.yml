@@ -66,7 +66,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        arch: [ {tag: arm64v8, platform: linux/arm64/v8}, {tag: ppc64le, platform: linux/ppc64le} ]
+        arch: [ {tag: arm64v8, platform: linux/arm64/v8}, {tag: ppc64le, platform: linux/ppc64le}, {tag: s390x, platform: linux/s390x}, {tag: arm32v7, platform: linux/arm/v7} ]
     steps:
     - uses: actions/checkout@v4
     - name: Setup Multi-Architecture Support
