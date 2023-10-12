@@ -29,7 +29,7 @@ jobs:
       image: node:bullseye
       options: --ulimit core=-1 --ulimit memlock=-1:-1
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Install npm packages
       run: npm install
     - name: Unit Test
@@ -68,6 +68,7 @@ jobs:
       matrix:
         arch: [ amd64, arm32v5, arm32v7, arm64v8, i386, mips64le, ppc64le, riscv64, s390x ]
     steps:
+    - uses: actions/checkout@v4
     - name: Setup Multi-Architecture Support
       run: scripts/setup-multi-arch.sh
     - name: Test Multi-Architecture
