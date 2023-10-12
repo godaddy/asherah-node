@@ -4,7 +4,6 @@ echo "Downloading Asherah libraries"
 
 source .asherah-version
 
-#rm -rf lib
 mkdir -p lib
 cd lib || exit 1
 
@@ -46,13 +45,13 @@ else
   exit 1
 fi
 
-curl -s -L --fail -O --retry 999 --retry-max-time 0 "https://github.com/godaddy/asherah-cobhan/releases/download/${ASHERAH_VERSION}/${ARCHIVE}" || echo "Failed to download ${ASHERAH_VERSION}/${ARCHIVE}"
-curl -s -L --fail -O --retry 999 --retry-max-time 0 "https://github.com/godaddy/asherah-cobhan/releases/download/${ASHERAH_VERSION}/${HEADER}" || echo "Failed to download ${ASHERAH_VERSION}/${HEADER}"
-curl -s -L --fail -O --retry 999 --retry-max-time 0 "https://github.com/godaddy/asherah-cobhan/releases/download/${ASHERAH_VERSION}/${SUMS}" || echo "Failed to download ${ASHERAH_VERSION}/${SUMS}"
+curl -s -L --fail --etag-save "${ARCHIVE}.etag" --etag-compare "${ARCHIVE}.etag" -O --retry 999 --retry-max-time 0 "https://github.com/godaddy/asherah-cobhan/releases/download/${ASHERAH_VERSION}/${ARCHIVE}" || echo "Failed to download ${ASHERAH_VERSION}/${ARCHIVE}"
+
+curl -s -L --fail --etag-save "${HEADER}.etag" --etag-compare "${HEADER}.etag" -O --retry 999 --retry-max-time 0 "https://github.com/godaddy/asherah-cobhan/releases/download/${ASHERAH_VERSION}/${HEADER}" || echo "Failed to download ${ASHERAH_VERSION}/${HEADER}"
+
+curl -s -L --fail --etag-save "${SUMS}.etag" --etag-compare "${SUMS}.etag" -O --retry 999 --retry-max-time 0 "https://github.com/godaddy/asherah-cobhan/releases/download/${ASHERAH_VERSION}/${SUMS}" || echo "Failed to download ${ASHERAH_VERSION}/${SUMS}"
 grep -e "${ARCHIVE}" -e "${HEADER}" "${SUMS}" > ./SHA256SUM
 shasum -a 256 -c ./SHA256SUM || (echo 'SHA256 mismatch!' ; rm -f ./*.a ./*.h ; exit 1)
 
-rm "${SUMS}"
-
-mv -f "${ARCHIVE}" libasherah.a
-mv -f "${HEADER}" libasherah.h
+cp -f "${ARCHIVE}" libasherah.a
+cp -f "${HEADER}" libasherah.h
