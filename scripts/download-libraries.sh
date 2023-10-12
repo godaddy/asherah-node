@@ -2,6 +2,7 @@
 
 echo "Downloading Asherah libraries"
 
+# shellcheck source=/dev/null
 source .asherah-version
 
 mkdir -p lib
