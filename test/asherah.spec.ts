@@ -3,6 +3,7 @@ import { AsherahConfig, decrypt, encrypt, decrypt_string, setup, shutdown, encry
 import crypto from 'crypto';
 import Benchmark = require('benchmark');
 import { env } from 'process';
+import winston = require('winston');
 
 const benchmark = (env['BENCHMARK'] == '1' || env['BENCHMARK'] == 'true');
 
@@ -14,16 +15,40 @@ function get_big_string(): string {
   return 'x'.repeat(16384);
 }
 
+const posix_log_levels = {
+    emerg: 0,
+    alert: 1,
+    crit: 2,
+    error: 3,
+    warning: 4,
+    notice: 5,
+    info: 6,
+    debug: 7
+  };
+
 function setup_asherah_static_memory(verbose: boolean, session_cache: boolean): void {
+  winston.configure({
+    transports: [
+      new winston.transports.Console({
+        level: 'error',
+        format: winston.format.combine(
+          winston.format.colorize(),
+          winston.format.simple()
+        )
+      })
+    ]
+  });
+
   set_log_hook((level: number, message: string): void => {
-    if(level == 3) {
-      console.error(message);
-    } else if(level == 7) {
-      console.log(message);
+    if(level <= posix_log_levels.error) {
+      winston.error(message);
+    } else if(level == posix_log_levels.debug) {
+      winston.debug(message);
     } else {
-      console.error('Unknown log level ' + level + ' message: ' + message);
+      winston.info(message);
     }
   });
+
   setup({
     KMS: 'test-debug-static',
     Metastore: 'test-debug-memory',
