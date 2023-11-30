@@ -9,7 +9,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@cucumber/cucumber": "^7.3.2",
+    "@cucumber/cucumber": "^10.0.0",
     "asherah": "*",
     "assert": "^2.1.0",
     "fs": "^0.0.1-security"
