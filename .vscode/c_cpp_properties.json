@@ -1,0 +1,27 @@
+{
+    "configurations": [
+        {
+            "name": "Mac",
+            "includePath": [
+                "${workspaceFolder}/src/**",
+                "${workspaceFolder}/node_modules/node-addon-api/**",
+                "${workspaceFolder}/node_modules/node-api-headers/include/**",
+                "${workspaceFolder}/lib/**"
+            ],
+            "forcedInclude": [
+                "${workspaceFolder}/node_modules/node-addon-api/napi.h",
+                "${workspaceFolder}/lib/libasherah.h",
+                "${workspaceFolder}/node_modules/node-api-headers/include/node_api.h"
+            ],
+            "defines": [],
+            "macFrameworkPath": [
+                "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks"
+            ],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "macos-clang-arm64"
+        }
+    ],
+    "version": 4
+}

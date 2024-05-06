@@ -2,7 +2,7 @@
   'targets': [
       {
       'target_name': 'asherah',
-      'include_dirs': ["<!(node -p \"require('node-addon-api').include_dir\")"],
+      'include_dirs': ["<!(node -p \"require('node-addon-api').include_dir\")", "lib/", "src/"],
       "cflags": ["-fexceptions", "-g", "-O3", "-std=c++17", "-fPIC"],
       "cflags_cc": ["-fexceptions", "-g", "-O3", "-std=c++17", "-fPIC"],
       "cflags!": [ "-fno-exceptions"],
@@ -19,15 +19,9 @@
       },
       'defines': [ 'NAPI_CPP_EXCEPTIONS', 'NODE_API_SWALLOW_UNTHROWABLE_EXCEPTIONS', 'NODE_ADDON_API_DISABLE_DEPRECATED', 'NODE_API_NO_EXTERNAL_BUFFERS_ALLOWED' ],
       'sources': [
-        'lib/libasherah.h',
-        'src/asherah.h',
         'src/asherah.cc',
         'src/logging.cc',
-        'src/logging.h',
-        'src/cobhan_napi_interop.h',
-        'src/cobhan.h',
-        'src/cobhan.cc',
-        'src/hints.h'
+        'src/logging_napi.cc'
       ],
       'libraries': [ '../lib/libasherah.a' ]
     }
