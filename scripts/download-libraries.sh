@@ -208,6 +208,7 @@ function interval_message {
 # Main function
 function main {
   echo "Downloading Asherah libraries"
+  # shellcheck disable=SC1091
   source .asherah-version
 
   # Parse arguments

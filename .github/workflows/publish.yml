@@ -3,13 +3,13 @@ name: Publish Asherah-Node
 on:
   release:
     types: [published] # Trigger when release is created
-
+  
 jobs:
   publish-package:
     timeout-minutes: 15
     runs-on: ubuntu-latest
     container:
-      image: node:bullseye
+      image: node:bookworm
       options: --ulimit core=-1 --ulimit memlock=-1:-1
     steps:
     - uses: actions/checkout@v2

@@ -10,6 +10,7 @@
 #include "scoped_allocate.h"
 #endif
 #include <napi.h>
+#include <atomic>
 
 #ifndef NAPI_CPP_EXCEPTIONS
 #error Support for C++ exceptions is required
