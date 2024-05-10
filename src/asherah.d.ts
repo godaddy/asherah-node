@@ -1,43 +1,43 @@
 /// <reference types="node" />
 export type AsherahConfig = {
-  /** The name of this service (Required) */
-  ServiceName: string;
-  /** The name of the product that owns this service (Required) */
-  ProductID: string;
-  /** The amount of time a key is considered valid */
-  ExpireAfter: number | null;
-  /** The amount of time before cached keys are considered stale */
-  CheckInterval: number | null;
-  /** Determines the type of metastore to use for persisting keys (Required) { "rdbms", "dynamodb", "memory" } */
-  Metastore: string;
-  /** The database connection string (Required if metastore=rdbms) */
-  ConnectionString: string | null;
-  /** Required for Aurora sessions using write forwarding { "eventual", "global", "session" } */
-  ReplicaReadConsistency: string | null;
-  /** An optional endpoint URL (hostname only or fully qualified URI) (only supported by metastore=dynamodb) */
-  DynamoDBEndpoint: string | null;
-  /** The AWS region for DynamoDB requests (defaults to globally configured region) (only supported by metastore=dynamodb) */
-  DynamoDBRegion: string | null;
-  /** The table name for DynamoDB (only supported by metastore=dynamodb) */
-  DynamoDBTableName: string | null;
-  /** Define the maximum number of sessions to cache (Default 1000) */
-  SessionCacheMaxSize: number | null;
-  /** The amount of time a session will remain cached (Default 2h) */
-  SessionCacheDuration: number | null;
-  /** Configures the master key management service (Default kms) { "aws", "static" } */
-  KMS: string | null;
-  /** Dictionary of REGION: ARN (required if kms=aws) */
-  RegionMap: {
-    [name: string]: string;
-  } | null;
-  /** The preferred AWS region (required if kms=aws) */
-  PreferredRegion: string | null;
-  /** Configure the metastore to use regional suffixes (only supported by metastore=dynamodb) */
-  EnableRegionSuffix: boolean | null;
-  /** Enable shared session caching */
-  EnableSessionCaching: boolean | null;
-  /** Enable verbose logging output */
-  Verbose: boolean | null;
+    /** The name of this service (Required) */
+    ServiceName: string;
+    /** The name of the product that owns this service (Required) */
+    ProductID: string;
+    /** The amount of time a key is considered valid */
+    ExpireAfter: number | null;
+    /** The amount of time before cached keys are considered stale */
+    CheckInterval: number | null;
+    /** Determines the type of metastore to use for persisting keys (Required) { "rdbms", "dynamodb", "memory" } */
+    Metastore: string;
+    /** The database connection string (Required if metastore=rdbms) */
+    ConnectionString: string | null;
+    /** Required for Aurora sessions using write forwarding { "eventual", "global", "session" } */
+    ReplicaReadConsistency: string | null;
+    /** An optional endpoint URL (hostname only or fully qualified URI) (only supported by metastore=dynamodb) */
+    DynamoDBEndpoint: string | null;
+    /** The AWS region for DynamoDB requests (defaults to globally configured region) (only supported by metastore=dynamodb) */
+    DynamoDBRegion: string | null;
+    /** The table name for DynamoDB (only supported by metastore=dynamodb) */
+    DynamoDBTableName: string | null;
+    /** Define the maximum number of sessions to cache (Default 1000) */
+    SessionCacheMaxSize: number | null;
+    /** The amount of time a session will remain cached (Default 2h) */
+    SessionCacheDuration: number | null;
+    /** Configures the master key management service (Default kms) { "aws", "static" } */
+    KMS: string | null;
+    /** Dictionary of REGION: ARN (required if kms=aws) */
+    RegionMap: {
+        [name: string]: string;
+    } | null;
+    /** The preferred AWS region (required if kms=aws) */
+    PreferredRegion: string | null;
+    /** Configure the metastore to use regional suffixes (only supported by metastore=dynamodb) */
+    EnableRegionSuffix: boolean | null;
+    /** Enable shared session caching */
+    EnableSessionCaching: boolean | null;
+    /** Enable verbose logging output */
+    Verbose: boolean | null;
 };
 
 type LogHookCallback = (level: number, message: string) => void;

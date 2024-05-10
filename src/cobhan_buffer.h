@@ -5,8 +5,8 @@
 #include <cstring>   // for std::memcpy
 #include <iostream>  // for std::terminate
 #include <limits>    // for std::numeric_limits
-#include <stdexcept> // for std::runtime_error, std::invalid_argument
 #include <sstream>   // for std::ostringstream
+#include <stdexcept> // for std::runtime_error, std::invalid_argument
 #include <string>    // for std::string
 
 class CobhanBuffer {

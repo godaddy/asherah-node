@@ -1,8 +1,8 @@
 #ifndef LOGGING_NAPI_H
 #define LOGGING_NAPI_H
 #include "hints.h"
-#include <napi.h>
 #include "logging.h"
+#include <napi.h>
 
 #ifndef NAPI_CPP_EXCEPTIONS
 #error Support for C++ exceptions is required
@@ -12,13 +12,14 @@ class LoggerNapi : public Logger {
 public:
   LoggerNapi(Napi::Env &env, std::string system_name);
   explicit LoggerNapi(Napi::Env &env, std::string system_name,
-                  Napi::Function new_log_hook);
+                      Napi::Function new_log_hook);
   ~LoggerNapi();
 
   void set_log_hook(Napi::Function new_log_hook);
 
   void debug_log(const char *function_name, const char *message) const override;
-  void debug_log(const char *function_name, const std::string &message) const override;
+  void debug_log(const char *function_name,
+                 const std::string &message) const override;
   void debug_log_alloca(const char *function_name, const char *variable_name,
                         size_t length) const override;
 
@@ -26,9 +27,11 @@ public:
                      size_t length) const override;
 
   void error_log(const char *function_name, const char *message) const override;
-  void error_log(const char *function_name, const std::string &message) const override;
-  [[noreturn]] void log_error_and_throw(const char *function_name,
-                                        const std::string &error_msg) const override;
+  void error_log(const char *function_name,
+                 const std::string &message) const override;
+  [[noreturn]] void
+  log_error_and_throw(const char *function_name,
+                      const std::string &error_msg) const override;
 
 private:
   Napi::FunctionReference log_hook;

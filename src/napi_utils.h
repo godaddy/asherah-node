@@ -13,7 +13,7 @@ class NapiUtils {
 public:
   // This gets the length of the utf-8 string without allocating / copying
   static size_t GetUtf8StringLength(const Napi::Env &env,
-                             const Napi::String &napiString) {
+                                    const Napi::String &napiString) {
     size_t result;
     napi_status status =
         napi_get_value_string_utf8(env, napiString, nullptr, 0, &result);

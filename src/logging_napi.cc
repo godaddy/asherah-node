@@ -5,7 +5,7 @@ LoggerNapi::LoggerNapi(Napi::Env &env, std::string system_name)
     : Logger(system_name), log_hook(Napi::FunctionReference()), env(env) {}
 
 LoggerNapi::LoggerNapi(Napi::Env &env, std::string system_name,
-               Napi::Function new_log_hook)
+                       Napi::Function new_log_hook)
     : Logger(system_name), env(env) {
   if (unlikely(new_log_hook.IsEmpty())) {
     NapiUtils::ThrowException(env, "new_log_hook cannot be nullptr");
@@ -30,7 +30,8 @@ void LoggerNapi::set_log_hook(Napi::Function new_log_hook) {
   }
 }
 
-void LoggerNapi::debug_log(const char *function_name, const char *message) const {
+void LoggerNapi::debug_log(const char *function_name,
+                           const char *message) const {
   if (unlikely(verbose_flag)) {
     if (unlikely(log_hook.IsEmpty())) {
       stderr_debug_log(function_name, message);
@@ -47,7 +48,7 @@ void LoggerNapi::debug_log(const char *function_name, const char *message) const
 }
 
 void LoggerNapi::debug_log(const char *function_name,
-                       const std::string &message) const {
+                           const std::string &message) const {
   if (unlikely(verbose_flag)) {
     if (unlikely(log_hook.IsEmpty())) {
       stderr_debug_log(function_name, message);
@@ -64,7 +65,8 @@ void LoggerNapi::debug_log(const char *function_name,
 }
 
 void LoggerNapi::debug_log_alloca(const char *function_name,
-                              const char *variable_name, size_t length) const {
+                                  const char *variable_name,
+                                  size_t length) const {
   if (unlikely(verbose_flag)) {
     if (unlikely(log_hook.IsEmpty())) {
       stderr_debug_log_alloca(function_name, variable_name, length);
@@ -82,8 +84,8 @@ void LoggerNapi::debug_log_alloca(const char *function_name,
   }
 }
 
-void LoggerNapi::debug_log_new(const char *function_name, const char *variable_name,
-                           size_t length) const {
+void LoggerNapi::debug_log_new(const char *function_name,
+                               const char *variable_name, size_t length) const {
   if (unlikely(verbose_flag)) {
     if (unlikely(log_hook.IsEmpty())) {
       stderr_debug_log_new(function_name, variable_name, length);
@@ -101,7 +103,8 @@ void LoggerNapi::debug_log_new(const char *function_name, const char *variable_n
   }
 }
 
-void LoggerNapi::error_log(const char *function_name, const char *message) const {
+void LoggerNapi::error_log(const char *function_name,
+                           const char *message) const {
   if (unlikely(verbose_flag)) {
     if (unlikely(log_hook.IsEmpty())) {
       stderr_error_log(function_name, message);
@@ -119,7 +122,7 @@ void LoggerNapi::error_log(const char *function_name, const char *message) const
 }
 
 void LoggerNapi::error_log(const char *function_name,
-                       const std::string &message) const {
+                           const std::string &message) const {
   // Unconditionally log errors to stderr
   stderr_error_log(function_name, message);
 
@@ -135,7 +138,7 @@ void LoggerNapi::error_log(const char *function_name,
 
 __attribute__((always_inline, noreturn)) inline void
 LoggerNapi::log_error_and_throw(const char *function_name,
-                            const std::string &error_msg) const {
+                                const std::string &error_msg) const {
   std::string final_error_msg =
       system_name + ": [EXCEPTION] " + function_name + (": " + error_msg);
 

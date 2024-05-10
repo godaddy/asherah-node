@@ -146,6 +146,7 @@ export async function test_round_trip_buffers_async(inputBuffer: Buffer): Promis
 export function test_round_trip_strings(input: string): void {
     try {
         assert_asherah_setup();
+
         assert_input(input);
 
         const encrypted = encrypt_string('partition', input);
@@ -163,7 +164,6 @@ export function test_round_trip_strings(input: string): void {
 
 export async function test_round_trip_strings_async(input: string): Promise<void> {
     try {
-        //TODO: Move this
         assert_asherah_setup();
 
         assert_input(input);
@@ -257,9 +257,9 @@ export async function loop_encrypt_async(input: Buffer, partition = 'partition',
 
 export async function loop_roundtrip_buffer_async(input: Buffer, partition = 'partition', cycles = 1): Promise<void> {
 
-        for (let i = 0; i < cycles; i++) {
-            const enc = await encrypt_async(partition, input);
-            await decrypt_async(partition, enc);
-        }
+    for (let i = 0; i < cycles; i++) {
+        const enc = await encrypt_async(partition, input);
+        await decrypt_async(partition, enc);
+    }
 
 }

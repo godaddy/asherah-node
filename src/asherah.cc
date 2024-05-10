@@ -519,7 +519,7 @@ private:
     }
   }
 
-#pragma endregion Begin/End Methods
+#pragma endregion Begin / End Methods
 
 #pragma region AsyncWorkers
 
@@ -661,7 +661,6 @@ private:
     }
   }
 
-
   __attribute__((always_inline)) inline size_t
   EstimateAsherahOutputSize(size_t data_byte_len, size_t partition_byte_len) {
     const size_t est_encryption_overhead = 48;
@@ -719,7 +718,6 @@ private:
   }
 
 #pragma endregion Helpers
-
 };
 
 NODE_API_NAMED_ADDON('asherah', Asherah)
