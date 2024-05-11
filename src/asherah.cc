@@ -696,4 +696,4 @@ private:
 #pragma endregion Helpers
 };
 
-NODE_API_NAMED_ADDON('asherah', Asherah)
+NODE_API_NAMED_ADDON(asherah, Asherah)
