@@ -28,7 +28,7 @@ echo Encrypt and Decrypt with Asherah-Node
 
 cd "${ORIG_DIR}/integration/node" || exit 1
 echo Installing npm packages
-npm install
+CXXFLAGS='-DNODE_API_EXPERIMENTAL_NOGC_ENV_OPT_OUT' npm install
 
 echo "Running cucumber-js encrypt.feature"
 ./node_modules/.bin/cucumber-js ./features/encrypt.feature

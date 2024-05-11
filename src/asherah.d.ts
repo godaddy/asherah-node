@@ -43,11 +43,18 @@ export type AsherahConfig = {
 type LogHookCallback = (level: number, message: string) => void;
 
 export declare function setup(config: AsherahConfig): void;
+export declare function setup_async(config: AsherahConfig): Promise;
 export declare function shutdown(): void;
+export declare function shutdown_async(): Promise;
 export declare function decrypt(partitionId: string, dataRowRecord: string): Buffer;
+export declare function decrypt_async(partitionId: string, dataRowRecord: string): Promise<Buffer>;
 export declare function encrypt(partitionId: string, data: Buffer): string;
+export declare function encrypt_async(partitionId: string, data: Buffer): Promise<string>;
 export declare function decrypt_string(partitionId: string, dataRowRecord: string): string;
+export declare function decrypt_string_async(partitionId: string, dataRowRecord: string): Promise<string>;
 export declare function encrypt_string(partitionId: string, data: string): string;
+export declare function encrypt_string_async(partitionId: string, data: string): Promise<string>;
 export declare function set_max_stack_alloc_item_size(max_item_size: number): void;
 export declare function set_safety_padding_overhead(safety_padding_overhead: number): void;
 export declare function set_log_hook(logHook: LogHookCallback): void;
+export declare function get_setup_status(): boolean;

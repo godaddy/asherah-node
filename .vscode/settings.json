@@ -67,6 +67,8 @@
         "variant": "cpp",
         "vector": "cpp",
         "algorithm": "cpp",
-        "format": "cpp"
+        "format": "cpp",
+        "execution": "cpp",
+        "__memory": "cpp"
     }
 }
