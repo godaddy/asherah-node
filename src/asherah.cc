@@ -9,8 +9,8 @@
 #ifdef USE_SCOPED_ALLOCATE_BUFFER
 #include "scoped_allocate.h"
 #endif
-#include <napi.h>
 #include <atomic>
+#include <napi.h>
 
 #ifndef NAPI_CPP_EXCEPTIONS
 #error Support for C++ exceptions is required
@@ -294,8 +294,8 @@ private:
       CobhanBufferNapi input(env, input_value);
 
       CobhanBufferNapi output(input.get_data_len_bytes());
-      auto worker = new DecryptFromJsonToBufferWorker(env, this, partition_id,
-                                                      input, output);
+      auto worker = new DecryptFromJsonWorker<Napi::Buffer<unsigned char>>(
+          env, this, partition_id, input, output);
       worker->Queue();
       return worker->Promise();
     } catch (const std::exception &e) {
@@ -375,8 +375,8 @@ private:
 
       CobhanBufferNapi output(input.get_data_len_bytes());
 
-      auto worker = new DecryptFromJsonToStringWorker(env, this, partition_id,
-                                                      input, output);
+      auto worker = new DecryptFromJsonWorker<Napi::String>(
+          env, this, partition_id, input, output);
       worker->Queue();
 
       return worker->Promise();
@@ -573,6 +573,7 @@ private:
     CobhanBufferNapi output;
   };
 
+  template <typename T>
   class DecryptFromJsonWorker : public AsherahAsyncWorker<GoInt32> {
   public:
     DecryptFromJsonWorker(const Napi::Env &env, Asherah *instance,
@@ -582,46 +583,20 @@ private:
           partition_id(std::move(partition_id)), input(std::move(input)),
           output(std::move(output)) {}
 
-    // extern GoInt32 DecryptFromJson(void* partitionIdPtr, void* jsonPtr,
-    // void* dataPtr);
     GoInt32 ExecuteTask() override {
       return DecryptFromJson(partition_id, input, output);
+    }
+
+    Napi::Value OnOKTask(Napi::Env &env) override {
+      T output_result;
+      asherah->EndDecryptFromJson(env, output, result, output_result);
+      return output_result;
     }
 
   protected:
     CobhanBufferNapi partition_id;
     CobhanBufferNapi input;
     CobhanBufferNapi output;
-  };
-
-  class DecryptFromJsonToBufferWorker : public DecryptFromJsonWorker {
-  public:
-    DecryptFromJsonToBufferWorker(const Napi::Env &env, Asherah *instance,
-                                  CobhanBufferNapi &partition_id,
-                                  CobhanBufferNapi &input,
-                                  CobhanBufferNapi &output)
-        : DecryptFromJsonWorker(env, instance, partition_id, input, output) {}
-
-    Napi::Value OnOKTask(Napi::Env &env) override {
-      Napi::Buffer<unsigned char> output_buffer;
-      asherah->EndDecryptFromJson(env, output, result, output_buffer);
-      return output_buffer;
-    }
-  };
-
-  class DecryptFromJsonToStringWorker : public DecryptFromJsonWorker {
-  public:
-    DecryptFromJsonToStringWorker(const Napi::Env &env, Asherah *instance,
-                                  CobhanBufferNapi &partition_id,
-                                  CobhanBufferNapi &input,
-                                  CobhanBufferNapi &output)
-        : DecryptFromJsonWorker(env, instance, partition_id, input, output) {}
-
-    Napi::Value OnOKTask(Napi::Env &env) override {
-      Napi::String output_string;
-      asherah->EndDecryptFromJson(env, output, result, output_string);
-      return output_string;
-    }
   };
 
   class ShutdownAsherahWorker : public AsherahAsyncWorker<GoInt32> {
