@@ -32,6 +32,8 @@
     "src/hints.h",
     "src/logging.cc",
     "src/logging.h",
+    "src/logging_napi.cc",
+    "src/logging_napi.h",
     "src/napi_utils.h",
     "src/scoped_allocate.h",
     "src/asherah.d.ts",
