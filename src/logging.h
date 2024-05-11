@@ -2,6 +2,8 @@
 #define LOGGING_H
 #include <sstream> // std::ostringstream
 #include <string>  // std::string
+#include <cstdint> // int32_t
+#include <cstddef> // size_t
 
 class Logger {
 public:
