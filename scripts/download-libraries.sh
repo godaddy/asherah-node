@@ -2,6 +2,11 @@
 
 set -e  # Exit on any command failure
 
+if [ ! -f .asherah-version ]; then
+  echo "Error: The script is meant to be run from the root directory of the asherah-node project" >&2
+  exit 1
+fi
+
 # Global Constants
 CHECK_INTERVAL_SECONDS=$((5 * 60)) # 5 minutes
 MAX_DOWNLOAD_RETRIES=3
