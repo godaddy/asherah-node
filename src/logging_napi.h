@@ -31,6 +31,7 @@ public:
                  const std::string &message) const override;
 
 private:
+  void call_log_hook(int level, const std::string &message) const;
   Napi::FunctionReference log_hook;
   Napi::Env env;
   const int posix_log_level_error = 3;
