@@ -22,7 +22,6 @@ const test_verbose = true;
 const default_max_stack_alloc_item_size = 2048;
 const big_string_size = 65535;
 const simple_secret = 'mysecretdata';
-const bad_only = true;
 
 describe('Asherah', function () {
     it('Bad No Setup Async', async function () {
@@ -41,10 +40,17 @@ describe('Asherah', function () {
         await bad_encrypt_string_empty_async(test_verbose, true, default_max_stack_alloc_item_size);
     });
 
-    //TODO: Remove this
-    if (bad_only) {
-        return;
-    }
+    it('Bad Encrypt Buffers Undefined', async function () {
+        await bad_encrypt_buffers_undefined_async(test_verbose, true, default_max_stack_alloc_item_size);
+    });
+
+    it('Bad Encrypt Buffers Null', async function () {
+        await bad_encrypt_buffers_null_async(test_verbose, true, default_max_stack_alloc_item_size);
+    });
+
+    it('Bad Encrypt Buffers Empty', async function () {
+        await bad_encrypt_buffers_empty_async(test_verbose, true, default_max_stack_alloc_item_size);
+    });
 
     // Test using heap only
     register_sync_roundtrip_tests(simple_secret, test_verbose, false, force_use_heap);
@@ -192,6 +198,39 @@ async function bad_encrypt_string_empty_async(verbose: boolean, session_cache: b
         assert_throws_async(async () => {
             await test_round_trip_strings_async('');
         }, 'Should throw error if encrypt string empty');
+    } finally {
+        await asherah_shutdown_async();
+    }
+}
+
+async function bad_encrypt_buffers_undefined_async(verbose: boolean, session_cache: boolean, max_stack_alloc_item_size: number): Promise<void> {
+    await asherah_setup_static_memory_async(verbose, session_cache, max_stack_alloc_item_size);
+    try {
+        assert_throws_async(async () => {
+            await test_round_trip_buffers_async(undefined as any);
+        }, 'Should throw error if encrypt buffer undefined');
+    } finally {
+        await asherah_shutdown_async();
+    }
+}
+
+async function bad_encrypt_buffers_null_async(verbose: boolean, session_cache: boolean, max_stack_alloc_item_size: number): Promise<void> {
+    await asherah_setup_static_memory_async(verbose, session_cache, max_stack_alloc_item_size);
+    try {
+        assert_throws_async(async () => {
+            await test_round_trip_buffers_async(null as any);
+        }, 'Should throw error if encrypt buffer null');
+    } finally {
+        await asherah_shutdown_async();
+    }
+}
+
+async function bad_encrypt_buffers_empty_async(verbose: boolean, session_cache: boolean, max_stack_alloc_item_size: number): Promise<void> {
+    await asherah_setup_static_memory_async(verbose, session_cache, max_stack_alloc_item_size);
+    try {
+        assert_throws_async(async () => {
+            await test_round_trip_buffers_async(Buffer.from(''));
+        }, 'Should throw error if encrypt buffer empty');
     } finally {
         await asherah_shutdown_async();
     }
