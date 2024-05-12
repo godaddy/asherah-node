@@ -38,6 +38,7 @@ mysql --protocol=tcp -P 3306 -u "${TEST_DB_USER}" -p"${TEST_DB_PASSWORD}" -e "CR
 
 npm install
 
+# shellcheck disable=SC1091
 source ./run-encrypt.sh
 
 # Simulate other platforms
@@ -48,6 +49,7 @@ cp /tmp/node_encrypted /tmp/go_encrypted
 cp /tmp/node_encrypted /tmp/sidecar_go_encrypted
 cp /tmp/node_encrypted /tmp/sidecar_java_encrypted
 
+# shellcheck disable=SC1091
 source ./run-decrypt.sh
 
 echo "Clean up simulated other platforms"

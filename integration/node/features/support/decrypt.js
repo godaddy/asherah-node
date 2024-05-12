@@ -1,3 +1,5 @@
+module.exports = { default: '--publish-quiet' }
+
 const { Given, When, Then } = require('@cucumber/cucumber')
 const assert = require('assert');
 const asherah = require("asherah");
@@ -56,3 +58,4 @@ Then('decrypted_data should be equal to {string}', async function (originalPaylo
     assert(decryptedPayload == originalPayload);
     return 'passed';
 });
+

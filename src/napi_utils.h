@@ -29,7 +29,7 @@ public:
     auto error = Napi::Error::New(env, message);
     error.ThrowAsJavaScriptException();
     // If the JavaScript exception isn't thrown, fallback to a C++ exception
-    throw error;
+    throw error; // NOLINT(*-throw-by-value-catch-by-reference)
   }
 
   static void AsJsonObjectAndString(const Napi::Env &env,
@@ -116,25 +116,25 @@ public:
     if (likely(value.IsString())) {
       return value.As<Napi::String>();
     } else if (unlikely(value.IsUndefined())) {
-      ThrowException(env, "Expected String but received undefined");
+      ThrowException(env, std::string(func_name) + ": Expected String but received undefined");
     } else if (unlikely(value.IsNull())) {
-      ThrowException(env, "Expected String but received null");
+      ThrowException(env, std::string(func_name) + ": Expected String but received null");
     } else {
-      ThrowException(env, "Expected String but received unknown type");
+      ThrowException(env, std::string(func_name) + ": Expected String but received unknown type");
     }
   }
 
-  static Napi::Buffer<unsigned char>
+    __attribute__((unused)) static Napi::Buffer<unsigned char>
   RequireParameterBuffer(const Napi::Env &env, const char *func_name,
                          Napi::Value value) {
     if (likely(value.IsBuffer())) {
       return value.As<Napi::Buffer<unsigned char>>();
     } else if (unlikely(value.IsUndefined())) {
-      ThrowException(env, "Expected String but received undefined");
+      ThrowException(env, std::string(func_name) + ": Expected String but received undefined");
     } else if (unlikely(value.IsNull())) {
-      ThrowException(env, "Expected String but received null");
+      ThrowException(env, std::string(func_name) + ": Expected String but received null");
     } else {
-      ThrowException(env, "Expected String but received unknown type");
+      ThrowException(env, std::string(func_name) + ": Expected String but received unknown type");
     }
   }
 
@@ -144,13 +144,13 @@ public:
     if (value.IsString()) {
       return value.As<Napi::String>();
     } else if (likely(value.IsBuffer())) {
-      return value.As<Napi::Buffer<unsigned char>>();
+      return value.As<Napi::Buffer<unsigned char>>(); // NOLINT(*-slicing)
     } else if (unlikely(value.IsUndefined())) {
-      ThrowException(env, "Expected String but received undefined");
+      ThrowException(env, std::string(func_name) + ": Expected String but received undefined");
     } else if (unlikely(value.IsNull())) {
-      ThrowException(env, "Expected String but received null");
+      ThrowException(env, std::string(func_name) + ": Expected String but received null");
     } else {
-      ThrowException(env, "Expected String but received unknown type");
+      ThrowException(env, std::string(func_name) + ": Expected String but received unknown type");
     }
   }
 

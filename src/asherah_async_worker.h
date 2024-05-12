@@ -32,7 +32,7 @@ protected:
 private:
   Napi::Promise::Deferred deferred;
 
-  void Execute() override final {
+  void Execute() final {
     try {
       result = ExecuteTask();
     } catch (const std::exception &ex) {
@@ -40,7 +40,7 @@ private:
     }
   }
 
-  void OnOK() override final {
+  void OnOK() final {
     Napi::Env env = Env();
     Napi::HandleScope scope(env);
     try {
@@ -51,7 +51,7 @@ private:
     }
   }
 
-  void OnError(Napi::Error const &error) override final {
+  void OnError(Napi::Error const &error) final {
     Napi::Env env = Env();
     Napi::HandleScope scope(Env());
     try {

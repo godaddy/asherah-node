@@ -37,9 +37,9 @@ public:
   }
 
 protected:
-  Logger(std::string system_name);
+  explicit Logger(const std::string &system_name);
 
-  bool verbose_flag = 0;
+  bool verbose_flag = false;
   std::string system_name;
 
   void stderr_debug_log(const char *function_name, const char *message) const;
