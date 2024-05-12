@@ -4,7 +4,7 @@
 #include "hints.h"
 #include <napi.h>
 #include <stdexcept>
-
+#include <string>
 #ifndef NAPI_CPP_EXCEPTIONS
 #error Support for C++ exceptions is required
 #endif
@@ -26,10 +26,8 @@ public:
 
   [[noreturn]] static void ThrowException(const Napi::Env &env,
                                           const std::string &message) {
-    auto error = Napi::Error::New(env, message);
-    error.ThrowAsJavaScriptException();
-    // If the JavaScript exception isn't thrown, fallback to a C++ exception
-    throw error; // NOLINT(*-throw-by-value-catch-by-reference)
+    //throw std::runtime_error(message);
+    throw Napi::Error::New(env, message);
   }
 
   static void AsJsonObjectAndString(const Napi::Env &env,

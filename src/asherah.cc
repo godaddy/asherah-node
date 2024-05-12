@@ -82,9 +82,13 @@ private:
 
       // extern GoInt32 SetupJson(void* configJson);
       GoInt32 result = SetupJson(config);
-      EndSetupAsherah(result, product_id_length, service_name_length);
+      EndSetupAsherah(env, result, product_id_length, service_name_length);
+    } catch (Napi::Error &e) {
+      e.ThrowAsJavaScriptException();
+      return;
     } catch (const std::exception &e) {
-      logger.log_error_and_throw(__func__, e.what());
+      Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
+      return;
     }
   }
 
@@ -105,8 +109,12 @@ private:
                                            service_name_length);
       worker->Queue();
       return worker->Promise();
+    } catch (Napi::Error &e) {
+      e.ThrowAsJavaScriptException();
+      return env.Undefined();
     } catch (const std::exception &e) {
-      logger.log_error_and_throw(__func__, e.what());
+      Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
+      return env.Undefined();
     }
   }
 
@@ -117,8 +125,12 @@ private:
       BeginShutdownAsherah(env, __func__, info);
       Shutdown();
       EndShutdownAsherah();
+    } catch (Napi::Error &e) {
+      e.ThrowAsJavaScriptException();
+      return;
     } catch (const std::exception &e) {
-      logger.log_error_and_throw(__func__, e.what());
+      Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
+      return;
     }
   }
 
@@ -130,8 +142,12 @@ private:
       auto worker = new ShutdownAsherahWorker(env, this);
       worker->Queue();
       return worker->Promise();
+    } catch (Napi::Error &e) {
+      e.ThrowAsJavaScriptException();
+      return env.Undefined();
     } catch (const std::exception &e) {
-      logger.log_error_and_throw(__func__, e.what());
+      Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
+      return env.Undefined();
     }
   }
 
@@ -189,9 +205,12 @@ private:
       GoInt32 result = EncryptToJson(partition_id, input, output);
 
       EndEncryptToJson(env, output, result, output_string);
-
+    } catch (Napi::Error &e) {
+      e.ThrowAsJavaScriptException();
+      return env.Undefined();
     } catch (const std::exception &e) {
-      logger.log_error_and_throw(__func__, e.what());
+      Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
+      return env.Undefined();
     }
 
     return output_string;
@@ -220,8 +239,12 @@ private:
           new EncryptAsherahWorker(env, this, partition_id, input, output);
       worker->Queue();
       return worker->Promise();
+    } catch (Napi::Error &e) {
+      e.ThrowAsJavaScriptException();
+      return env.Undefined();
     } catch (const std::exception &e) {
-      logger.log_error_and_throw(__func__, e.what());
+      Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
+      return env.Undefined();
     }
   }
 
@@ -272,12 +295,17 @@ private:
       // void* dataPtr);
       GoInt32 result = DecryptFromJson(partition_id, input, output);
 
-      CheckResult(result);
+      CheckResult(env, result);
 
       output_value = output.ToBuffer(env); // NOLINT(*-slicing)
+    } catch (Napi::Error &e) {
+      e.ThrowAsJavaScriptException();
+      return env.Undefined();
     } catch (const std::exception &e) {
-      logger.log_error_and_throw(__func__, e.what());
+      Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
+      return env.Undefined();
     }
+
     return output_value;
   }
 
@@ -298,8 +326,12 @@ private:
           env, this, partition_id, input, output);
       worker->Queue();
       return worker->Promise();
+    } catch (Napi::Error &e) {
+      e.ThrowAsJavaScriptException();
+      return env.Undefined();
     } catch (const std::exception &e) {
-      logger.log_error_and_throw(__func__, e.what());
+      Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
+      return env.Undefined();
     }
   }
 
@@ -309,10 +341,6 @@ private:
     Napi::String output_string;
     try {
       NapiUtils::RequireParameterCount(info, 2);
-
-      if (unlikely(!info[0].IsString() || !info[1].IsString())) {
-        logger.log_error_and_throw(__func__, "Wrong argument types");
-      }
 
       Napi::String partition_id_string;
       Napi::Value input_value;
@@ -349,8 +377,12 @@ private:
       GoInt32 result = DecryptFromJson(partition_id, input, output);
 
       EndDecryptFromJson(env, output, result, output_string);
+    } catch (Napi::Error &e) {
+      e.ThrowAsJavaScriptException();
+      return env.Undefined();
     } catch (const std::exception &e) {
-      logger.log_error_and_throw(__func__, e.what());
+      Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
+      return env.Undefined();
     }
     return output_string;
   }
@@ -360,10 +392,6 @@ private:
     Napi::HandleScope scope(env);
     try {
       NapiUtils::RequireParameterCount(info, 2);
-
-      if (unlikely(!info[0].IsString() || !info[1].IsString())) {
-        logger.log_error_and_throw(__func__, "Wrong argument types");
-      }
 
       Napi::String partition_id_string;
       Napi::Value input_value;
@@ -380,8 +408,12 @@ private:
       worker->Queue();
 
       return worker->Promise();
+    } catch (Napi::Error &e) {
+      e.ThrowAsJavaScriptException();
+      return env.Undefined();
     } catch (const std::exception &e) {
-      logger.log_error_and_throw(__func__, e.what());
+      Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
+      return env.Undefined();
     }
   }
 
@@ -444,9 +476,9 @@ private:
     verbose_flag = verbose;
   }
 
-  void EndSetupAsherah(GoInt32 result, size_t product_id_length,
-                       size_t service_name_length) {
-    CheckResult(result);
+  void EndSetupAsherah(const Napi::Env &env, GoInt32 result,
+                       size_t product_id_length, size_t service_name_length) {
+    CheckResult(env, result);
 
     est_intermediate_key_overhead = product_id_length + service_name_length;
 
@@ -469,14 +501,14 @@ private:
 
   void EndEncryptToJson(Napi::Env env, CobhanBufferNapi &output, GoInt32 result,
                         Napi::String &output_string) {
-    CheckResult(result);
+    CheckResult(env, result);
 
     output_string = output.ToString(env);
   }
 
   void EndEncryptToJson(Napi::Env env, CobhanBufferNapi &output, GoInt32 result,
                         Napi::Buffer<unsigned char> &output_buffer) {
-    CheckResult(result);
+    CheckResult(env, result);
 
     output_buffer = output.ToBuffer(env);
   }
@@ -495,14 +527,14 @@ private:
   void EndDecryptFromJson(Napi::Env &env, CobhanBufferNapi &output,
                           GoInt32 result,
                           Napi::Buffer<unsigned char> &output_buffer) {
-    CheckResult(result);
+    CheckResult(env, result);
 
     output_buffer = output.ToBuffer(env);
   }
 
   void EndDecryptFromJson(Napi::Env &env, CobhanBufferNapi &output,
                           GoInt32 result, Napi::String &output_string) {
-    CheckResult(result);
+    CheckResult(env, result);
 
     output_string = output.ToString(env);
   }
@@ -536,7 +568,8 @@ private:
     GoInt32 ExecuteTask() override { return SetupJson(config); }
 
     Napi::Value OnOKTask(Napi::Env &env) override {
-      asherah->EndSetupAsherah(result, product_id_length, service_name_length);
+      asherah->EndSetupAsherah(env, result, product_id_length,
+                               service_name_length);
       return env.Undefined();
     }
 
@@ -619,9 +652,9 @@ private:
 
 #pragma region Helpers
 
-  void CheckResult(GoInt32 result) {
+  void CheckResult(const Napi::Env &env, GoInt32 result) {
     if (unlikely(result < 0)) {
-      logger.log_error_and_throw(__func__, AsherahCobhanErrorToString(result));
+      NapiUtils::ThrowException(env, AsherahCobhanErrorToString(result));
     }
   }
 

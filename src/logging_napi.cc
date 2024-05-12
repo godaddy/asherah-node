@@ -105,34 +105,25 @@ void LoggerNapi::debug_log_new(const char *function_name,
 
 void LoggerNapi::error_log(const char *function_name,
                            const char *message) const {
-  if (unlikely(verbose_flag)) {
-    if (unlikely(log_hook.IsEmpty())) {
-      stderr_error_log(function_name, message);
-    } else {
-      stderr_error_log(function_name, message);
-      Napi::Env env = log_hook.Env();
-      Napi::HandleScope scope(env);
-      Napi::Function log_hook_function = log_hook.Value();
-      log_hook_function.Call(
-          {Napi::Number::New(env, posix_log_level_error),
-           Napi::String::New(env,
-                             system_name + function_name + ": " + message)});
-    }
-  }
-}
-
-void LoggerNapi::error_log(const char *function_name,
-                           const std::string &message) const {
-  // Unconditionally log errors to stderr
-  stderr_error_log(function_name, message);
-
   if (likely(!log_hook.IsEmpty())) {
     Napi::Env env = log_hook.Env();
     Napi::HandleScope scope(env);
     Napi::Function log_hook_function = log_hook.Value();
     log_hook_function.Call(
         {Napi::Number::New(env, posix_log_level_error),
-         Napi::String::New(env, system_name + function_name + ": " + message)});
+         Napi::String::New(env, system_name + ": " + function_name + ": " + message)});
+  }
+}
+
+void LoggerNapi::error_log(const char *function_name,
+                           const std::string &message) const {
+  if (likely(!log_hook.IsEmpty())) {
+    Napi::Env env = log_hook.Env();
+    Napi::HandleScope scope(env);
+    Napi::Function log_hook_function = log_hook.Value();
+    log_hook_function.Call(
+        {Napi::Number::New(env, posix_log_level_error),
+         Napi::String::New(env, system_name + ": " + function_name + ": " + message)});
   }
 }
 
@@ -140,12 +131,16 @@ __attribute__((always_inline, noreturn)) inline void
 LoggerNapi::log_error_and_throw(const char *function_name,
                                 const std::string &error_msg) const {
   std::string final_error_msg =
-      system_name + ": [EXCEPTION] " + function_name + (": " + error_msg);
+      system_name + ": " + function_name + ": EXCEPTION: " + error_msg;
 
-  // Unconditionally log errors to stderr
-  stderr_error_log(function_name, final_error_msg);
-
-  error_log(function_name, final_error_msg);
+  if (likely(!log_hook.IsEmpty())) {
+    Napi::Env env = log_hook.Env();
+    Napi::HandleScope scope(env);
+    Napi::Function log_hook_function = log_hook.Value();
+    log_hook_function.Call(
+        {Napi::Number::New(env, posix_log_level_error),
+         Napi::String::New(env, final_error_msg)});
+  }
 
   NapiUtils::ThrowException(env, final_error_msg);
 }
