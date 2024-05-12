@@ -25,9 +25,6 @@ public:
                          const char *message) const = 0;
   virtual void error_log(const char *function_name,
                          const std::string &message) const = 0;
-  [[noreturn]] virtual void
-  log_error_and_throw(const char *function_name,
-                      const std::string &error_msg) const = 0;
 
   __attribute__((always_inline)) inline static std::string
   format_ptr(const void *ptr) {
@@ -37,9 +34,9 @@ public:
   }
 
 protected:
-  Logger(std::string system_name);
+  explicit Logger(const std::string &system_name);
 
-  bool verbose_flag = 0;
+  bool verbose_flag = false;
   std::string system_name;
 
   void stderr_debug_log(const char *function_name, const char *message) const;

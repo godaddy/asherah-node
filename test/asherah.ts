@@ -101,82 +101,72 @@ export async function asherah_shutdown_async(): Promise<void> {
 }
 
 export function test_round_trip_buffers(inputBuffer: Buffer): void {
-    try {
-        assert_asherah_setup();
+    assert_asherah_setup();
 
-        assert_input_buffer(inputBuffer);
+    const encrypted = encrypt('partition', inputBuffer);
 
-        const encrypted = encrypt('partition', inputBuffer);
+    const inputString = inputBuffer.toString('utf8');
 
-        const inputString = inputBuffer.toString('utf8');
+    assert_encrypt_string('partition', inputString, encrypted);
 
-        assert_encrypt_string('partition', inputString, encrypted);
+    const decrypted = decrypt('partition', encrypted);
 
-        const decrypted = decrypt('partition', encrypted);
-
-        assert_buffers_equal(inputBuffer, decrypted, 'Decrypted data should match original input');
-
-    } catch (e) {
-        console.error("test_round_trip_buffers failed: " + e);
-        throw e;
-    }
+    assert_buffers_equal(inputBuffer, decrypted, 'Decrypted data should match original input');
 }
 
 export async function test_round_trip_buffers_async(inputBuffer: Buffer): Promise<void> {
-    try {
-        assert_asherah_setup();
+    assert_asherah_setup();
 
-        assert_input_buffer(inputBuffer);
+    const encrypted = await encrypt_async('partition', inputBuffer);
 
-        const encrypted = await encrypt_async('partition', inputBuffer);
+    const inputString = inputBuffer.toString('utf8');
 
-        const inputString = inputBuffer.toString('utf8');
+    assert_encrypt_string('partition', inputString, encrypted);
 
-        assert_encrypt_string('partition', inputString, encrypted);
+    const decrypted = await decrypt_async('partition', encrypted);
 
-        const decrypted = await decrypt_async('partition', encrypted);
-
-        assert_buffers_equal(inputBuffer, decrypted, 'Decrypted data should match original input');
-    } catch (e) {
-        console.error("test_round_trip_buffers_async failed: " + e);
-        throw e;
-    }
+    assert_buffers_equal(inputBuffer, decrypted, 'Decrypted data should match original input');
 }
 
 export function test_round_trip_strings(input: string): void {
-    try {
-        assert_asherah_setup();
+    assert_asherah_setup();
 
-        assert_input(input);
+    const encrypted = encrypt_string('partition', input);
 
-        const encrypted = encrypt_string('partition', input);
+    assert_encrypt_string('partition', input, encrypted);
 
-        assert_encrypt_string('partition', input, encrypted);
+    const output = decrypt_string('partition', encrypted);
 
-        const output = decrypt_string('partition', encrypted);
-
-        assert_output_string(input, output);
-    } catch (e) {
-        console.error("test_round_trip_strings failed: " + e);
-        throw e;
-    }
+    assert_output_string(input, output);
 }
 
 export async function test_round_trip_strings_async(input: string): Promise<void> {
+    assert_asherah_setup();
+
+    const encrypted = await encrypt_string_async('partition', input);
+
+    assert_encrypt_string('partition', input, encrypted);
+
+    const output = await decrypt_string_async('partition', encrypted);
+
+    assert_output_string(input, output);
+}
+
+export function assert_throws(func: () => void, message: string) {
     try {
-        assert_asherah_setup();
-
-        assert_input(input);
-        const encrypted = await encrypt_string_async('partition', input);
-
-        assert_encrypt_string('partition', input, encrypted);
-
-        const output = await decrypt_string_async('partition', encrypted);
-
-        assert_output_string(input, output);
+        func();
+        assert(false, message);
     } catch (e) {
-        console.error("test_round_trip_strings_async failed: " + e);
-        throw e;
+        // Expected
+    }
+}
+
+export async function assert_throws_async(func: () => Promise<void>, message: string) {
+    try {
+        await func();
+        assert(false, message);
+    } catch (e) {
+        // Expected
     }
 }
 
@@ -197,16 +187,6 @@ function assert_buffers_equal(a: Buffer, b: Buffer, message?: string) {
         console.error("b: [" + b.toString('utf8') + "]");
         assert(false, message ?? "Buffers are not equal");
     }
-}
-
-function assert_input_buffer(input: Buffer) {
-    assert_input(input);
-    assert(input.length > 0, "Empty input buffer");
-}
-
-function assert_input(input: any) {
-    assert(input != undefined, "Undefined input");
-    assert(input != null, "Null input");
 }
 
 function assert_encrypt_string(partition: string, input: string, encrypted: string) {
@@ -256,10 +236,8 @@ export async function loop_encrypt_async(input: Buffer, partition = 'partition',
 }
 
 export async function loop_roundtrip_buffer_async(input: Buffer, partition = 'partition', cycles = 1): Promise<void> {
-
     for (let i = 0; i < cycles; i++) {
         const enc = await encrypt_async(partition, input);
         await decrypt_async(partition, enc);
     }
-
 }

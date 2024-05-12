@@ -29,11 +29,9 @@ public:
   void error_log(const char *function_name, const char *message) const override;
   void error_log(const char *function_name,
                  const std::string &message) const override;
-  [[noreturn]] void
-  log_error_and_throw(const char *function_name,
-                      const std::string &error_msg) const override;
 
 private:
+  void call_log_hook(int level, const std::string &message) const;
   Napi::FunctionReference log_hook;
   Napi::Env env;
   const int posix_log_level_error = 3;
