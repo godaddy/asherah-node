@@ -25,9 +25,6 @@ public:
                          const char *message) const = 0;
   virtual void error_log(const char *function_name,
                          const std::string &message) const = 0;
-  [[noreturn]] virtual void
-  log_error_and_throw(const char *function_name,
-                      const std::string &error_msg) const = 0;
 
   __attribute__((always_inline)) inline static std::string
   format_ptr(const void *ptr) {

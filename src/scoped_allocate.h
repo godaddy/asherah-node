@@ -24,22 +24,19 @@
       /* If the buffer is small enough, allocate it on the stack */            \
       logger.debug_log_alloca(function_name, #buffer, buffer_size);            \
       buffer = (char *)alloca(buffer_size);                                    \
+      throw std::runtime_error("alloca(" + std::to_string(buffer_size) +       \
+                               ") returned null");                             \
     } else {                                                                   \
       /* Otherwise, allocate it on the heap */                                 \
       logger.debug_log_new(function_name, #buffer, buffer_size);               \
       buffer = new (std::nothrow) char[buffer_size];                           \
       if (unlikely(buffer == nullptr)) {                                       \
-        std::string error_msg =                                                \
-            "new[" + std::to_string(buffer_size) + "] returned null";          \
-        logger.log_error_and_throw(function_name, error_msg);                  \
-        break;                                                                 \
+        std::string error_msg = std::string(function_name) + "new[" +          \
+                                std::to_string(buffer_size) +                  \
+                                "] returned null";                             \
+        throw std::runtime_error(error_msg);                                   \
       }                                                                        \
       unique_ptr.reset(buffer);                                                \
-    }                                                                          \
-    if (unlikely(buffer == nullptr)) {                                         \
-      logger.log_error_and_throw(function_name,                                \
-                                 "Failed to allocate " #buffer);               \
-      break;                                                                   \
     }                                                                          \
   } while (0)
 
