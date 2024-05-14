@@ -199,7 +199,7 @@ private:
                              maximum_stack_alloc_size, __func__);
       CobhanBufferNapi output(output_cobhan_buffer, output_size_bytes);
 #else
-      CobhanBufferNapi output(asherah_output_size_bytes);
+      CobhanBufferNapi output(env, asherah_output_size_bytes);
 #endif
 
       GoInt32 result = EncryptToJson(partition_id, input, output);
@@ -233,7 +233,7 @@ private:
       size_t asherah_output_size_bytes = EstimateAsherahOutputSize(
           input_data_len_bytes, partition_id_data_len_bytes);
 
-      CobhanBufferNapi output(asherah_output_size_bytes);
+      CobhanBufferNapi output(env, asherah_output_size_bytes);
 
       auto worker =
           new EncryptAsherahWorker(env, this, partition_id, input, output);
@@ -288,7 +288,7 @@ private:
 #else
       CobhanBufferNapi partition_id(env, partition_id_string);
       CobhanBufferNapi input(env, input_value);
-      CobhanBufferNapi output(input.get_data_len_bytes());
+      CobhanBufferNapi output(env, input.get_data_len_bytes());
 #endif
 
       // extern GoInt32 DecryptFromJson(void* partitionIdPtr, void* jsonPtr,
@@ -321,7 +321,7 @@ private:
       CobhanBufferNapi partition_id(env, partition_id_string);
       CobhanBufferNapi input(env, input_value);
 
-      CobhanBufferNapi output(input.get_data_len_bytes());
+      CobhanBufferNapi output(env, input.get_data_len_bytes());
       auto worker = new DecryptFromJsonWorker<Napi::Buffer<unsigned char>>(
           env, this, partition_id, input, output);
       worker->Queue();
@@ -371,7 +371,7 @@ private:
 #else
       CobhanBufferNapi partition_id(env, partition_id_string);
       CobhanBufferNapi input(env, input_value);
-      CobhanBufferNapi output(input.get_data_len_bytes());
+      CobhanBufferNapi output(env, input.get_data_len_bytes());
 #endif
 
       GoInt32 result = DecryptFromJson(partition_id, input, output);
@@ -401,7 +401,7 @@ private:
       CobhanBufferNapi partition_id(env, partition_id_string);
       CobhanBufferNapi input(env, input_value);
 
-      CobhanBufferNapi output(input.get_data_len_bytes());
+      CobhanBufferNapi output(env, input.get_data_len_bytes());
 
       auto worker = new DecryptFromJsonWorker<Napi::String>(
           env, this, partition_id, input, output);
