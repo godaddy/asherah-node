@@ -52,16 +52,16 @@ public:
     return static_cast<void *>(cbuffer);
   }
 
-  char *get_data_ptr() const { return data_ptr; }
+  [[nodiscard]] char *get_data_ptr() const { return data_ptr; }
 
-  size_t get_data_len_bytes() const { return *data_len_ptr; }
+  [[nodiscard]] size_t get_data_len_bytes() const { return *data_len_ptr; }
 
   ~CobhanBuffer() {
     verify_canaries();
     cleanup();
   }
 
-  __attribute__((unused)) std::string DebugPrintStdErr() const {
+  [[nodiscard]] __attribute__((unused)) std::string DebugPrintStdErr() const {
     auto debug_string = std::string(get_data_ptr(), get_data_len_bytes());
     std::ostringstream debug_output;
     debug_output << "CobhanBuffer { " << std::endl
@@ -127,7 +127,7 @@ protected:
     }
   }
 
-  size_t get_allocation_size() const { return allocation_size; }
+  [[nodiscard]] size_t get_allocation_size() const { return allocation_size; }
 
   void set_data_len_bytes(size_t data_len_bytes) {
     if (data_len_bytes > max_int32_size) {

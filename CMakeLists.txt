@@ -14,12 +14,14 @@ add_library(${PROJECT_NAME} SHARED
         ${PROJECT_SOURCE_DIR}/src/logging.cc
         ${PROJECT_SOURCE_DIR}/src/logging_napi.cc
         ${PROJECT_SOURCE_DIR}/src/logging_stderr.cc
+        src/scoped_allocate.h
 )
 target_compile_definitions(${PROJECT_NAME} PUBLIC
         -DNAPI_CPP_EXCEPTIONS
         -DNODE_API_SWALLOW_UNTHROWABLE_EXCEPTIONS
         -DNODE_ADDON_API_DISABLE_DEPRECATED
         -DNODE_API_NO_EXTERNAL_BUFFERS_ALLOWED
+        -DUSE_SCOPED_ALLOCATE_BUFFER
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/lib/libasherah.a)
 target_compile_options(${PROJECT_NAME} PUBLIC

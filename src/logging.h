@@ -1,3 +1,5 @@
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 #ifndef LOGGING_H
 #define LOGGING_H
 #include <cstddef> // size_t
@@ -7,7 +9,7 @@
 
 class Logger {
 public:
-  void set_verbose_flag(int32_t verbose_flag);
+    [[maybe_unused]] void set_verbose_flag(int32_t verbose_flag);
 
   virtual void debug_log(const char *function_name,
                          const char *message) const = 0;
@@ -41,3 +43,5 @@ protected:
 };
 
 #endif // LOGGING_H
+
+#pragma clang diagnostic pop

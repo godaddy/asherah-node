@@ -2,13 +2,14 @@
 // Created by Jeremiah Gowdy on 5/14/24.
 //
 
-#ifndef STDERRLOGGER_H
-#define STDERRLOGGER_H
+#ifndef STDERR_LOGGER_H
+#define STDERR_LOGGER_H
 
 #include "logging.h"
 
 class StdErrLogger : public Logger {
 public:
+  StdErrLogger() = delete;
   explicit StdErrLogger(const std::string &system_name);
 
   void debug_log(const char *function_name, const char *message) const override;
@@ -23,4 +24,4 @@ public:
                  const std::string &message) const override;
 };
 
-#endif // STDERRLOGGER_H
+#endif // STDERR_LOGGER_H

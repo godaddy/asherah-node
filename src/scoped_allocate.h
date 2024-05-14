@@ -1,6 +1,8 @@
 #ifndef SCOPED_ALLOCATE_H
 #define SCOPED_ALLOCATE_H
 
+#ifdef USE_SCOPED_ALLOCATE_BUFFER
+
 /*
   This macro allows us to allocate a buffer either on the stack or on the heap.
   If the requested buffer size is less than max_stack_alloc_size, we create the
@@ -42,5 +44,7 @@
   std::unique_ptr<char[]> buffer##_unique_ptr;                                 \
   SCOPED_ALLOCATE_BUFFER_UNIQUE_PTR(buffer, buffer_size, buffer##_unique_ptr,  \
                                     max_stack_alloc_size, function_name)
+
+#endif // USE_SCOPED_ALLOCATE_BUFFER
 
 #endif // SCOPED_ALLOCATE_H

@@ -17,7 +17,7 @@ public:
       : CobhanBuffer(NapiUtils::GetUtf8StringLength(env, napiString) + 1),
         env(env) { // Add one for possible NULL delimiter due to Node
                    // string functions
-    copy_from_string(env, napiString);
+    copy_from_string(napiString);
   }
 
   // Constructor from Napi::Buffer<unsigned char>
@@ -31,7 +31,7 @@ public:
   explicit CobhanBufferNapi(const Napi::Env &env, const Napi::Value &napiValue)
       : CobhanBuffer(ValueToDataSize(env, napiValue)), env(env) {
     if (napiValue.IsString()) {
-      copy_from_string(env, napiValue.As<Napi::String>());
+      copy_from_string(napiValue.As<Napi::String>());
     } else if (napiValue.IsBuffer()) {
       auto napiBuffer = napiValue.As<Napi::Buffer<unsigned char>>();
       std::memcpy(get_data_ptr(), napiBuffer.Data(), napiBuffer.Length());
@@ -54,7 +54,7 @@ public:
   CobhanBufferNapi(const Napi::Env &env, const Napi::String &napiString,
                    char *cbuffer, size_t allocation_size)
       : CobhanBuffer(cbuffer, allocation_size), env(env) {
-    copy_from_string(env, napiString);
+    copy_from_string(napiString);
   }
 
   // Constructor from a Napi::String to an externally allocated buffer
@@ -62,7 +62,7 @@ public:
                    char *cbuffer, size_t allocation_size)
       : CobhanBuffer(cbuffer, allocation_size), env(env) {
     if (napiValue.IsString()) {
-      copy_from_string(env, napiValue.As<Napi::String>());
+      copy_from_string(napiValue.As<Napi::String>());
     } else if (napiValue.IsBuffer()) {
       auto napiBuffer = napiValue.As<Napi::Buffer<unsigned char>>();
       std::memcpy(get_data_ptr(), napiBuffer.Data(), napiBuffer.Length());
@@ -97,7 +97,7 @@ public:
   }
 
   // Returns a Napi::String from the buffer using napi_create_string_utf8
-  [[nodiscard]] Napi::String ToString(const Napi::Env &) const {
+  [[nodiscard]] Napi::String ToString() const {
     napi_value napiStr;
     napi_status status = napi_create_string_utf8(
         env, get_data_ptr(), get_data_len_bytes(), &napiStr);
@@ -112,7 +112,7 @@ public:
   }
 
   // Returns a Napi::Buffer<unsigned char> from the buffer
-  [[nodiscard]] Napi::Buffer<unsigned char> ToBuffer(const Napi::Env &) const {
+  [[nodiscard]] Napi::Buffer<unsigned char> ToBuffer() const {
     auto buffer = Napi::Buffer<unsigned char>::Copy(
         env, reinterpret_cast<unsigned char *>(get_data_ptr()),
         get_data_len_bytes());
@@ -168,7 +168,7 @@ public:
 private:
   Napi::Env env;
 
-  void copy_from_string(const Napi::Env &, const Napi::String &napiString) {
+  void copy_from_string(const Napi::String &napiString) {
     size_t str_len = NapiUtils::GetUtf8StringLength(env, napiString);
     // Add one for NULL delimiter due to napi_get_value_string_utf8
     size_t allocation_size =

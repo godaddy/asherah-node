@@ -41,12 +41,12 @@ public:
       ThrowException(env, "Input value is undefined");
     } else if (value.IsString()) {
       // Convert string to object using JSON.parse
-      Napi::String str = value.As<Napi::String>();
+      auto str = value.As<Napi::String>();
       jsonString = str;
       jsonObject = jsonParse.Call({str}).As<Napi::Object>();
     } else if (value.IsObject()) {
       // Convert object to string using JSON.stringify
-      Napi::Object obj = value.As<Napi::Object>();
+        auto obj = value.As<Napi::Object>();
       if (jsonStringify.IsUndefined()) {
         ThrowException(env, "jsonStringify is undefined");
       } else if (jsonStringify.IsEmpty()) {
