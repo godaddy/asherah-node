@@ -112,6 +112,9 @@ examples/docker/package-lock.json
 
 third_party/
 
+*.cbp
+.cmake
+
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json

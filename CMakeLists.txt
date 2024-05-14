@@ -10,12 +10,28 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist)
 
 # main
 add_library(${PROJECT_NAME} SHARED ${PROJECT_SOURCE_DIR}/src/asherah.cc ${PROJECT_SOURCE_DIR}/src/logging.cc ${PROJECT_SOURCE_DIR}/src/logging_napi.cc)
-target_compile_definitions(${PROJECT_NAME} PUBLIC -DNAPI_CPP_EXCEPTIONS -DNODE_API_SWALLOW_UNTHROWABLE_EXCEPTIONS -DNODE_ADDON_API_DISABLE_DEPRECATED -DNODE_API_NO_EXTERNAL_BUFFERS_ALLOWED)
+target_compile_definitions(${PROJECT_NAME} PUBLIC
+        -DNAPI_CPP_EXCEPTIONS
+        -DNODE_API_SWALLOW_UNTHROWABLE_EXCEPTIONS
+        -DNODE_ADDON_API_DISABLE_DEPRECATED
+        -DNODE_API_NO_EXTERNAL_BUFFERS_ALLOWED
+)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/lib/libasherah.a)
-target_compile_options(${PROJECT_NAME} PUBLIC -fexceptions -g -O3 -fPIC -Wall -Wextra -Wpedantic -Werror -Wno-c99-extensions -Wno-unknown-pragmas -Wno-unused-parameter)
+target_compile_options(${PROJECT_NAME} PUBLIC
+        -fexceptions
+        -g
+        -O3
+        -fPIC
+        -Wall
+        -Wextra
+        -Wpedantic
+        -Werror
+        -Wno-c99-extensions
+        -Wno-unknown-pragmas
+)
 
 # set filename
-set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "asherah.node" PREFIX "" SUFFIX "")
+set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "asherah" PREFIX "" SUFFIX ".node")
 
 # dependencies
 if(NOT EXISTS ${PROJECT_SOURCE_DIR}/third_party/node-addon-api)
