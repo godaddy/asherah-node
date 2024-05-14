@@ -171,7 +171,7 @@ private:
 
   void copy_from_string(const Napi::Env &, const Napi::String &napiString) {
     size_t str_len = NapiUtils::GetUtf8StringLength(env, napiString);
-
+    // Add one for NULL delimiter due to napi_get_value_string_utf8
     size_t allocation_size =
         CobhanBuffer::DataSizeToAllocationSize(str_len) + 1;
 
@@ -181,6 +181,7 @@ private:
           "Buffer allocation size is insufficient to hold the Napi::String.");
     }
 
+    // Bytes written is the number of bytes copied, excluding the NULL
     size_t bytes_written;
     napi_status status = napi_get_value_string_utf8(
         env, napiString, get_data_ptr(), str_len + 1, &bytes_written);
@@ -191,6 +192,7 @@ private:
                    ", Bytes Written: " + std::to_string(bytes_written));
     }
 
+    // Update our data length to the actual string length
     set_data_len_bytes(str_len);
   }
 };
