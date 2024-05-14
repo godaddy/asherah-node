@@ -70,6 +70,6 @@
   },
   "types": "dist/asherah.d.ts",
   "dependencies": {
-    "node-addon-api": "7.0.0"
+    "node-addon-api": "^7.0.0"
   }
 }
