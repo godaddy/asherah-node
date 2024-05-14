@@ -11,7 +11,7 @@
   },
   "scripts": {
     "preinstall": "scripts/download-libraries.sh",
-    "load": "node --max-old-space-size=500 scripts/dumpster-fire.js",
+    "load": "node --max-old-space-size=500 scripts/dumpster-fire-memory.js",
     "install": "scripts/build.sh",
     "test:mocha-debug": "lldb -o run -- node node_modules/mocha/bin/mocha --inspect-brk",
     "test:mocha": "mocha",
