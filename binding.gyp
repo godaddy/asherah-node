@@ -26,7 +26,8 @@
       'sources': [
         'src/asherah.cc',
         'src/logging.cc',
-        'src/logging_napi.cc'
+        'src/logging_napi.cc',
+        'src/logging_stderr.cc'
       ],
       'libraries': [ '../lib/libasherah.a' ]
     }

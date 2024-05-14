@@ -9,7 +9,12 @@ file(MAKE_DIRECTORY ${PROJECT_SOURCE_DIR}/dist)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist)
 
 # main
-add_library(${PROJECT_NAME} SHARED ${PROJECT_SOURCE_DIR}/src/asherah.cc ${PROJECT_SOURCE_DIR}/src/logging.cc ${PROJECT_SOURCE_DIR}/src/logging_napi.cc)
+add_library(${PROJECT_NAME} SHARED
+        ${PROJECT_SOURCE_DIR}/src/asherah.cc
+        ${PROJECT_SOURCE_DIR}/src/logging.cc
+        ${PROJECT_SOURCE_DIR}/src/logging_napi.cc
+        ${PROJECT_SOURCE_DIR}/src/logging_stderr.cc
+)
 target_compile_definitions(${PROJECT_NAME} PUBLIC
         -DNAPI_CPP_EXCEPTIONS
         -DNODE_API_SWALLOW_UNTHROWABLE_EXCEPTIONS
@@ -26,8 +31,8 @@ target_compile_options(${PROJECT_NAME} PUBLIC
         -Wextra
         -Wpedantic
         -Werror
-        -Wno-c99-extensions
         -Wno-unknown-pragmas
+        -Wno-c99-extensions
 )
 
 # set filename

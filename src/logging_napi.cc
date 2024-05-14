@@ -1,12 +1,12 @@
 #include "logging_napi.h"
 #include "napi_utils.h"
 
-LoggerNapi::LoggerNapi(Napi::Env &env, std::string system_name)
-    : Logger(system_name), log_hook(Napi::FunctionReference()), env(env) {}
+LoggerNapi::LoggerNapi(Napi::Env &env, const std::string& system_name)
+    : StdErrLogger(system_name), log_hook(Napi::FunctionReference()), env(env) {}
 
-LoggerNapi::LoggerNapi(Napi::Env &env, std::string system_name,
+[[maybe_unused]] LoggerNapi::LoggerNapi(Napi::Env &env, const std::string& system_name,
                        Napi::Function new_log_hook)
-    : Logger(system_name), env(env) {
+    : StdErrLogger(system_name), env(env) {
   if (unlikely(new_log_hook.IsEmpty())) {
     NapiUtils::ThrowException(env, system_name + ": new_log_hook cannot be nullptr");
   }
@@ -44,7 +44,7 @@ void LoggerNapi::debug_log(const char *function_name,
                            const char *message) const {
   if (unlikely(verbose_flag)) {
     if (unlikely(log_hook.IsEmpty())) {
-      stderr_debug_log(function_name, message);
+        StdErrLogger::debug_log(function_name, message);
     } else {
       call_log_hook(posix_log_level_debug, system_name + ": " + function_name + ": " + message);
     }
@@ -55,7 +55,7 @@ void LoggerNapi::debug_log(const char *function_name,
                            const std::string &message) const {
   if (unlikely(verbose_flag)) {
     if (unlikely(log_hook.IsEmpty())) {
-      stderr_debug_log(function_name, message);
+      StdErrLogger::debug_log(function_name, message);
     } else {
       call_log_hook(posix_log_level_debug, system_name + ": " + function_name + ": " + message);
     }
@@ -67,7 +67,7 @@ void LoggerNapi::debug_log_alloca(const char *function_name,
                                   size_t length) const {
   if (unlikely(verbose_flag)) {
     if (unlikely(log_hook.IsEmpty())) {
-      stderr_debug_log_alloca(function_name, variable_name, length);
+      StdErrLogger::debug_log_alloca(function_name, variable_name, length);
     } else {
       call_log_hook(posix_log_level_debug, system_name + ": " + function_name +
                                               ": Calling alloca(" +
@@ -81,7 +81,7 @@ void LoggerNapi::debug_log_new(const char *function_name,
                                const char *variable_name, size_t length) const {
   if (unlikely(verbose_flag)) {
     if (unlikely(log_hook.IsEmpty())) {
-      stderr_debug_log_new(function_name, variable_name, length);
+      StdErrLogger::debug_log_new(function_name, variable_name, length);
     } else {
       call_log_hook(posix_log_level_debug, system_name + ": " + function_name +
                                               ": Calling new[" +

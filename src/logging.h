@@ -34,21 +34,12 @@ public:
   }
 
 protected:
-  explicit Logger(const std::string &system_name);
-
   bool verbose_flag = false;
   std::string system_name;
 
-  void stderr_debug_log(const char *function_name, const char *message) const;
-  void stderr_debug_log(const char *function_name,
-                        const std::string &message) const;
-  void stderr_debug_log_alloca(const char *function_name,
-                               const char *variable_name, size_t length) const;
-  void stderr_debug_log_new(const char *function_name,
-                            const char *variable_name, size_t length) const;
-  void stderr_error_log(const char *function_name, const char *message) const;
-  void stderr_error_log(const char *function_name,
-                        const std::string &message) const;
+  explicit Logger(std::string system_name);
+
+
 };
 
 #endif // LOGGING_H
