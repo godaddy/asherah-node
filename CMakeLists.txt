@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(asherah-node)
+project(asherah)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -31,7 +31,7 @@ target_compile_options(${PROJECT_NAME} PUBLIC
 )
 
 # set filename
-set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "asherah" PREFIX "" SUFFIX ".node")
+set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "" PREFIX "" SUFFIX ".node")
 
 # dependencies
 if(NOT EXISTS ${PROJECT_SOURCE_DIR}/third_party/node-addon-api)
