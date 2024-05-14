@@ -663,13 +663,13 @@ private:
 
   void RequireAsherahSetup(const Napi::Env &env, const char *func_name) {
     if (unlikely(setup_state.load(std::memory_order_acquire) == 0)) {
-      NapiUtils::ThrowException(env, "RequireAsherahSetup: setup() not called");
+      NapiUtils::ThrowException(env, std::string(func_name) + ": RequireAsherahSetup: setup() not called");
     }
   }
 
   void RequireAsherahNotSetup(const Napi::Env &env, const char *func_name) {
     if (unlikely(setup_state.load(std::memory_order_acquire) != 0)) {
-      NapiUtils::ThrowException(env, "RequireAsherahNotSetup: setup() already called");
+      NapiUtils::ThrowException(env, std::string(func_name) + ": RequireAsherahNotSetup: setup() already called");
     }
   }
 
