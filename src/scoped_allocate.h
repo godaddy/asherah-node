@@ -13,36 +13,34 @@
   will automatically free the allocated buffer when it goes out of scope.
 */
 
-#define SCOPED_ALLOCATE_BUFFER_UNIQUE_PTR(logger, buffer, buffer_size,         \
-                                          unique_ptr, max_stack_alloc_size,    \
-                                          function_name)                       \
+#define SCOPED_ALLOCATE_BUFFER_UNIQUE_PTR(buffer, buffer_size, unique_ptr,     \
+                                          max_stack_alloc_size, function_name) \
   do {                                                                         \
     buffer = nullptr;                                                          \
     if (buffer_size < max_stack_alloc_size) {                                  \
       /* If the buffer is small enough, allocate it on the stack */            \
-      logger.debug_log_alloca(function_name, #buffer, buffer_size);            \
       buffer = (char *)alloca(buffer_size);                                    \
-      throw std::runtime_error("alloca(" + std::to_string(buffer_size) +       \
-                               ") returned null");                             \
+      if (unlikely(buffer == nullptr)) {                                       \
+        throw std::runtime_error(std::string(function_name) + " alloca(" +     \
+                                 std::to_string(buffer_size) +                 \
+                                 ") returned null");                           \
+      }                                                                        \
     } else {                                                                   \
       /* Otherwise, allocate it on the heap */                                 \
-      logger.debug_log_new(function_name, #buffer, buffer_size);               \
       buffer = new (std::nothrow) char[buffer_size];                           \
       if (unlikely(buffer == nullptr)) {                                       \
-        std::string error_msg = std::string(function_name) + "new[" +          \
-                                std::to_string(buffer_size) +                  \
-                                "] returned null";                             \
-        throw std::runtime_error(error_msg);                                   \
+        throw std::runtime_error(std::string(function_name) + " new[" +        \
+                                 std::to_string(buffer_size) +                 \
+                                 "] returned null");                           \
       }                                                                        \
       unique_ptr.reset(buffer);                                                \
     }                                                                          \
   } while (0)
 
-#define SCOPED_ALLOCATE_BUFFER(logger, buffer, buffer_size,                    \
-                               max_stack_alloc_size, function_name)            \
+#define SCOPED_ALLOCATE_BUFFER(buffer, buffer_size, max_stack_alloc_size,      \
+                               function_name)                                  \
   std::unique_ptr<char[]> buffer##_unique_ptr;                                 \
-  SCOPED_ALLOCATE_BUFFER_UNIQUE_PTR(logger, buffer, buffer_size,               \
-                                    buffer##_unique_ptr, max_stack_alloc_size, \
-                                    function_name)
+  SCOPED_ALLOCATE_BUFFER_UNIQUE_PTR(buffer, buffer_size, buffer##_unique_ptr,  \
+                                    max_stack_alloc_size, function_name)
 
 #endif // SCOPED_ALLOCATE_H
