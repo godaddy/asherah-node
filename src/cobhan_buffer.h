@@ -61,7 +61,7 @@ public:
     cleanup();
   }
 
-    __attribute__((unused)) std::string DebugPrintStdErr() const {
+  __attribute__((unused)) std::string DebugPrintStdErr() const {
     auto debug_string = std::string(get_data_ptr(), get_data_len_bytes());
     std::ostringstream debug_output;
     debug_output << "CobhanBuffer { " << std::endl

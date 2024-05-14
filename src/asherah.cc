@@ -424,7 +424,7 @@ private:
     auto new_size = (size_t)item_size.Int32Value();
 
     maximum_stack_alloc_size = new_size;
-    //TODO: This needs exception handling consistent with other methods
+    // TODO: This needs exception handling consistent with other methods
   }
 
   void SetSafetyPaddingOverhead(const Napi::CallbackInfo &info) {
@@ -441,7 +441,7 @@ private:
                      &info) { // NOLINT(*-convert-member-functions-to-static)
     int32_t setup_status = setup_state.load(std::memory_order_acquire);
     return Napi::Boolean::New(info.Env(), setup_status != 0);
-    //TODO: This needs exception handling consistent with other methods
+    // TODO: This needs exception handling consistent with other methods
   }
 
   void SetLogHook(const Napi::CallbackInfo &info) {
@@ -452,7 +452,7 @@ private:
     }
 
     logger.set_log_hook(info[0].As<Napi::Function>());
-    //TODO: This needs exception handling consistent with other methods
+    // TODO: This needs exception handling consistent with other methods
   }
 
   void BeginSetupAsherah(const Napi::Env &env, const char *func_name,
@@ -487,7 +487,8 @@ private:
 
     auto old_setup_state = setup_state.exchange(1, std::memory_order_acq_rel);
     if (unlikely(old_setup_state != 0)) {
-      NapiUtils::ThrowException(env, "EndSetupAsherah: lost race to mark setup_state?!");
+      NapiUtils::ThrowException(
+          env, "EndSetupAsherah: lost race to mark setup_state?!");
     }
   }
 
@@ -551,7 +552,8 @@ private:
   void EndShutdownAsherah(Napi::Env &env) {
     auto old_setup_state = setup_state.exchange(0, std::memory_order_acq_rel);
     if (unlikely(old_setup_state == 0)) {
-      NapiUtils::ThrowException(env, "EndSetupAsherah: lost race to mark setup_state?!");
+      NapiUtils::ThrowException(
+          env, "EndSetupAsherah: lost race to mark setup_state?!");
     }
   }
 
@@ -663,13 +665,17 @@ private:
 
   void RequireAsherahSetup(const Napi::Env &env, const char *func_name) {
     if (unlikely(setup_state.load(std::memory_order_acquire) == 0)) {
-      NapiUtils::ThrowException(env, std::string(func_name) + ": RequireAsherahSetup: setup() not called");
+      NapiUtils::ThrowException(
+          env,
+          std::string(func_name) + ": RequireAsherahSetup: setup() not called");
     }
   }
 
   void RequireAsherahNotSetup(const Napi::Env &env, const char *func_name) {
     if (unlikely(setup_state.load(std::memory_order_acquire) != 0)) {
-      NapiUtils::ThrowException(env, std::string(func_name) + ": RequireAsherahNotSetup: setup() already called");
+      NapiUtils::ThrowException(
+          env, std::string(func_name) +
+                   ": RequireAsherahNotSetup: setup() already called");
     }
   }
 

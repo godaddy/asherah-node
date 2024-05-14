@@ -14,9 +14,9 @@ class CobhanBufferNapi : public CobhanBuffer {
 public:
   // Constructor from a Napi::String
   CobhanBufferNapi(const Napi::Env &env, const Napi::String &napiString)
-      : CobhanBuffer(NapiUtils::GetUtf8StringLength(env, napiString) +
-                     1), env(env) { // Add one for possible NULL delimiter due to Node
-                          // string functions
+      : CobhanBuffer(NapiUtils::GetUtf8StringLength(env, napiString) + 1),
+        env(env) { // Add one for possible NULL delimiter due to Node
+                   // string functions
     copy_from_string(env, napiString);
   }
 
@@ -33,8 +33,7 @@ public:
     if (napiValue.IsString()) {
       copy_from_string(env, napiValue.As<Napi::String>());
     } else if (napiValue.IsBuffer()) {
-      auto napiBuffer =
-          napiValue.As<Napi::Buffer<unsigned char>>();
+      auto napiBuffer = napiValue.As<Napi::Buffer<unsigned char>>();
       std::memcpy(get_data_ptr(), napiBuffer.Data(), napiBuffer.Length());
     } else {
       NapiUtils::ThrowException(
@@ -65,8 +64,7 @@ public:
     if (napiValue.IsString()) {
       copy_from_string(env, napiValue.As<Napi::String>());
     } else if (napiValue.IsBuffer()) {
-      auto napiBuffer =
-          napiValue.As<Napi::Buffer<unsigned char>>();
+      auto napiBuffer = napiValue.As<Napi::Buffer<unsigned char>>();
       std::memcpy(get_data_ptr(), napiBuffer.Data(), napiBuffer.Length());
     } else {
       NapiUtils::ThrowException(
@@ -82,7 +80,8 @@ public:
 
   // Constructor from externally allocated char* and size_t representing
   // allocation size in bytes
-  explicit CobhanBufferNapi(const Napi::Env &env, char *cbuffer, size_t allocation_size)
+  explicit CobhanBufferNapi(const Napi::Env &env, char *cbuffer,
+                            size_t allocation_size)
       : CobhanBuffer(cbuffer, allocation_size), env(env) {}
 
   // Move constructor

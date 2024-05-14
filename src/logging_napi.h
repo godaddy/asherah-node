@@ -11,10 +11,11 @@
 
 class LoggerNapi : public StdErrLogger {
 public:
-  LoggerNapi(Napi::Env &env, const std::string& system_name);
+  LoggerNapi(Napi::Env &env, const std::string &system_name);
 
-    [[maybe_unused]] explicit LoggerNapi(Napi::Env &env, const std::string& system_name,
-                      Napi::Function new_log_hook);
+  [[maybe_unused]] explicit LoggerNapi(Napi::Env &env,
+                                       const std::string &system_name,
+                                       Napi::Function new_log_hook);
   ~LoggerNapi();
 
   void set_log_hook(Napi::Function new_log_hook);

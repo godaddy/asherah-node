@@ -1,9 +1,9 @@
 #ifndef LOGGING_H
 #define LOGGING_H
+#include <cstddef> // size_t
+#include <cstdint> // int32_t
 #include <sstream> // std::ostringstream
 #include <string>  // std::string
-#include <cstdint> // int32_t
-#include <cstddef> // size_t
 
 class Logger {
 public:
@@ -38,8 +38,6 @@ protected:
   std::string system_name;
 
   explicit Logger(std::string system_name);
-
-
 };
 
 #endif // LOGGING_H
