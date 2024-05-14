@@ -11,7 +11,6 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist)
 # main
 add_library(${PROJECT_NAME} SHARED
         ${PROJECT_SOURCE_DIR}/src/asherah.cc
-        ${PROJECT_SOURCE_DIR}/src/logging.cc
         ${PROJECT_SOURCE_DIR}/src/logging_napi.cc
         ${PROJECT_SOURCE_DIR}/src/logging_stderr.cc
         src/scoped_allocate.h

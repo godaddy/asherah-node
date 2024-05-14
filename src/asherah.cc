@@ -11,10 +11,6 @@
 #include <atomic>
 #include <napi.h>
 
-#ifndef NAPI_CPP_EXCEPTIONS
-#error Support for C++ exceptions is required
-#endif
-
 static volatile std::atomic<int32_t> setup_state{0};
 
 class Asherah : public Napi::Addon<Asherah> {

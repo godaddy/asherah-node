@@ -1,7 +1,3 @@
-//
-// Created by Jeremiah Gowdy on 5/14/24.
-//
-
 #ifndef STDERR_LOGGER_H
 #define STDERR_LOGGER_H
 

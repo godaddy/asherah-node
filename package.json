@@ -30,7 +30,6 @@
     "src/cobhan_buffer_napi.h",
     "src/cobhan_buffer.h",
     "src/hints.h",
-    "src/logging.cc",
     "src/logging.h",
     "src/logging_napi.cc",
     "src/logging_napi.h",

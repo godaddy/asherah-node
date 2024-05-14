@@ -1,7 +1,9 @@
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
+
 #ifndef LOGGING_H
 #define LOGGING_H
+
 #include <cstddef> // size_t
 #include <cstdint> // int32_t
 #include <sstream> // std::ostringstream
@@ -9,7 +11,7 @@
 
 class Logger {
 public:
-    [[maybe_unused]] void set_verbose_flag(int32_t verbose_flag);
+    [[maybe_unused]] void set_verbose_flag(int32_t verbose) { verbose_flag = verbose != 0; };
 
   virtual void debug_log(const char *function_name,
                          const char *message) const = 0;
@@ -39,7 +41,7 @@ protected:
   bool verbose_flag = false;
   std::string system_name;
 
-  explicit Logger(std::string system_name);
+  explicit Logger(std::string system_name) : system_name(std::move(system_name)) {}
 };
 
 #endif // LOGGING_H

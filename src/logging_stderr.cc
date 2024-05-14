@@ -1,7 +1,3 @@
-//
-// Created by Jeremiah Gowdy on 5/14/24.
-//
-
 #include "logging_stderr.h"
 #include "hints.h"
 #include <iostream>

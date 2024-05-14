@@ -14,7 +14,8 @@
           '-g',
           '-O3',
           '-std=c++17',
-          '-fPIC'
+          '-fPIC',
+          '-Wno-unknown-pragmas'
         ],
       },
       'defines': [ 
@@ -26,7 +27,6 @@
         ],
       'sources': [
         'src/asherah.cc',
-        'src/logging.cc',
         'src/logging_napi.cc',
         'src/logging_stderr.cc'
       ],

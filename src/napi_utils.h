@@ -5,9 +5,6 @@
 #include <napi.h>
 #include <stdexcept>
 #include <string>
-#ifndef NAPI_CPP_EXCEPTIONS
-#error Support for C++ exceptions is required
-#endif
 
 class NapiUtils {
 public:

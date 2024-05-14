@@ -6,10 +6,6 @@
 #include <napi.h>
 #include <stdexcept>
 
-#ifndef NAPI_CPP_EXCEPTIONS
-#error Support for C++ exceptions is required
-#endif
-
 class CobhanBufferNapi : public CobhanBuffer {
 public:
   // Constructor from a Napi::String
