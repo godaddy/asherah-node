@@ -1,3 +1,5 @@
+// noinspection JSUnusedGlobalSymbols,DuplicatedCode
+
 /// <reference types="node" />
 export type AsherahConfig = {
     /** The name of this service (Required) */

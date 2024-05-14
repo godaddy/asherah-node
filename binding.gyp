@@ -14,19 +14,21 @@
           '-g',
           '-O3',
           '-std=c++17',
-          '-fPIC'
+          '-fPIC',
+          '-Wno-unknown-pragmas'
         ],
       },
       'defines': [ 
         'NAPI_CPP_EXCEPTIONS',
         'NODE_API_SWALLOW_UNTHROWABLE_EXCEPTIONS',
         'NODE_ADDON_API_DISABLE_DEPRECATED',
-        'NODE_API_NO_EXTERNAL_BUFFERS_ALLOWED'
+        'NODE_API_NO_EXTERNAL_BUFFERS_ALLOWED',
+        'USE_SCOPED_ALLOCATE_BUFFER',
         ],
       'sources': [
         'src/asherah.cc',
-        'src/logging.cc',
-        'src/logging_napi.cc'
+        'src/logging_napi.cc',
+        'src/logging_stderr.cc'
       ],
       'libraries': [ '../lib/libasherah.a' ]
     }

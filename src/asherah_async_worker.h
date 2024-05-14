@@ -1,13 +1,8 @@
-// asherah_async_worker.h
 #ifndef ASHERAH_ASYNC_WORKER_H
 #define ASHERAH_ASYNC_WORKER_H
 
 #include <napi.h>
 #include <stdexcept>
-
-#ifndef NAPI_CPP_EXCEPTIONS
-#error Support for C++ exceptions is required
-#endif
 
 class Asherah;
 

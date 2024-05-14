@@ -6,35 +6,30 @@
 #include <napi.h>
 #include <stdexcept>
 
-#ifndef NAPI_CPP_EXCEPTIONS
-#error Support for C++ exceptions is required
-#endif
-
 class CobhanBufferNapi : public CobhanBuffer {
 public:
   // Constructor from a Napi::String
   CobhanBufferNapi(const Napi::Env &env, const Napi::String &napiString)
-      : CobhanBuffer(NapiUtils::GetUtf8StringLength(env, napiString) +
-                     1) { // Add one for possible NULL delimiter due to Node
-                          // string functions
-    copy_from_string(env, napiString);
+      : CobhanBuffer(NapiUtils::GetUtf8StringLength(env, napiString) + 1),
+        env(env) { // Add one for possible NULL delimiter due to Node
+                   // string functions
+    copy_from_string(napiString);
   }
 
   // Constructor from Napi::Buffer<unsigned char>
   explicit CobhanBufferNapi(const Napi::Env &env,
                             const Napi::Buffer<unsigned char> &napiBuffer)
-      : CobhanBuffer(napiBuffer.ByteLength()) {
+      : CobhanBuffer(napiBuffer.ByteLength()), env(env) {
     std::memcpy(get_data_ptr(), napiBuffer.Data(), napiBuffer.ByteLength());
   }
 
   // Constructor from Napi::Value
   explicit CobhanBufferNapi(const Napi::Env &env, const Napi::Value &napiValue)
-      : CobhanBuffer(ValueToDataSize(env, napiValue)) {
+      : CobhanBuffer(ValueToDataSize(env, napiValue)), env(env) {
     if (napiValue.IsString()) {
-      copy_from_string(env, napiValue.As<Napi::String>());
+      copy_from_string(napiValue.As<Napi::String>());
     } else if (napiValue.IsBuffer()) {
-      Napi::Buffer<unsigned char> napiBuffer =
-          napiValue.As<Napi::Buffer<unsigned char>>();
+      auto napiBuffer = napiValue.As<Napi::Buffer<unsigned char>>();
       std::memcpy(get_data_ptr(), napiBuffer.Data(), napiBuffer.Length());
     } else {
       NapiUtils::ThrowException(
@@ -47,26 +42,25 @@ public:
   CobhanBufferNapi(const Napi::Env &env,
                    const Napi::Buffer<unsigned char> &napiBuffer, char *cbuffer,
                    size_t allocation_size)
-      : CobhanBuffer(cbuffer, allocation_size) {
+      : CobhanBuffer(cbuffer, allocation_size), env(env) {
     std::memcpy(get_data_ptr(), napiBuffer.Data(), napiBuffer.Length());
   }
 
   // Constructor from a Napi::String to an externally allocated buffer
   CobhanBufferNapi(const Napi::Env &env, const Napi::String &napiString,
                    char *cbuffer, size_t allocation_size)
-      : CobhanBuffer(cbuffer, allocation_size) {
-    copy_from_string(env, napiString);
+      : CobhanBuffer(cbuffer, allocation_size), env(env) {
+    copy_from_string(napiString);
   }
 
   // Constructor from a Napi::String to an externally allocated buffer
   CobhanBufferNapi(const Napi::Env &env, const Napi::Value &napiValue,
                    char *cbuffer, size_t allocation_size)
-      : CobhanBuffer(cbuffer, allocation_size) {
+      : CobhanBuffer(cbuffer, allocation_size), env(env) {
     if (napiValue.IsString()) {
-      copy_from_string(env, napiValue.As<Napi::String>());
+      copy_from_string(napiValue.As<Napi::String>());
     } else if (napiValue.IsBuffer()) {
-      Napi::Buffer<unsigned char> napiBuffer =
-          napiValue.As<Napi::Buffer<unsigned char>>();
+      auto napiBuffer = napiValue.As<Napi::Buffer<unsigned char>>();
       std::memcpy(get_data_ptr(), napiBuffer.Data(), napiBuffer.Length());
     } else {
       NapiUtils::ThrowException(
@@ -77,17 +71,18 @@ public:
 
   // Constructor from size_t representing data length in bytes (not allocation
   // size)
-  explicit CobhanBufferNapi(size_t data_len_bytes)
-      : CobhanBuffer(data_len_bytes) {}
+  explicit CobhanBufferNapi(const Napi::Env &env, size_t data_len_bytes)
+      : CobhanBuffer(data_len_bytes), env(env) {}
 
   // Constructor from externally allocated char* and size_t representing
   // allocation size in bytes
-  explicit CobhanBufferNapi(char *cbuffer, size_t allocation_size)
-      : CobhanBuffer(cbuffer, allocation_size) {}
+  explicit CobhanBufferNapi(const Napi::Env &env, char *cbuffer,
+                            size_t allocation_size)
+      : CobhanBuffer(cbuffer, allocation_size), env(env) {}
 
   // Move constructor
   CobhanBufferNapi(CobhanBufferNapi &&other) noexcept
-      : CobhanBuffer(std::move(other)) {}
+      : CobhanBuffer(std::move(other)), env(other.env) {}
 
   // Move assignment operator
   CobhanBufferNapi &operator=(CobhanBufferNapi &&other) noexcept {
@@ -98,7 +93,7 @@ public:
   }
 
   // Returns a Napi::String from the buffer using napi_create_string_utf8
-  Napi::String ToString(const Napi::Env &env) const {
+  [[nodiscard]] Napi::String ToString() const {
     napi_value napiStr;
     napi_status status = napi_create_string_utf8(
         env, get_data_ptr(), get_data_len_bytes(), &napiStr);
@@ -113,7 +108,7 @@ public:
   }
 
   // Returns a Napi::Buffer<unsigned char> from the buffer
-  Napi::Buffer<unsigned char> ToBuffer(const Napi::Env &env) const {
+  [[nodiscard]] Napi::Buffer<unsigned char> ToBuffer() const {
     auto buffer = Napi::Buffer<unsigned char>::Copy(
         env, reinterpret_cast<unsigned char *>(get_data_ptr()),
         get_data_len_bytes());
@@ -167,9 +162,11 @@ public:
   }
 
 private:
-  void copy_from_string(const Napi::Env &env, const Napi::String &napiString) {
-    size_t str_len = NapiUtils::GetUtf8StringLength(env, napiString);
+  Napi::Env env;
 
+  void copy_from_string(const Napi::String &napiString) {
+    size_t str_len = NapiUtils::GetUtf8StringLength(env, napiString);
+    // Add one for NULL delimiter due to napi_get_value_string_utf8
     size_t allocation_size =
         CobhanBuffer::DataSizeToAllocationSize(str_len) + 1;
 
@@ -179,6 +176,7 @@ private:
           "Buffer allocation size is insufficient to hold the Napi::String.");
     }
 
+    // Bytes written is the number of bytes copied, excluding the NULL
     size_t bytes_written;
     napi_status status = napi_get_value_string_utf8(
         env, napiString, get_data_ptr(), str_len + 1, &bytes_written);
@@ -189,6 +187,7 @@ private:
                    ", Bytes Written: " + std::to_string(bytes_written));
     }
 
+    // Update our data length to the actual string length
     set_data_len_bytes(str_len);
   }
 };

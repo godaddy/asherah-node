@@ -110,6 +110,11 @@ integration/go
 
 examples/docker/package-lock.json
 
+third_party/
+
+*.cbp
+.cmake
+
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
@@ -122,3 +127,15 @@ examples/docker/package-lock.json
 
 # Built Visual Studio Code Extensions
 *.vsix
+
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps

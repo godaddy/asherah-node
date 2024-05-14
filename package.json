@@ -11,7 +11,7 @@
   },
   "scripts": {
     "preinstall": "scripts/download-libraries.sh",
-    "load": "node --max-old-space-size=500 scripts/dumpster-fire.js",
+    "load": "node --max-old-space-size=500 scripts/dumpster-fire-memory.js",
     "install": "scripts/build.sh",
     "test:mocha-debug": "lldb -o run -- node node_modules/mocha/bin/mocha --inspect-brk",
     "test:mocha": "mocha",
@@ -30,10 +30,11 @@
     "src/cobhan_buffer_napi.h",
     "src/cobhan_buffer.h",
     "src/hints.h",
-    "src/logging.cc",
     "src/logging.h",
     "src/logging_napi.cc",
     "src/logging_napi.h",
+    "src/logging_stderr.cc",
+    "src/logging_stderr.h",
     "src/napi_utils.h",
     "src/scoped_allocate.h",
     "src/asherah.d.ts",
@@ -70,6 +71,6 @@
   },
   "types": "dist/asherah.d.ts",
   "dependencies": {
-    "node-addon-api": "7.0.0"
+    "node-addon-api": "^7.0.0"
   }
 }

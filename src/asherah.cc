@@ -1,20 +1,15 @@
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "readability-convert-member-functions-to-static"
 
-#define USE_SCOPE_ALLOCATE_BUFFER 1
 #include "asherah_async_worker.h"
 #include "cobhan_buffer_napi.h"
 #include "hints.h"
 #include "libasherah.h"
 #include "logging_napi.h"
 #include "napi_utils.h"
-#ifdef USE_SCOPED_ALLOCATE_BUFFER
 #include "scoped_allocate.h"
-#endif
 #include <atomic>
 #include <napi.h>
-
-#ifndef NAPI_CPP_EXCEPTIONS
-#error Support for C++ exceptions is required
-#endif
 
 static volatile std::atomic<int32_t> setup_state{0};
 
@@ -71,7 +66,7 @@ private:
       char *config_cbuffer;
       size_t config_cbuffer_size =
           CobhanBufferNapi::StringToAllocationSize(env, config_string);
-      SCOPED_ALLOCATE_BUFFER(logger, config_cbuffer, config_cbuffer_size,
+      SCOPED_ALLOCATE_BUFFER(config_cbuffer, config_cbuffer_size,
                              maximum_stack_alloc_size, __func__);
 
       CobhanBufferNapi config(env, config_string, config_cbuffer,
@@ -166,14 +161,13 @@ private:
       char *partition_id_cbuffer;
       size_t partition_id_cbuffer_size =
           CobhanBufferNapi::StringToAllocationSize(env, partition_id_string);
-      SCOPED_ALLOCATE_BUFFER(logger, partition_id_cbuffer,
-                             partition_id_cbuffer_size,
+      SCOPED_ALLOCATE_BUFFER(partition_id_cbuffer, partition_id_cbuffer_size,
                              maximum_stack_alloc_size, __func__);
 
       char *input_cbuffer;
       size_t input_cbuffer_size =
           CobhanBufferNapi::ValueToAllocationSize(env, input_value);
-      SCOPED_ALLOCATE_BUFFER(logger, input_cbuffer, input_cbuffer_size,
+      SCOPED_ALLOCATE_BUFFER(input_cbuffer, input_cbuffer_size,
                              maximum_stack_alloc_size, __func__);
 
       CobhanBufferNapi partition_id(env, partition_id_string,
@@ -195,11 +189,11 @@ private:
       char *output_cobhan_buffer;
       size_t output_size_bytes =
           CobhanBuffer::DataSizeToAllocationSize(asherah_output_size_bytes);
-      SCOPED_ALLOCATE_BUFFER(logger, output_cobhan_buffer, output_size_bytes,
+      SCOPED_ALLOCATE_BUFFER(output_cobhan_buffer, output_size_bytes,
                              maximum_stack_alloc_size, __func__);
-      CobhanBufferNapi output(output_cobhan_buffer, output_size_bytes);
+      CobhanBufferNapi output(env, output_cobhan_buffer, output_size_bytes);
 #else
-      CobhanBufferNapi output(asherah_output_size_bytes);
+      CobhanBufferNapi output(env, asherah_output_size_bytes);
 #endif
 
       GoInt32 result = EncryptToJson(partition_id, input, output);
@@ -233,7 +227,7 @@ private:
       size_t asherah_output_size_bytes = EstimateAsherahOutputSize(
           input_data_len_bytes, partition_id_data_len_bytes);
 
-      CobhanBufferNapi output(asherah_output_size_bytes);
+      CobhanBufferNapi output(env, asherah_output_size_bytes);
 
       auto worker =
           new EncryptAsherahWorker(env, this, partition_id, input, output);
@@ -263,14 +257,13 @@ private:
       char *partition_id_cbuffer;
       size_t partition_id_cbuffer_size =
           CobhanBufferNapi::StringToAllocationSize(env, partition_id_string);
-      SCOPED_ALLOCATE_BUFFER(logger, partition_id_cbuffer,
-                             partition_id_cbuffer_size,
+      SCOPED_ALLOCATE_BUFFER(partition_id_cbuffer, partition_id_cbuffer_size,
                              maximum_stack_alloc_size, __func__);
 
       char *input_cbuffer;
       size_t input_cbuffer_size =
           CobhanBufferNapi::ValueToAllocationSize(env, input_value);
-      SCOPED_ALLOCATE_BUFFER(logger, input_cbuffer, input_cbuffer_size,
+      SCOPED_ALLOCATE_BUFFER(input_cbuffer, input_cbuffer_size,
                              maximum_stack_alloc_size, __func__);
 
       CobhanBufferNapi partition_id(env, partition_id_string,
@@ -282,13 +275,13 @@ private:
       char *output_cobhan_buffer;
       size_t output_size_bytes =
           CobhanBuffer::DataSizeToAllocationSize(input.get_data_len_bytes());
-      SCOPED_ALLOCATE_BUFFER(logger, output_cobhan_buffer, output_size_bytes,
+      SCOPED_ALLOCATE_BUFFER(output_cobhan_buffer, output_size_bytes,
                              maximum_stack_alloc_size, __func__);
-      CobhanBufferNapi output(output_cobhan_buffer, output_size_bytes);
+      CobhanBufferNapi output(env, output_cobhan_buffer, output_size_bytes);
 #else
       CobhanBufferNapi partition_id(env, partition_id_string);
       CobhanBufferNapi input(env, input_value);
-      CobhanBufferNapi output(input.get_data_len_bytes());
+      CobhanBufferNapi output(env, input.get_data_len_bytes());
 #endif
 
       // extern GoInt32 DecryptFromJson(void* partitionIdPtr, void* jsonPtr,
@@ -297,7 +290,7 @@ private:
 
       CheckResult(env, result);
 
-      output_value = output.ToBuffer(env); // NOLINT(*-slicing)
+      output_value = output.ToBuffer(); // NOLINT(*-slicing)
     } catch (Napi::Error &e) {
       e.ThrowAsJavaScriptException();
       return env.Undefined();
@@ -321,7 +314,7 @@ private:
       CobhanBufferNapi partition_id(env, partition_id_string);
       CobhanBufferNapi input(env, input_value);
 
-      CobhanBufferNapi output(input.get_data_len_bytes());
+      CobhanBufferNapi output(env, input.get_data_len_bytes());
       auto worker = new DecryptFromJsonWorker<Napi::Buffer<unsigned char>>(
           env, this, partition_id, input, output);
       worker->Queue();
@@ -351,14 +344,13 @@ private:
       char *partition_id_cbuffer;
       size_t partition_id_cbuffer_size =
           CobhanBufferNapi::StringToAllocationSize(env, partition_id_string);
-      SCOPED_ALLOCATE_BUFFER(logger, partition_id_cbuffer,
-                             partition_id_cbuffer_size,
+      SCOPED_ALLOCATE_BUFFER(partition_id_cbuffer, partition_id_cbuffer_size,
                              maximum_stack_alloc_size, __func__);
 
       char *input_cbuffer;
       size_t input_cbuffer_size =
           CobhanBufferNapi::ValueToAllocationSize(env, input_value);
-      SCOPED_ALLOCATE_BUFFER(logger, input_cbuffer, input_cbuffer_size,
+      SCOPED_ALLOCATE_BUFFER(input_cbuffer, input_cbuffer_size,
                              maximum_stack_alloc_size, __func__);
 
       CobhanBufferNapi partition_id(env, partition_id_string,
@@ -367,11 +359,11 @@ private:
       CobhanBufferNapi input(env, input_value, input_cbuffer,
                              input_cbuffer_size);
 
-      CobhanBufferNapi output(input.get_data_len_bytes());
+      CobhanBufferNapi output(env, input.get_data_len_bytes());
 #else
       CobhanBufferNapi partition_id(env, partition_id_string);
       CobhanBufferNapi input(env, input_value);
-      CobhanBufferNapi output(input.get_data_len_bytes());
+      CobhanBufferNapi output(env, input.get_data_len_bytes());
 #endif
 
       GoInt32 result = DecryptFromJson(partition_id, input, output);
@@ -401,7 +393,7 @@ private:
       CobhanBufferNapi partition_id(env, partition_id_string);
       CobhanBufferNapi input(env, input_value);
 
-      CobhanBufferNapi output(input.get_data_len_bytes());
+      CobhanBufferNapi output(env, input.get_data_len_bytes());
 
       auto worker = new DecryptFromJsonWorker<Napi::String>(
           env, this, partition_id, input, output);
@@ -418,41 +410,79 @@ private:
   }
 
   void SetMaxStackAllocItemSize(const Napi::CallbackInfo &info) {
-    NapiUtils::RequireParameterCount(info, 1);
+    Napi::Env env = info.Env();
+    Napi::HandleScope scope(env);
+    try {
+      NapiUtils::RequireParameterCount(info, 1);
 
-    Napi::Number item_size = info[0].ToNumber();
-    auto new_size = (size_t)item_size.Int32Value();
+      Napi::Number item_size = info[0].ToNumber();
+      auto new_size = (size_t)item_size.Int32Value();
 
-    maximum_stack_alloc_size = new_size;
-    //TODO: This needs exception handling consistent with other methods
+      maximum_stack_alloc_size = new_size;
+    } catch (Napi::Error &e) {
+      e.ThrowAsJavaScriptException();
+      return;
+    } catch (const std::exception &e) {
+      Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
+      return;
+    }
   }
 
   void SetSafetyPaddingOverhead(const Napi::CallbackInfo &info) {
-    NapiUtils::RequireParameterCount(info, 1);
+    Napi::Env env = info.Env();
+    Napi::HandleScope scope(env);
+    try {
+      NapiUtils::RequireParameterCount(info, 1);
 
-    // Napi::Number safety_padding_number = info[0].ToNumber();
-    // auto new_safety_padding_bytes = (size_t)
-    // safety_padding_number.Int32Value(); Safety padding size is now fixed -
-    // ignore the input set_safety_padding_bytes(new_safety_padding_bytes);
+      // Napi::Number safety_padding_number = info[0].ToNumber();
+      // auto new_safety_padding_bytes = (size_t)
+      // safety_padding_number.Int32Value(); Safety padding size is now fixed -
+      // ignore the input set_safety_padding_bytes(new_safety_padding_bytes);
+    } catch (Napi::Error &e) {
+      e.ThrowAsJavaScriptException();
+      return;
+    } catch (const std::exception &e) {
+      Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
+      return;
+    }
   }
 
   Napi::Value
   GetSetupStatus(const Napi::CallbackInfo
                      &info) { // NOLINT(*-convert-member-functions-to-static)
-    int32_t setup_status = setup_state.load(std::memory_order_acquire);
-    return Napi::Boolean::New(info.Env(), setup_status != 0);
-    //TODO: This needs exception handling consistent with other methods
+    Napi::Env env = info.Env();
+    Napi::HandleScope scope(env);
+    try {
+      int32_t setup_status = setup_state.load(std::memory_order_acquire);
+      return Napi::Boolean::New(info.Env(), setup_status != 0);
+    } catch (Napi::Error &e) {
+      e.ThrowAsJavaScriptException();
+      return env.Undefined();
+    } catch (const std::exception &e) {
+      Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
+      return env.Undefined();
+    }
   }
 
   void SetLogHook(const Napi::CallbackInfo &info) {
-    NapiUtils::RequireParameterCount(info, 1);
 
-    if (unlikely(!info[0].IsFunction())) {
-      NapiUtils::ThrowException(info.Env(), "Expected a function");
+    Napi::Env env = info.Env();
+    Napi::HandleScope scope(env);
+    try {
+      NapiUtils::RequireParameterCount(info, 1);
+
+      if (unlikely(!info[0].IsFunction())) {
+        NapiUtils::ThrowException(info.Env(), "Expected a function");
+      }
+
+      logger.set_log_hook(info[0].As<Napi::Function>());
+    } catch (Napi::Error &e) {
+      e.ThrowAsJavaScriptException();
+      return;
+    } catch (const std::exception &e) {
+      Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
+      return;
     }
-
-    logger.set_log_hook(info[0].As<Napi::Function>());
-    //TODO: This needs exception handling consistent with other methods
   }
 
   void BeginSetupAsherah(const Napi::Env &env, const char *func_name,
@@ -487,7 +517,8 @@ private:
 
     auto old_setup_state = setup_state.exchange(1, std::memory_order_acq_rel);
     if (unlikely(old_setup_state != 0)) {
-      NapiUtils::ThrowException(env, "EndSetupAsherah: lost race to mark setup_state?!");
+      NapiUtils::ThrowException(
+          env, "EndSetupAsherah: lost race to mark setup_state?!");
     }
   }
 
@@ -506,14 +537,15 @@ private:
                         Napi::String &output_string) {
     CheckResult(env, result);
 
-    output_string = output.ToString(env);
+    output_string = output.ToString();
   }
 
-  void EndEncryptToJson(Napi::Env env, CobhanBufferNapi &output, GoInt32 result,
-                        Napi::Buffer<unsigned char> &output_buffer) {
+  [[maybe_unused]] void
+  EndEncryptToJson(Napi::Env env, CobhanBufferNapi &output, GoInt32 result,
+                   Napi::Buffer<unsigned char> &output_buffer) {
     CheckResult(env, result);
 
-    output_buffer = output.ToBuffer(env);
+    output_buffer = output.ToBuffer();
   }
 
   void BeginDecryptFromJson(const Napi::Env &env, const char *func_name,
@@ -532,14 +564,14 @@ private:
                           Napi::Buffer<unsigned char> &output_buffer) {
     CheckResult(env, result);
 
-    output_buffer = output.ToBuffer(env);
+    output_buffer = output.ToBuffer();
   }
 
   void EndDecryptFromJson(Napi::Env &env, CobhanBufferNapi &output,
                           GoInt32 result, Napi::String &output_string) {
     CheckResult(env, result);
 
-    output_string = output.ToString(env);
+    output_string = output.ToString();
   }
 
   void BeginShutdownAsherah(const Napi::Env &env, const char *func_name,
@@ -551,7 +583,8 @@ private:
   void EndShutdownAsherah(Napi::Env &env) {
     auto old_setup_state = setup_state.exchange(0, std::memory_order_acq_rel);
     if (unlikely(old_setup_state == 0)) {
-      NapiUtils::ThrowException(env, "EndSetupAsherah: lost race to mark setup_state?!");
+      NapiUtils::ThrowException(
+          env, "EndSetupAsherah: lost race to mark setup_state?!");
     }
   }
 
@@ -626,10 +659,10 @@ private:
     Napi::Value OnOKTask(Napi::Env &env) override {
       T output_result;
       asherah->EndDecryptFromJson(env, output, result, output_result);
-      return output_result;
+      return output_result; // NOLINT(*-slicing)
     }
 
-  protected:
+  private:
     CobhanBufferNapi partition_id;
     CobhanBufferNapi input;
     CobhanBufferNapi output;
@@ -663,18 +696,23 @@ private:
 
   void RequireAsherahSetup(const Napi::Env &env, const char *func_name) {
     if (unlikely(setup_state.load(std::memory_order_acquire) == 0)) {
-      NapiUtils::ThrowException(env, "RequireAsherahSetup: setup() not called");
+      NapiUtils::ThrowException(
+          env,
+          std::string(func_name) + ": RequireAsherahSetup: setup() not called");
     }
   }
 
   void RequireAsherahNotSetup(const Napi::Env &env, const char *func_name) {
     if (unlikely(setup_state.load(std::memory_order_acquire) != 0)) {
-      NapiUtils::ThrowException(env, "RequireAsherahNotSetup: setup() already called");
+      NapiUtils::ThrowException(
+          env, std::string(func_name) +
+                   ": RequireAsherahNotSetup: setup() already called");
     }
   }
 
-  __attribute__((always_inline)) inline size_t
-  EstimateAsherahOutputSize(size_t data_byte_len, size_t partition_byte_len) {
+  [[nodiscard]] __attribute__((always_inline)) inline size_t
+  EstimateAsherahOutputSize(size_t data_byte_len,
+                            size_t partition_byte_len) const {
     const size_t est_encryption_overhead = 48;
     const size_t est_envelope_overhead = 185;
     const double base64_overhead = 1.34;
@@ -733,3 +771,5 @@ private:
 };
 
 NODE_API_NAMED_ADDON(asherah, Asherah)
+
+#pragma clang diagnostic pop

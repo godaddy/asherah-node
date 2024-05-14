@@ -1,18 +1,18 @@
 #ifndef LOGGING_NAPI_H
 #define LOGGING_NAPI_H
+
 #include "hints.h"
 #include "logging.h"
+#include "logging_stderr.h"
 #include <napi.h>
 
-#ifndef NAPI_CPP_EXCEPTIONS
-#error Support for C++ exceptions is required
-#endif
-
-class LoggerNapi : public Logger {
+class LoggerNapi : public StdErrLogger {
 public:
-  LoggerNapi(Napi::Env &env, std::string system_name);
-  explicit LoggerNapi(Napi::Env &env, std::string system_name,
-                      Napi::Function new_log_hook);
+  LoggerNapi(Napi::Env &env, const std::string &system_name);
+
+  [[maybe_unused]] explicit LoggerNapi(Napi::Env &env,
+                                       const std::string &system_name,
+                                       Napi::Function new_log_hook);
   ~LoggerNapi();
 
   void set_log_hook(Napi::Function new_log_hook);

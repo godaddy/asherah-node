@@ -5,9 +5,6 @@
 #include <napi.h>
 #include <stdexcept>
 #include <string>
-#ifndef NAPI_CPP_EXCEPTIONS
-#error Support for C++ exceptions is required
-#endif
 
 class NapiUtils {
 public:
@@ -26,7 +23,7 @@ public:
 
   [[noreturn]] static void ThrowException(const Napi::Env &env,
                                           const std::string &message) {
-    //throw std::runtime_error(message);
+    // throw std::runtime_error(message);
     throw Napi::Error::New(env, message);
   }
 
@@ -41,12 +38,12 @@ public:
       ThrowException(env, "Input value is undefined");
     } else if (value.IsString()) {
       // Convert string to object using JSON.parse
-      Napi::String str = value.As<Napi::String>();
+      auto str = value.As<Napi::String>();
       jsonString = str;
       jsonObject = jsonParse.Call({str}).As<Napi::Object>();
     } else if (value.IsObject()) {
       // Convert object to string using JSON.stringify
-      Napi::Object obj = value.As<Napi::Object>();
+        auto obj = value.As<Napi::Object>();
       if (jsonStringify.IsUndefined()) {
         ThrowException(env, "jsonStringify is undefined");
       } else if (jsonStringify.IsEmpty()) {
@@ -114,25 +111,31 @@ public:
     if (likely(value.IsString())) {
       return value.As<Napi::String>();
     } else if (unlikely(value.IsUndefined())) {
-      ThrowException(env, std::string(func_name) + ": Expected String but received undefined");
+      ThrowException(env, std::string(func_name) +
+                              ": Expected String but received undefined");
     } else if (unlikely(value.IsNull())) {
-      ThrowException(env, std::string(func_name) + ": Expected String but received null");
+      ThrowException(env, std::string(func_name) +
+                              ": Expected String but received null");
     } else {
-      ThrowException(env, std::string(func_name) + ": Expected String but received unknown type");
+      ThrowException(env, std::string(func_name) +
+                              ": Expected String but received unknown type");
     }
   }
 
-    __attribute__((unused)) static Napi::Buffer<unsigned char>
+  __attribute__((unused)) static Napi::Buffer<unsigned char>
   RequireParameterBuffer(const Napi::Env &env, const char *func_name,
                          Napi::Value value) {
     if (likely(value.IsBuffer())) {
       return value.As<Napi::Buffer<unsigned char>>();
     } else if (unlikely(value.IsUndefined())) {
-      ThrowException(env, std::string(func_name) + ": Expected String but received undefined");
+      ThrowException(env, std::string(func_name) +
+                              ": Expected String but received undefined");
     } else if (unlikely(value.IsNull())) {
-      ThrowException(env, std::string(func_name) + ": Expected String but received null");
+      ThrowException(env, std::string(func_name) +
+                              ": Expected String but received null");
     } else {
-      ThrowException(env, std::string(func_name) + ": Expected String but received unknown type");
+      ThrowException(env, std::string(func_name) +
+                              ": Expected String but received unknown type");
     }
   }
 
@@ -144,11 +147,14 @@ public:
     } else if (likely(value.IsBuffer())) {
       return value.As<Napi::Buffer<unsigned char>>(); // NOLINT(*-slicing)
     } else if (unlikely(value.IsUndefined())) {
-      ThrowException(env, std::string(func_name) + ": Expected String but received undefined");
+      ThrowException(env, std::string(func_name) +
+                              ": Expected String but received undefined");
     } else if (unlikely(value.IsNull())) {
-      ThrowException(env, std::string(func_name) + ": Expected String but received null");
+      ThrowException(env, std::string(func_name) +
+                              ": Expected String but received null");
     } else {
-      ThrowException(env, std::string(func_name) + ": Expected String but received unknown type");
+      ThrowException(env, std::string(func_name) +
+                              ": Expected String but received unknown type");
     }
   }
 
