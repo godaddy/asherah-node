@@ -4,9 +4,7 @@
 
 void Logger::set_verbose_flag(int32_t verbose) { verbose_flag = verbose != 0; }
 
-Logger::Logger(const std::string &system_name) : system_name(system_name) {
-  std::cerr << "Created logger for " << system_name << std::endl << std::flush;
-}
+Logger::Logger(const std::string &system_name) : system_name(system_name) {}
 
 void Logger::stderr_debug_log(const char *function_name, const char *message) const {
   if (unlikely(verbose_flag)) {
