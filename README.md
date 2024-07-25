@@ -97,6 +97,64 @@ console.log("Output: " + output)
 asherah.shutdown()
 ```
 
+### Environment Variables and AWS
+
+If you're experiencing issues with AWS credentials, you can forcibly set the environment variables prior to calling setup in such a way as to ensure they're set for the Go runtime:
+
+```javascript
+
+const asherah = require('asherah');
+const fs = require('fs');
+
+const config = {
+    KMS: 'aws',
+    Metastore: 'memory',
+    ServiceName: 'TestService',
+    ProductID: 'TestProduct',
+    Verbose: true,
+    EnableSessionCaching: true,
+    ExpireAfter: null,
+    CheckInterval: null,
+    ConnectionString: null,
+    ReplicaReadConsistency: null,
+    DynamoDBEndpoint: null,
+    DynamoDBRegion: null,
+    DynamoDBTableName: null,
+    SessionCacheMaxSize: null,
+    SessionCacheDuration: null,
+    RegionMap: {"us-west-2": "arn:aws:kms:us-west-2:XXXXXXXXX:key/XXXXXXXXXX"},
+    PreferredRegion: null,
+    EnableRegionSuffix: null
+  };
+
+// Read the AWS environment variables from the JSON file
+// DO NOT HARDCODE YOUR AWS CREDENTIALS
+const awsEnvPath = './awsEnv.json';
+const awsEnvData = fs.readFileSync(awsEnvPath, 'utf8');
+const awsEnv = JSON.parse(awsEnvData);
+
+// Set the environment variables using the setenv function
+asherah.setenv(awsEnv);
+
+asherah.setup(config)
+
+const input = 'mysecretdata'
+
+console.log("Input: " + input)
+
+const data = Buffer.from(input, 'utf8');
+
+const encrypted = asherah.encrypt('partition', data);
+
+const decrypted = asherah.decrypt('partition', encrypted);
+
+const output = decrypted.toString('utf8');
+
+console.log("Output: " + output)
+
+asherah.shutdown()
+```
+
 ### Go and Alpine / musl libc
 
 The Golang compiler when creating shared libraries (.so) uses a Thread Local Storage model of init-exec.  This model is inheriently incompatible with loading libraries at runtime with dlopen(), unless your libc reserves some space for dlopen()'ed libraries which is something of a hack.  The most common libc, glibc does in fact reserve space for dlopen()'ed libraries that use init-exec model.  The libc provided with Alpine is musl libc, and it does not participate in this hack / workaround of reserving space.  Most compilers generate libraries with a Thread Local Storage model of global-dynamic which does not require this workaround, and the authors of musl libc do not feel that workaround should exist.

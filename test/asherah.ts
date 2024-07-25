@@ -79,6 +79,7 @@ export function asherah_setup(config: AsherahConfig) {
 
 export function asherah_setup_static_memory(verbose = false, session_cache = true, max_stack_alloc_item_size = -1): void {
     configure_winston_logging();
+    asherah_set_env();
     setup(get_static_memory_config(verbose, session_cache));
     if (max_stack_alloc_item_size >= 0) {
         set_max_stack_alloc_item_size(max_stack_alloc_item_size);
@@ -87,13 +88,14 @@ export function asherah_setup_static_memory(verbose = false, session_cache = tru
 
 export async function asherah_setup_static_memory_async(verbose = false, session_cache = true, max_stack_alloc_item_size = -1): Promise<void> {
     configure_winston_logging();
+    asherah_set_env();
     await setup_async(get_static_memory_config(verbose, session_cache));
     if (max_stack_alloc_item_size >= 0) {
         set_max_stack_alloc_item_size(max_stack_alloc_item_size);
     }
 }
 
-export async function asherah_set_env(): Promise<void> {
+export function asherah_set_env() {
     const myString = '{"VAR": "VAL"}';
     setenv(myString);
 }
