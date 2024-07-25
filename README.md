@@ -131,7 +131,7 @@ const config = {
 // DO NOT HARDCODE YOUR AWS CREDENTIALS
 const awsEnvPath = './awsEnv.json';
 const awsEnvData = fs.readFileSync(awsEnvPath, 'utf8');
-const awsEnv = JSON.parse(awsEnvData);
+const awsEnv = JSON.stringify(awsEnvData);
 
 // Set the environment variables using the setenv function
 asherah.setenv(awsEnv);
