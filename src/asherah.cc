@@ -38,6 +38,7 @@ public:
                            &Asherah::SetSafetyPaddingOverhead),
             InstanceMethod("get_setup_status", &Asherah::GetSetupStatus),
             InstanceMethod("set_log_hook", &Asherah::SetLogHook),
+            InstanceMethod("setenv", &Asherah::SetEnv),
         });
   }
 
@@ -406,6 +407,22 @@ private:
     } catch (const std::exception &e) {
       Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
       return env.Undefined();
+    }
+  }
+
+  void SetEnv(const Napi::CallbackInfo &info) {
+    Napi::Env env = info.Env();
+    Napi::HandleScope scope(env);
+    try {
+      NapiUtils::RequireParameterCount(info, 1);
+      CobhanBufferNapi env_json(env, info[0]);
+      ::SetEnv(env_json);
+    } catch (Napi::Error &e) {
+      e.ThrowAsJavaScriptException();
+      return;
+    } catch (const std::exception &e) {
+      Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
+      return;
     }
   }
 
