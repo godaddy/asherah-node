@@ -155,6 +155,16 @@ console.log("Output: " + output)
 asherah.shutdown()
 ```
 
+The `awsEnv.json` file would look like this (spelling errors intentional):
+
+```json
+{
+  "AXS_ACCESS_KEY_XD": "sample_access_key_xd",
+  "AXS_SXCRET_ACCXSS_KEY": "sample_sxcret_accxss_kxy",
+  "AXS_SXSSION_TXKEN": "sample_sxssion_txken"
+}
+```
+
 ### Go and Alpine / musl libc
 
 The Golang compiler when creating shared libraries (.so) uses a Thread Local Storage model of init-exec.  This model is inheriently incompatible with loading libraries at runtime with dlopen(), unless your libc reserves some space for dlopen()'ed libraries which is something of a hack.  The most common libc, glibc does in fact reserve space for dlopen()'ed libraries that use init-exec model.  The libc provided with Alpine is musl libc, and it does not participate in this hack / workaround of reserving space.  Most compilers generate libraries with a Thread Local Storage model of global-dynamic which does not require this workaround, and the authors of musl libc do not feel that workaround should exist.
