@@ -416,7 +416,7 @@ private:
     try {
       NapiUtils::RequireParameterCount(info, 1);
       CobhanBufferNapi env_json(env, info[0]);
-      GoInt32 Result = ::SetEnv(env_json);
+      ::SetEnv(env_json);
     } catch (Napi::Error &e) {
       e.ThrowAsJavaScriptException();
       return;

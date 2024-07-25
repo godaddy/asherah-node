@@ -14,7 +14,8 @@ import {
     shutdown_async,
     get_setup_status,
     set_max_stack_alloc_item_size,
-    set_log_hook
+    set_log_hook,
+    setenv
 } from '../dist/asherah'
 
 import { assert } from 'chai';
@@ -90,6 +91,11 @@ export async function asherah_setup_static_memory_async(verbose = false, session
     if (max_stack_alloc_item_size >= 0) {
         set_max_stack_alloc_item_size(max_stack_alloc_item_size);
     }
+}
+
+export async function asherah_set_env(): Promise<void> {
+    const myString = '{"VAR": "VAL"}';
+    setenv(myString);
 }
 
 export function asherah_shutdown(): void {
