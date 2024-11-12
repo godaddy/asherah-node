@@ -6,9 +6,8 @@ const { Given, When, Then } = require('@cucumber/cucumber')
 const assert = require('assert');
 const asherah = require("asherah");
 const fs = require("fs");
-const os = require("os");
 
-const fileDirectory = os.tmpdir() + "/";
+const fileDirectory = "/tmp/";
 const fileName = "node_encrypted";
 
 let payloadString;
