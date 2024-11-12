@@ -31,6 +31,7 @@ trap cleanup INT
 trap cleanup EXIT
 
 export MYSQL_HOSTNAME=mysql
+export TEST_DB_HOSTNAME=localhost
 export TEST_DB_NAME=testdb
 export TEST_DB_USER=root
 export TEST_DB_PASSWORD=Password123
@@ -55,12 +56,12 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "Waiting for MySQL to come up"
-while ! mysqladmin ping --protocol=tcp -u "${TEST_DB_USER}" -p"${TEST_DB_PASSWORD}" --silent 2>/dev/null; do
+while ! $CONTAINER_CMD exec $MYSQL_CONTAINER_ID mysqladmin ping --protocol=tcp -u "${TEST_DB_USER}" -p"${TEST_DB_PASSWORD}" --silent 2>/dev/null; do
     sleep 1
 done
 
 echo "Create encryption_key table"
-mysql --protocol=tcp -P "${TEST_DB_PORT}" -u "${TEST_DB_USER}" -p"${TEST_DB_PASSWORD}" -e "CREATE TABLE ${TEST_DB_NAME}.encryption_key (
+$CONTAINER_CMD exec $MYSQL_CONTAINER_ID mysql --protocol=tcp -P "${TEST_DB_PORT}" -u "${TEST_DB_USER}" -p"${TEST_DB_PASSWORD}" -e "CREATE TABLE ${TEST_DB_NAME}.encryption_key (
           id             VARCHAR(255) NOT NULL,
           created        TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
           key_record     TEXT         NOT NULL,
