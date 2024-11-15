@@ -10,11 +10,12 @@ const fileDirectory = "/tmp/";
 var encryptedPayload;
 var decryptedPayload;
 
+var adoDatabaseHost = process.env.TEST_DB_HOSTNAME;
 var adoDatabaseName = process.env.TEST_DB_NAME;
 var adoUsername = process.env.TEST_DB_USER;
 var adoPassword = process.env.TEST_DB_PASSWORD;
 var adoPort = process.env.TEST_DB_PORT;
-var adoConnectionString = adoUsername+":"+adoPassword+"@tcp(localhost:"+adoPort+")/"+adoDatabaseName+"?tls=false"
+var adoConnectionString = adoUsername+":"+adoPassword+"@tcp("+adoDatabaseHost+":"+adoPort+")/"+adoDatabaseName+"?tls=false";
 
 Given('I have encrypted_data from {string}', async function (string) {
     var payload = fs.readFileSync(fileDirectory + string, 'utf8');
