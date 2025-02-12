@@ -1,3 +1,5 @@
+# asherah-node
+
 Asherah envelope encryption and key rotation library
 
 This is a wrapper of the Asherah Go implementation using the Cobhan FFI library
@@ -168,3 +170,7 @@ The `awsEnv.json` file would look like this (spelling errors intentional):
 ### Go and Alpine / musl libc
 
 The Golang compiler when creating shared libraries (.so) uses a Thread Local Storage model of init-exec.  This model is inheriently incompatible with loading libraries at runtime with dlopen(), unless your libc reserves some space for dlopen()'ed libraries which is something of a hack.  The most common libc, glibc does in fact reserve space for dlopen()'ed libraries that use init-exec model.  The libc provided with Alpine is musl libc, and it does not participate in this hack / workaround of reserving space.  Most compilers generate libraries with a Thread Local Storage model of global-dynamic which does not require this workaround, and the authors of musl libc do not feel that workaround should exist.
+
+## Updating npm packages
+
+To update packages, run `npm run update`. This command uses [npm-check-updates](https://github.com/raineorshine/npm-check-updates) to bring all npm packages to their latest version. This command also runs `npm install` and `npm audit fix` for you.
