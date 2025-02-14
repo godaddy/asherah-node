@@ -46,9 +46,10 @@ jobs:
           INDEX (created)
         );"
     - name: Setup Go environment
-      uses: actions/setup-go@v5.0.1
+      uses: actions/setup-go@v5
       with:
-        go-version: 1.22.3
+        go-version: 1.24.0
+        check-latest: true
     - name: Test Cross-Language
       env:
         TEST_DB_NAME: ${{ env.MYSQL_DATABASE }}
