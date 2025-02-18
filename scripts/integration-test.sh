@@ -14,7 +14,7 @@ PATH=$GOPATH/bin:$GOROOT/bin:$PATH
 ### Encrypt with Go
 cd "${ORIG_DIR}/integration/asherah/tests/cross-language/go" || exit 1
 go mod edit -replace github.com/godaddy/asherah/go/appencryption=../../../go/appencryption
-go install github.com/cucumber/godog/cmd/godog@v0.14.1
+
 echo "GOPATH: ${GOPATH}"
 echo "PATH: ${PATH}"
 echo "GOBIN: ${GOBIN}"
@@ -22,7 +22,7 @@ echo "GOBIN: ${GOBIN}"
 go mod tidy
 
 echo Encrypt with Go
-godog "${ORIG_DIR}/integration/node/features/encrypt.feature"
+go test -v -test.run '^TestEncryptFeatures$' -godog.paths="${ORIG_DIR}/integration/node/features/encrypt.feature"
 
 echo Encrypt and Decrypt with Asherah-Node
 
@@ -42,4 +42,4 @@ echo "Running cucumber-js decrypt.feature"
 
 echo Decrypt with Go
 cd "${ORIG_DIR}/integration/asherah/tests/cross-language/go" || exit 1
-godog "${ORIG_DIR}/integration/node/features/decrypt.feature"
+go test -v -test.run '^TestDecryptFeatures$' -godog.paths="${ORIG_DIR}/integration/node/features/decrypt.feature"
