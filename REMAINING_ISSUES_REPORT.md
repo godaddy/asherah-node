@@ -8,7 +8,7 @@ After implementing fixes across multiple branches:
 - `fix-empty-partition-validation` - Empty partition ID validation
 - `optimize-partition-validation` - String length optimization
 
-## Critical Issues
+## Critical Issues (3 total)
 
 ### 1. Integer Overflow in Size Calculations
 **Severity**: High  
@@ -20,7 +20,7 @@ auto new_size = (size_t)item_size.Int32Value();
 **Fix**: Add bounds checking before cast
 
 ### 2. Potential Integer Overflow in EstimateAsherahOutputSize
-**Severity**: Medium  
+**Severity**: High  
 **Location**: `src/asherah.cc:753-756`
 ```cpp
 size_t est_data_byte_len =
@@ -30,17 +30,8 @@ size_t est_data_byte_len =
 **Issue**: Large inputs could overflow when multiplied by 1.34  
 **Fix**: Add SIZE_MAX/2 check before calculation
 
-### 3. Stack Overflow Risk in SCOPED_ALLOCATE
-**Severity**: Medium  
-**Location**: `src/scoped_allocate.h:24`
-```cpp
-buffer = (char *)alloca(buffer_size);
-```
-**Issue**: No stack size limit checking  
-**Fix**: Add reasonable max stack allocation limit (e.g., 64KB)
-
-### 4. Buffer Underflow in AllocationSizeToMaxDataSize
-**Severity**: Medium  
+### 3. Buffer Underflow in AllocationSizeToMaxDataSize
+**Severity**: High  
 **Location**: `src/cobhan_buffer.h:96-104`
 ```cpp
 size_t data_len_bytes = allocation_len_bytes - cobhan_header_size_bytes -
