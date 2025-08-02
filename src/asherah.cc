@@ -155,8 +155,9 @@ private:
     try {
       Napi::String partition_id_string;
       Napi::Value input_value;
+      size_t partition_id_length;
 
-      BeginEncryptToJson(env, __func__, info, partition_id_string, input_value);
+      BeginEncryptToJson(env, __func__, info, partition_id_string, input_value, partition_id_length);
 
 #ifdef USE_SCOPED_ALLOCATE_BUFFER
       char *partition_id_cbuffer;
@@ -541,12 +542,12 @@ private:
 
   void BeginEncryptToJson(const Napi::Env &env, const char *func_name,
                           const Napi::CallbackInfo &info,
-                          Napi::String &partition_id, Napi::Value &input) {
+                          Napi::String &partition_id, Napi::Value &input,
+                          size_t &partition_id_length) {
     RequireAsherahSetup(env, func_name);
 
     NapiUtils::RequireParameterCount(info, 2);
 
-    size_t partition_id_length;
     partition_id = NapiUtils::RequireParameterStringWithLength(env, func_name, info[0], partition_id_length);
     input = NapiUtils::RequireParameterStringOrBuffer(env, func_name, info[1]);
     
@@ -574,12 +575,12 @@ private:
 
   void BeginDecryptFromJson(const Napi::Env &env, const char *func_name,
                             const Napi::CallbackInfo &info,
-                            Napi::String &partition_id, Napi::Value &input) {
+                            Napi::String &partition_id, Napi::Value &input,
+                            size_t &partition_id_length) {
     RequireAsherahSetup(env, func_name);
 
     NapiUtils::RequireParameterCount(info, 2);
 
-    size_t partition_id_length;
     partition_id = NapiUtils::RequireParameterStringWithLength(env, func_name, info[0], partition_id_length);
     input = NapiUtils::RequireParameterStringOrBuffer(env, func_name, info[1]);
     
