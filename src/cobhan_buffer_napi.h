@@ -102,9 +102,8 @@ public:
         env, get_data_ptr(), get_data_len_bytes(), &napiStr);
 
     if (status != napi_ok) {
-      napi_throw_error(env, nullptr,
-                       "Failed to create Napi::String from CobhanBuffer");
-      return {};
+      NapiUtils::ThrowException(env,
+                       "CobhanBufferNapi::ToString: Failed to create Napi::String from CobhanBuffer");
     }
 
     return {env, napiStr};
