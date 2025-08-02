@@ -122,6 +122,16 @@ public:
     }
   }
 
+  // Version that also returns the UTF-8 length to avoid redundant calls
+  static Napi::String RequireParameterStringWithLength(const Napi::Env &env,
+                                                       const char *func_name,
+                                                       Napi::Value value,
+                                                       size_t &utf8_length) {
+    Napi::String str = RequireParameterString(env, func_name, value);
+    utf8_length = GetUtf8StringLength(env, str);
+    return str;
+  }
+
   __attribute__((unused)) static Napi::Buffer<unsigned char>
   RequireParameterBuffer(const Napi::Env &env, const char *func_name,
                          Napi::Value value) {

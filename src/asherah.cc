@@ -546,8 +546,15 @@ private:
 
     NapiUtils::RequireParameterCount(info, 2);
 
-    partition_id = NapiUtils::RequireParameterString(env, func_name, info[0]);
+    size_t partition_id_length;
+    partition_id = NapiUtils::RequireParameterStringWithLength(env, func_name, info[0], partition_id_length);
     input = NapiUtils::RequireParameterStringOrBuffer(env, func_name, info[1]);
+    
+    // Validate partition ID is not empty
+    if (partition_id_length == 0) {
+      NapiUtils::ThrowException(env, std::string(func_name) + 
+                                ": Partition ID cannot be empty");
+    }
   }
 
   void EndEncryptToJson(Napi::Env env, CobhanBufferNapi &output, GoInt32 result,
@@ -572,8 +579,15 @@ private:
 
     NapiUtils::RequireParameterCount(info, 2);
 
-    partition_id = NapiUtils::RequireParameterString(env, func_name, info[0]);
+    size_t partition_id_length;
+    partition_id = NapiUtils::RequireParameterStringWithLength(env, func_name, info[0], partition_id_length);
     input = NapiUtils::RequireParameterStringOrBuffer(env, func_name, info[1]);
+    
+    // Validate partition ID is not empty
+    if (partition_id_length == 0) {
+      NapiUtils::ThrowException(env, std::string(func_name) + 
+                                ": Partition ID cannot be empty");
+    }
   }
 
   void EndDecryptFromJson(Napi::Env &env, CobhanBufferNapi &output,
