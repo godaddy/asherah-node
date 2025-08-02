@@ -162,7 +162,7 @@ private:
 #ifdef USE_SCOPED_ALLOCATE_BUFFER
       char *partition_id_cbuffer;
       size_t partition_id_cbuffer_size =
-          CobhanBufferNapi::StringToAllocationSize(env, partition_id_string);
+          CobhanBufferNapi::StringToAllocationSize(env, partition_id_string, partition_id_length);
       SCOPED_ALLOCATE_BUFFER(partition_id_cbuffer, partition_id_cbuffer_size,
                              maximum_stack_alloc_size, __func__);
 
@@ -174,11 +174,12 @@ private:
 
       CobhanBufferNapi partition_id(env, partition_id_string,
                                     partition_id_cbuffer,
-                                    partition_id_cbuffer_size);
+                                    partition_id_cbuffer_size,
+                                    partition_id_length);
       CobhanBufferNapi input(env, input_value, input_cbuffer,
                              input_cbuffer_size);
 #else
-      CobhanBufferNapi partition_id(env, partition_id_string);
+      CobhanBufferNapi partition_id(env, partition_id_string, partition_id_length);
       CobhanBufferNapi input(env, input_value);
 #endif
 
@@ -219,9 +220,10 @@ private:
     try {
       Napi::String partition_id_string;
       Napi::Value input_value;
-      BeginEncryptToJson(env, __func__, info, partition_id_string, input_value);
+      size_t partition_id_length;
+      BeginEncryptToJson(env, __func__, info, partition_id_string, input_value, partition_id_length);
 
-      CobhanBufferNapi partition_id(env, partition_id_string);
+      CobhanBufferNapi partition_id(env, partition_id_string, partition_id_length);
       CobhanBufferNapi input(env, input_value);
 
       size_t partition_id_data_len_bytes = partition_id.get_data_len_bytes();
@@ -258,7 +260,7 @@ private:
 #ifdef USE_SCOPED_ALLOCATE_BUFFER
       char *partition_id_cbuffer;
       size_t partition_id_cbuffer_size =
-          CobhanBufferNapi::StringToAllocationSize(env, partition_id_string);
+          CobhanBufferNapi::StringToAllocationSize(env, partition_id_string, partition_id_length);
       SCOPED_ALLOCATE_BUFFER(partition_id_cbuffer, partition_id_cbuffer_size,
                              maximum_stack_alloc_size, __func__);
 
@@ -270,7 +272,8 @@ private:
 
       CobhanBufferNapi partition_id(env, partition_id_string,
                                     partition_id_cbuffer,
-                                    partition_id_cbuffer_size);
+                                    partition_id_cbuffer_size,
+                                    partition_id_length);
       CobhanBufferNapi input(env, input_value, input_cbuffer,
                              input_cbuffer_size);
 
@@ -310,10 +313,11 @@ private:
     try {
       Napi::String partition_id_string;
       Napi::Value input_value;
+      size_t partition_id_length;
       BeginDecryptFromJson(env, __func__, info, partition_id_string,
-                           input_value);
+                           input_value, partition_id_length);
 
-      CobhanBufferNapi partition_id(env, partition_id_string);
+      CobhanBufferNapi partition_id(env, partition_id_string, partition_id_length);
       CobhanBufferNapi input(env, input_value);
 
       CobhanBufferNapi output(env, input.get_data_len_bytes());
@@ -345,7 +349,7 @@ private:
 #ifdef USE_SCOPED_ALLOCATE_BUFFER
       char *partition_id_cbuffer;
       size_t partition_id_cbuffer_size =
-          CobhanBufferNapi::StringToAllocationSize(env, partition_id_string);
+          CobhanBufferNapi::StringToAllocationSize(env, partition_id_string, partition_id_length);
       SCOPED_ALLOCATE_BUFFER(partition_id_cbuffer, partition_id_cbuffer_size,
                              maximum_stack_alloc_size, __func__);
 
@@ -357,7 +361,8 @@ private:
 
       CobhanBufferNapi partition_id(env, partition_id_string,
                                     partition_id_cbuffer,
-                                    partition_id_cbuffer_size);
+                                    partition_id_cbuffer_size,
+                                    partition_id_length);
       CobhanBufferNapi input(env, input_value, input_cbuffer,
                              input_cbuffer_size);
 
@@ -389,10 +394,11 @@ private:
 
       Napi::String partition_id_string;
       Napi::Value input_value;
+      size_t partition_id_length;
       BeginDecryptFromJson(env, __func__, info, partition_id_string,
-                           input_value);
+                           input_value, partition_id_length);
 
-      CobhanBufferNapi partition_id(env, partition_id_string);
+      CobhanBufferNapi partition_id(env, partition_id_string, partition_id_length);
       CobhanBufferNapi input(env, input_value);
 
       CobhanBufferNapi output(env, input.get_data_len_bytes());
