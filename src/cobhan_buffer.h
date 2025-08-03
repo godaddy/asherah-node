@@ -16,7 +16,7 @@ public:
   explicit CobhanBuffer(size_t data_len_bytes) {
     if (data_len_bytes > max_int32_size) {
       throw std::invalid_argument(
-          "Requested data length exceeds maximum allowable size");
+          "CobhanBuffer(size_t): Requested data length exceeds maximum allowable size (2GB limit)");
     }
     allocation_size = DataSizeToAllocationSize(data_len_bytes);
     cbuffer = new char[allocation_size];
@@ -30,7 +30,7 @@ public:
       : cbuffer(cbuffer), allocation_size(allocation_size), ownership(false) {
     if (allocation_size > max_int32_size) {
       throw std::invalid_argument(
-          "Allocation size exceeds maximum allowable size");
+          "CobhanBuffer(char*, size_t): Allocation size exceeds maximum allowable size (2GB limit)");
     }
     initialize();
   }
@@ -88,7 +88,7 @@ public:
         + safety_padding_bytes; // Add safety padding if configured
     if (allocation > max_int32_size) {
       throw std::invalid_argument(
-          "Calculated allocation size exceeds maximum allowable size");
+          "CobhanBuffer::DataSizeToAllocationSize: Calculated allocation size exceeds maximum allowable size (2GB limit)");
     }
     return allocation;
   }
@@ -98,7 +98,7 @@ public:
                             canary_size_bytes - safety_padding_bytes;
     if (data_len_bytes > max_int32_size) {
       throw std::invalid_argument(
-          "Calculated data size exceeds maximum allowable size");
+          "CobhanBuffer::AllocationSizeToMaxDataSize: Calculated data size exceeds maximum allowable size (2GB limit)");
     }
     return data_len_bytes;
   }
@@ -132,11 +132,11 @@ protected:
   void set_data_len_bytes(size_t data_len_bytes) {
     if (data_len_bytes > max_int32_size) {
       throw std::invalid_argument(
-          "Requested data length exceeds maximum allowable size");
+          "CobhanBuffer::set_data_len_bytes: Requested data length exceeds maximum allowable size (2GB limit)");
     }
     if (data_len_bytes > allocation_size) {
       throw std::invalid_argument(
-          "Requested data length exceeds allocation size");
+          "CobhanBuffer::set_data_len_bytes: Requested data length exceeds buffer allocation size");
     }
     *data_len_ptr = static_cast<int32_t>(data_len_bytes);
   }
@@ -162,7 +162,7 @@ private:
     }
 
     if (data_len_bytes > max_int32_size) {
-      throw std::invalid_argument("Data length exceeds maximum allowable size");
+      throw std::invalid_argument("CobhanBuffer::initialize: Data length exceeds maximum allowable size (2GB limit)");
     }
 
     // Write Cobhan header values
@@ -198,7 +198,7 @@ private:
       allocation_size = other.allocation_size;
       if (allocation_size > max_int32_size) {
         throw std::invalid_argument(
-            "Allocation size exceeds maximum allowable size");
+            "CobhanBuffer::moveFrom: Allocation size exceeds maximum allowable size (2GB limit)");
       }
 
       cbuffer = new char[allocation_size];
