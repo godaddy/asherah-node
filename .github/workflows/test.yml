@@ -61,7 +61,7 @@ jobs:
         ASHERAH_KMS_MODE: static
       run: scripts/integration-test.sh
     - name: Publish (dry-run)
-      run: npm publish --dry-run
+      run: npm publish --dry-run --tag beta
   test-multi-arch:
     runs-on: ubuntu-latest
     strategy:
