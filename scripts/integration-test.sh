@@ -9,6 +9,7 @@ GO_DIR="${ORIG_DIR}/integration/go"
 mkdir -p "${GO_DIR}/bin"
 export GOPATH=${GO_DIR}
 export GOBIN=${GO_DIR}/bin
+export GOTOOLCHAIN=local
 PATH=$GOPATH/bin:$GOROOT/bin:$PATH
 
 ### Encrypt with Go

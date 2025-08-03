@@ -3,6 +3,8 @@
 
 #ifdef USE_SCOPED_ALLOCATE_BUFFER
 
+#include "hints.h" // for unlikely macro
+
 /*
   This macro allows us to allocate a buffer either on the stack or on the heap.
   If the requested buffer size is less than max_stack_alloc_size, we create the
