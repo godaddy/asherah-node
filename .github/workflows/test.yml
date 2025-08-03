@@ -49,7 +49,6 @@ jobs:
       uses: actions/setup-go@v5
       with:
         go-version: 1.24.0
-        check-latest: true
     - name: Test Cross-Language
       env:
         TEST_DB_NAME: ${{ env.MYSQL_DATABASE }}
