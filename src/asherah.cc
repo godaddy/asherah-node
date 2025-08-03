@@ -253,9 +253,10 @@ private:
     try {
       Napi::String partition_id_string;
       Napi::Value input_value;
+      size_t partition_id_length;
 
       BeginDecryptFromJson(env, __func__, info, partition_id_string,
-                           input_value);
+                           input_value, partition_id_length);
 
 #ifdef USE_SCOPED_ALLOCATE_BUFFER
       char *partition_id_cbuffer;
@@ -343,8 +344,9 @@ private:
 
       Napi::String partition_id_string;
       Napi::Value input_value;
+      size_t partition_id_length;
       BeginDecryptFromJson(env, __func__, info, partition_id_string,
-                           input_value);
+                           input_value, partition_id_length);
 
 #ifdef USE_SCOPED_ALLOCATE_BUFFER
       char *partition_id_cbuffer;
