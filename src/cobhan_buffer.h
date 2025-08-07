@@ -9,6 +9,12 @@
 #include <stdexcept> // for std::runtime_error, std::invalid_argument
 #include <string>    // for std::string
 
+#ifdef _WIN32
+#include <windows.h> // for SecureZeroMemory
+#else
+#include <string.h>  // for explicit_bzero
+#endif
+
 class CobhanBuffer {
 public:
   // Used for requesting a new heap-based buffer allocation that can handle
@@ -55,6 +61,23 @@ public:
   [[nodiscard]] char *get_data_ptr() const { return data_ptr; }
 
   [[nodiscard]] size_t get_data_len_bytes() const { return *data_len_ptr; }
+
+  void secure_wipe_data() {
+    if (data_ptr && get_data_len_bytes() > 0) {
+#ifdef _WIN32
+      // Windows secure zero
+      SecureZeroMemory(data_ptr, get_data_len_bytes());
+#elif defined(__linux__) && defined(__GLIBC__)
+      // Linux with glibc has explicit_bzero
+      explicit_bzero(data_ptr, get_data_len_bytes());
+#else
+      // Fallback - volatile to prevent optimization
+      volatile char *p = data_ptr;
+      size_t len = get_data_len_bytes();
+      while (len--) *p++ = 0;
+#endif
+    }
+  }
 
   ~CobhanBuffer() {
     verify_canaries();
