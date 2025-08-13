@@ -9,11 +9,13 @@
 class CobhanBufferNapi : public CobhanBuffer {
 public:
   // Constructor from a Napi::String
-  CobhanBufferNapi(const Napi::Env &env, const Napi::String &napiString)
-      : CobhanBuffer(NapiUtils::GetUtf8StringLength(env, napiString) + 1),
+  CobhanBufferNapi(const Napi::Env &env, const Napi::String &napiString,
+                   int64_t utf8_length = -1)
+      : CobhanBuffer((utf8_length >= 0 ? static_cast<size_t>(utf8_length) 
+                                       : NapiUtils::GetUtf8StringLength(env, napiString)) + 1),
         env(env) { // Add one for possible NULL delimiter due to Node
                    // string functions
-    copy_from_string(napiString);
+    copy_from_string(napiString, utf8_length);
   }
 
   // Constructor from Napi::Buffer<unsigned char>
@@ -48,9 +50,10 @@ public:
 
   // Constructor from a Napi::String to an externally allocated buffer
   CobhanBufferNapi(const Napi::Env &env, const Napi::String &napiString,
-                   char *cbuffer, size_t allocation_size)
+                   char *cbuffer, size_t allocation_size,
+                   int64_t utf8_length = -1)
       : CobhanBuffer(cbuffer, allocation_size), env(env) {
-    copy_from_string(napiString);
+    copy_from_string(napiString, utf8_length);
   }
 
   // Constructor from a Napi::String to an externally allocated buffer
@@ -117,8 +120,10 @@ public:
 
   // Public method to calculate the required allocation size for a Napi::String
   static size_t StringToAllocationSize(const Napi::Env &env,
-                                       const Napi::String &napiString) {
-    size_t str_len = NapiUtils::GetUtf8StringLength(env, napiString);
+                                       const Napi::String &napiString,
+                                       int64_t utf8_length = -1) {
+    size_t str_len = (utf8_length >= 0) ? static_cast<size_t>(utf8_length)
+                                        : NapiUtils::GetUtf8StringLength(env, napiString);
     return DataSizeToAllocationSize(str_len) +
            1; // Add one for possible NULL delimiter due to Node string
               // functions
@@ -164,8 +169,9 @@ public:
 private:
   Napi::Env env;
 
-  void copy_from_string(const Napi::String &napiString) {
-    size_t str_len = NapiUtils::GetUtf8StringLength(env, napiString);
+  void copy_from_string(const Napi::String &napiString, int64_t utf8_length = -1) {
+    size_t str_len = (utf8_length >= 0) ? static_cast<size_t>(utf8_length)
+                                        : NapiUtils::GetUtf8StringLength(env, napiString);
     // Add one for NULL delimiter due to napi_get_value_string_utf8
     size_t allocation_size =
         CobhanBuffer::DataSizeToAllocationSize(str_len) + 1;
