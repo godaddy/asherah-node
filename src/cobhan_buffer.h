@@ -8,6 +8,7 @@
 #include <sstream>   // for std::ostringstream
 #include <stdexcept> // for std::runtime_error, std::invalid_argument
 #include <string>    // for std::string
+#include "hints.h"   // for unlikely
 
 #ifdef _WIN32
 #include <windows.h> // for SecureZeroMemory
@@ -117,6 +118,12 @@ public:
   }
 
   static size_t AllocationSizeToMaxDataSize(size_t allocation_len_bytes) {
+    // Check for buffer underflow with unlikely hint
+    constexpr size_t min_size = cobhan_header_size_bytes + canary_size_bytes + safety_padding_bytes;
+    if (unlikely(allocation_len_bytes < min_size)) {
+      throw std::invalid_argument("Buffer allocation size too small");
+    }
+    
     size_t data_len_bytes = allocation_len_bytes - cobhan_header_size_bytes -
                             canary_size_bytes - safety_padding_bytes;
     if (data_len_bytes > max_int32_size) {

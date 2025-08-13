@@ -433,9 +433,13 @@ private:
       NapiUtils::RequireParameterCount(info, 1);
 
       Napi::Number item_size = info[0].ToNumber();
-      auto new_size = (size_t)item_size.Int32Value();
-
-      maximum_stack_alloc_size = new_size;
+      int32_t value = item_size.Int32Value();
+      
+      // Clamp to reasonable range without branching
+      constexpr int32_t MAX_STACK_SIZE = 1048576; // 1MB max
+      value = std::max(0, std::min(value, MAX_STACK_SIZE));
+      
+      maximum_stack_alloc_size = static_cast<size_t>(value);
     } catch (Napi::Error &e) {
       e.ThrowAsJavaScriptException();
       return;
@@ -733,6 +737,13 @@ private:
     const size_t est_encryption_overhead = 48;
     const size_t est_envelope_overhead = 185;
     const double base64_overhead = 1.34;
+
+    // Only check for overflow if suspiciously large (> 1TB)
+    if (unlikely(data_byte_len > 1099511627776ULL)) {
+      if (data_byte_len > SIZE_MAX / 2) {
+        throw std::invalid_argument("Data size too large for encryption");
+      }
+    }
 
     // Add one rather than using std::ceil to round up
     size_t est_data_byte_len =
