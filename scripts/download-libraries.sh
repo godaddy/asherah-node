@@ -71,7 +71,8 @@ function download_file {
 function verify_checksums {
   local archive=$1
   local header=$2
-  local sums=$3
+  local warmup=$3
+  local sums=$4
 
   # Determine the available SHA hashing utility
   if command -v sha256sum &> /dev/null; then
@@ -90,10 +91,18 @@ function verify_checksums {
   fi
 
   # Filter the relevant checksums and verify they are not empty
+  # Note: warmup library might not exist in older releases, so it's optional
   checksums=$(grep -e "${archive}" -e "${header}" "${sums}")
   if [[ -z "$checksums" ]]; then
     echo "Error: No matching checksums found for ${archive} or ${header} in ${sums}." >&2
     return 1
+  fi
+  
+  # Try to add warmup checksum if it exists
+  local warmup_checksum
+  warmup_checksum=$(grep -e "${warmup}" "${sums}" 2>/dev/null || true)
+  if [[ -n "$warmup_checksum" ]]; then
+    checksums="${checksums}"$'\n'"${warmup_checksum}"
   fi
 
   echo "$checksums" > ./SHA256SUM  # Return value
@@ -144,11 +153,13 @@ function detect_os_and_cpu {
       #echo "Using Asherah libraries for Linux x86_64"
       ARCHIVE="libasherah-x64.a"
       HEADER="libasherah-x64-archive.h"
+      WARMUP="bun_warmup_minimal-linux-x64.so"
       SUMS="SHA256SUMS"
     elif [[ ${MACHINE} == 'aarch64' ]]; then
       #echo "Using Asherah libraries for Linux aarch64"
       ARCHIVE="libasherah-arm64.a"
       HEADER="libasherah-arm64-archive.h"
+      WARMUP="bun_warmup_minimal-linux-arm64.so"
       SUMS="SHA256SUMS"
     else
       #echo "Unsupported CPU architecture: ${MACHINE}" >&2
@@ -159,11 +170,13 @@ function detect_os_and_cpu {
       #echo "Using Asherah libraries for MacOS x86_64"
       ARCHIVE="libasherah-darwin-x64.a"
       HEADER="libasherah-darwin-x64-archive.h"
+      WARMUP="bun_warmup_minimal-darwin-x64.dylib"
       SUMS="SHA256SUMS-darwin"
     elif [[ ${MACHINE} == 'arm64' ]]; then
       #echo "Using Asherah libraries for MacOS arm64"
       ARCHIVE="libasherah-darwin-arm64.a"
       HEADER="libasherah-darwin-arm64-archive.h"
+      WARMUP="bun_warmup_minimal-darwin-arm64.dylib"
       SUMS="SHA256SUMS-darwin"
     else
       echo "Unsupported CPU architecture: ${MACHINE}" >&2
@@ -174,7 +187,7 @@ function detect_os_and_cpu {
     exit 1
   fi
 
-  echo "${ARCHIVE}" "${HEADER}" "${SUMS}"  # Return value
+  echo "${ARCHIVE}" "${HEADER}" "${WARMUP}" "${SUMS}"  # Return value
 }
 
 # Parse script arguments
@@ -216,18 +229,20 @@ function main {
   no_cache=$(parse_args "$@")
 
   # Detect OS and CPU architecture
-  read -r archive header sums < <(detect_os_and_cpu)
+  read -r archive header warmup sums < <(detect_os_and_cpu)
   echo "Archive: $archive"
   echo "Header: $header"
+  echo "Warmup: $warmup"
   echo "Sums: $sums"
   echo "Version: $ASHERAH_VERSION"
 
   # Interpolate the URLs
   url_prefix="https://github.com/godaddy/asherah-cobhan/releases/download/${ASHERAH_VERSION}"
-  file_names=("${archive}" "${header}" "${sums}")
+  file_names=("${archive}" "${header}" "${warmup}" "${sums}")
   file_urls=(
     "${url_prefix}/${archive}"
     "${url_prefix}/${header}"
+    "${url_prefix}/${warmup}"
     "${url_prefix}/${sums}"
   )
 
@@ -249,7 +264,7 @@ function main {
     done
 
     # Verify checksums and copy files
-    if verify_checksums "${archive}" "${header}" "${sums}"; then
+    if verify_checksums "${archive}" "${header}" "${warmup}" "${sums}"; then
       copy_files "${archive}" "${header}"
       checksums_verified=true
     else
