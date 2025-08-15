@@ -26,7 +26,8 @@
     "lint": "eslint src/**.ts --fix",
     "update": "npx npm-check-updates --target latest -u -x mocha && npm i && npm audit fix",
     "prepack": "scripts/build-bun-preload.sh",
-    "prepublishOnly": "echo 'Ready to publish asherah-node with integrated Bun support'"
+    "prepublishOnly": "echo 'Ready to publish asherah-node with integrated Bun support'",
+    "clean:bun-preload": "scripts/clean-bun-preload.sh"
   },
   "keywords": [],
   "author": "Jeremiah Gowdy <jeremiah@gowdy.me>",
@@ -50,6 +51,7 @@
     "scripts/download-libraries.sh",
     "scripts/build.sh",
     "scripts/build-bun-preload.sh",
+    "scripts/clean-bun-preload.sh",
     "asherah-bun-preload/",
     "SHA256SUMS",
     "SHA256SUMS-darwin",

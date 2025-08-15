@@ -12,12 +12,21 @@ LIB_DIR="$PRELOAD_DIR/lib"
 
 echo "Building Bun preload library..."
 
-# Check if Go is available
-if ! command -v go &> /dev/null; then
+# Check if Go is available and find the best Go binary
+GO_BINARY=""
+if command -v go &> /dev/null; then
+    GO_BINARY="go"
+elif command -v /opt/homebrew/bin/go &> /dev/null; then
+    GO_BINARY="/opt/homebrew/bin/go"
+elif command -v /usr/local/bin/go &> /dev/null; then
+    GO_BINARY="/usr/local/bin/go"
+else
     echo "Go not found. Skipping Bun preload build."
     echo "Bun support will not be available until Go is installed."
     exit 0
 fi
+
+echo "Using Go binary: $GO_BINARY"
 
 # Navigate to lib directory
 cd "$LIB_DIR"
@@ -46,7 +55,7 @@ case "$(uname)" in
 esac
 
 # Build the library
-go build $BUILD_FLAGS -o "bun_warmup_minimal$LIB_EXT" bun_warmup_minimal.go
+$GO_BINARY build $BUILD_FLAGS -o "bun_warmup_minimal$LIB_EXT" bun_warmup_minimal.go
 
 # Remove the header file (not needed for FFI)
 rm -f bun_warmup_minimal.h
