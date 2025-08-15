@@ -6,17 +6,7 @@ This is a wrapper of the Asherah Go implementation using the Cobhan FFI library
 
 ## Bun Runtime Support
 
-asherah-node now supports [Bun](https://bun.sh) runtime out of the box! No additional setup required:
-
-```javascript
-// Works automatically in both Node.js and Bun
-const asherah = require('asherah-node');
-
-// Use normally - Bun compatibility is handled automatically
-asherah.setup({ /* config */ });
-```
-
-The package automatically detects the Bun runtime and initializes Go compatibility as needed. Set `ASHERAH_BUN_VERBOSE=1` to see Bun initialization logs.
+asherah-node supports [Bun](https://bun.sh) runtime with automatic compatibility. No additional setup or code changes required - the same code works in both Node.js and Bun. Set `ASHERAH_BUN_VERBOSE=1` to see initialization logs.
 
 *NOTE:* Due to limitations around the type of libraries Go creates and the type of libraries musl libc supports, you MUST use a glibc based Linux distribution with asherah-node, such as Debian, Ubuntu, AlmaLinux, etc.  Alpine Linux with musl libc will not work.  For technical details, see below.
 

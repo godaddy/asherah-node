@@ -1,0 +1,33 @@
+=== Environment Analysis: Bun vs Node.js ===
+
+1. Process information:
+   Process name: node
+   Process argv0: node
+   Process platform: darwin
+   Process arch: arm64
+
+2. Memory information:
+   RSS: 36 MB
+   Heap Used: 3 MB
+   Heap Total: 5 MB
+
+3. Environment variables (Go-related):
+   GOOGLE_ANALYTICS_DISABLED: true
+
+4. Signal handlers:
+   SIGTERM handler: undefined
+   SIGINT handler: undefined
+
+5. Thread information:
+   Active resources: [ 'PipeWrap' ]
+
+6. libuv handles:
+   Active handles: 1
+
+7. Timing:
+   Process uptime: 11 ms
+   Process hrtime: [ 43126, 145631333 ]
+
+8. Module loading:
+   Module paths length: 4
+   Module filename: /Users/jgowdy/asherah-node/test-env-differences.js

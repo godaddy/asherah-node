@@ -1,0 +1,45 @@
+{
+  "name": "bun-go-runtime-init",
+  "version": "1.0.0",
+  "description": "Initialize Go runtime for CGO modules in Bun to prevent hangs",
+  "main": "index.js",
+  "keywords": [
+    "bun",
+    "go",
+    "cgo",
+    "runtime",
+    "native",
+    "addon",
+    "asherah",
+    "fix"
+  ],
+  "files": [
+    "index.js",
+    "lib/"
+  ],
+  "scripts": {
+    "postinstall": "node postinstall.js",
+    "test": "bun test.js"
+  },
+  "engines": {
+    "bun": ">=1.0.0"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/bun-go-runtime-init"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/bun-go-runtime-init/issues"
+  }
+}

@@ -1,0 +1,57 @@
+=== Runtime Comparison Analysis ===
+Runtime: Bun
+
+=== Native Thread Analysis ===
+=== Thread Analysis Tool ===
+PID: 11024
+Main thread ID: 0x2072e5f00
+
+Main thread signal mask:
+  SIGTERM: unblocked
+  SIGINT:  unblocked
+  SIGQUIT: unblocked
+  SIGPROF: unblocked
+  SIGALRM: unblocked
+  SIGUSR1: unblocked
+  SIGUSR2: unblocked
+
+Thread stack: addr=0x16f80c000, size=8372224 bytes (8.0 MB)
+
+Stack limit: 8372224 bytes (8.0 MB) / 67092480 bytes (64.0 MB)
+Address space limit: unlimited / unlimited
+
+
+=== JavaScript Environment ===
+Global object keys: 152
+
+Node.js globals present:
+  process: true
+  Buffer: true
+  global: true
+  __dirname: false
+  __filename: false
+
+Bun globals present:
+  Bun: true
+  ReadableStream: true
+  WritableStream: true
+
+=== Process Capabilities ===
+Process features:
+  Platform: darwin
+  Arch: arm64
+  Node version: v24.3.0
+  Features: [
+  "inspector", "debug", "uv", "ipv6", "tls_alpn", "tls_sni", "tls_ocsp", "tls", "cached_builtins",
+  "openssl_is_boringssl", "require_module", "typescript"
+]
+
+=== Signal Handler Test ===
+✅ SIGPROF handler installed successfully
+
+=== Native Module Loading ===
+✅ Native module loaded in 2ms
+Methods available: 17
+✅ Simple native call works: setup_status=false
+
+=== Analysis Complete ===

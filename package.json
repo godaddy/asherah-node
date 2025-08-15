@@ -5,8 +5,7 @@
   "main": "src/index.js",
   "exports": {
     ".": "./src/index.js",
-    "./native": "./build/Release/asherah.node",
-    "./bun-preload": "./asherah-bun-preload/index.js"
+    "./native": "./build/Release/asherah.node"
   },
   "repository": {
     "type": "git",
@@ -16,7 +15,6 @@
     "preinstall": "scripts/download-libraries.sh",
     "load": "node --max-old-space-size=500 scripts/dumpster-fire-memory.js",
     "install": "scripts/build.sh",
-    "postinstall": "scripts/build-bun-preload.sh",
     "test:mocha-debug": "lldb -o run -- node node_modules/mocha/bin/mocha --inspect-brk",
     "test:mocha": "mocha",
     "test": "nyc npm run test:mocha",
@@ -25,7 +23,6 @@
     "test:bun": "bun test-unified-bun.js || echo 'Bun not available, skipping Bun tests'",
     "lint": "eslint src/**.ts --fix",
     "update": "npx npm-check-updates --target latest -u -x mocha && npm i && npm audit fix",
-    "prepack": "scripts/build-bun-preload.sh",
     "prepublishOnly": "echo 'Ready to publish asherah-node with integrated Bun support'"
   },
   "keywords": [],
@@ -49,8 +46,6 @@
     "src/index.js",
     "scripts/download-libraries.sh",
     "scripts/build.sh",
-    "scripts/build-bun-preload.sh",
-    "asherah-bun-preload/",
     "SHA256SUMS",
     "SHA256SUMS-darwin",
     ".asherah-version"
