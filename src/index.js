@@ -1,30 +1,22 @@
 /**
  * asherah-node - Unified entry point with Bun runtime support
  * 
- * This module automatically handles Bun compatibility by detecting the runtime
- * and initializing Go warmup if needed, then loading the native module.
+ * Automatically detects Bun runtime and initializes FFI subsystem if needed.
  */
 
-const path = require('path');
-
-// Auto-detect and handle Bun runtime compatibility
+// Initialize Bun FFI subsystem for N-API compatibility
 if (typeof Bun !== 'undefined') {
   try {
-    // Ultra-minimal FFI initialization - just importing bun:ffi is sufficient
     require('bun:ffi');
     
-    // Optional: Log success in verbose mode
     if (process.env.ASHERAH_BUN_VERBOSE) {
-      console.log('✅ asherah-node: Bun runtime compatibility initialized');
+      console.log('✅ asherah-node: Bun FFI initialized');
     }
-    
   } catch (error) {
-    // Warn but continue - user may still be able to use it
     if (process.env.ASHERAH_BUN_VERBOSE) {
-      console.warn('⚠️  asherah-node: Bun compatibility initialization failed:', error.message);
+      console.warn('⚠️  asherah-node: Bun FFI initialization failed:', error.message);
     }
   }
 }
 
-// Load the native asherah module
-module.exports = require(path.join(__dirname, '..', 'build', 'Release', 'asherah.node'));
+module.exports = require('../build/Release/asherah.node');
