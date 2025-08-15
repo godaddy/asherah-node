@@ -13,9 +13,9 @@ if (typeof Bun !== 'undefined') {
       console.log('✅ asherah-node: Bun FFI initialized');
     }
   } catch (error) {
-    if (process.env.ASHERAH_BUN_VERBOSE) {
-      console.warn('⚠️  asherah-node: Bun FFI initialization failed:', error.message);
-    }
+    // Always log FFI initialization failures - this will break N-API loading
+    console.error('❌ asherah-node: Bun FFI initialization failed:', error.message);
+    console.error('   N-API modules may fail to load. Ensure Bun version supports FFI.');
   }
 }
 
