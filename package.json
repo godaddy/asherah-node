@@ -2,8 +2,10 @@
   "name": "asherah",
   "version": "0.0.0",
   "description": "Asherah envelope encryption and key rotation library",
+  "main": "src/index.js",
   "exports": {
-    "node-addons": "./dist/asherah.node"
+    ".": "./src/index.js",
+    "./native": "./build/Release/asherah.node"
   },
   "repository": {
     "type": "git",
@@ -39,6 +41,7 @@
     "src/napi_utils.h",
     "src/scoped_allocate.h",
     "src/asherah.d.ts",
+    "src/index.js",
     "scripts/download-libraries.sh",
     "scripts/build.sh",
     "SHA256SUMS",

@@ -4,6 +4,10 @@ Asherah envelope encryption and key rotation library
 
 This is a wrapper of the Asherah Go implementation using the Cobhan FFI library
 
+## Bun Runtime Support
+
+asherah-node supports [Bun](https://bun.sh) runtime with automatic compatibility. No additional setup or code changes required - the same code works in both Node.js and Bun.
+
 *NOTE:* Due to limitations around the type of libraries Go creates and the type of libraries musl libc supports, you MUST use a glibc based Linux distribution with asherah-node, such as Debian, Ubuntu, AlmaLinux, etc.  Alpine Linux with musl libc will not work.  For technical details, see below.
 
 Example code: 
