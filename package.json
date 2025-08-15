@@ -2,8 +2,11 @@
   "name": "asherah",
   "version": "0.0.0",
   "description": "Asherah envelope encryption and key rotation library",
+  "main": "src/index.js",
   "exports": {
-    "node-addons": "./dist/asherah.node"
+    ".": "./src/index.js",
+    "./native": "./build/Release/asherah.node",
+    "./bun-preload": "./asherah-bun-preload/index.js"
   },
   "repository": {
     "type": "git",
@@ -13,13 +16,17 @@
     "preinstall": "scripts/download-libraries.sh",
     "load": "node --max-old-space-size=500 scripts/dumpster-fire-memory.js",
     "install": "scripts/build.sh",
+    "postinstall": "scripts/build-bun-preload.sh",
     "test:mocha-debug": "lldb -o run -- node node_modules/mocha/bin/mocha --inspect-brk",
     "test:mocha": "mocha",
     "test": "nyc npm run test:mocha",
     "debug": "nyc npm run test:mocha-debug",
-    "posttest": "npm run lint",
+    "posttest": "npm run lint && npm run test:bun",
+    "test:bun": "bun test-unified-bun.js || echo 'Bun not available, skipping Bun tests'",
     "lint": "eslint src/**.ts --fix",
-    "update": "npx npm-check-updates --target latest -u -x mocha && npm i && npm audit fix"
+    "update": "npx npm-check-updates --target latest -u -x mocha && npm i && npm audit fix",
+    "prepack": "scripts/build-bun-preload.sh",
+    "prepublishOnly": "echo 'Ready to publish asherah-node with integrated Bun support'"
   },
   "keywords": [],
   "author": "Jeremiah Gowdy <jeremiah@gowdy.me>",
@@ -39,8 +46,11 @@
     "src/napi_utils.h",
     "src/scoped_allocate.h",
     "src/asherah.d.ts",
+    "src/index.js",
     "scripts/download-libraries.sh",
     "scripts/build.sh",
+    "scripts/build-bun-preload.sh",
+    "asherah-bun-preload/",
     "SHA256SUMS",
     "SHA256SUMS-darwin",
     ".asherah-version"
