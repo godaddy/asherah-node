@@ -153,13 +153,13 @@ function detect_os_and_cpu {
       #echo "Using Asherah libraries for Linux x86_64"
       ARCHIVE="libasherah-x64.a"
       HEADER="libasherah-x64-archive.h"
-      WARMUP="bun_warmup_minimal-linux-x64.so"
+      WARMUP="go-warmup-linux-x64.so"
       SUMS="SHA256SUMS"
     elif [[ ${MACHINE} == 'aarch64' ]]; then
       #echo "Using Asherah libraries for Linux aarch64"
       ARCHIVE="libasherah-arm64.a"
       HEADER="libasherah-arm64-archive.h"
-      WARMUP="bun_warmup_minimal-linux-arm64.so"
+      WARMUP="go-warmup-linux-arm64.so"
       SUMS="SHA256SUMS"
     else
       #echo "Unsupported CPU architecture: ${MACHINE}" >&2
@@ -170,13 +170,13 @@ function detect_os_and_cpu {
       #echo "Using Asherah libraries for MacOS x86_64"
       ARCHIVE="libasherah-darwin-x64.a"
       HEADER="libasherah-darwin-x64-archive.h"
-      WARMUP="bun_warmup_minimal-darwin-x64.dylib"
+      WARMUP="go-warmup-darwin-x64.dylib"
       SUMS="SHA256SUMS-darwin"
     elif [[ ${MACHINE} == 'arm64' ]]; then
       #echo "Using Asherah libraries for MacOS arm64"
       ARCHIVE="libasherah-darwin-arm64.a"
       HEADER="libasherah-darwin-arm64-archive.h"
-      WARMUP="bun_warmup_minimal-darwin-arm64.dylib"
+      WARMUP="go-warmup-darwin-arm64.dylib"
       SUMS="SHA256SUMS-darwin"
     else
       echo "Unsupported CPU architecture: ${MACHINE}" >&2

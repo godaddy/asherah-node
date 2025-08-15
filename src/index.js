@@ -19,9 +19,9 @@ if (typeof Bun !== 'undefined') {
     let libName;
     
     if (platform === 'darwin') {
-      libName = arch === 'x64' ? 'bun_warmup_minimal-darwin-x64.dylib' : 'bun_warmup_minimal-darwin-arm64.dylib';
+      libName = arch === 'x64' ? 'go-warmup-darwin-x64.dylib' : 'go-warmup-darwin-arm64.dylib';
     } else if (platform === 'linux') {
-      libName = arch === 'x64' ? 'bun_warmup_minimal-linux-x64.so' : 'bun_warmup_minimal-linux-arm64.so';
+      libName = arch === 'x64' ? 'go-warmup-linux-x64.so' : 'go-warmup-linux-arm64.so';
     } else {
       throw new Error(`Unsupported platform: ${platform}`);
     }
@@ -31,7 +31,7 @@ if (typeof Bun !== 'undefined') {
     
     // Check if library exists (might not be available in older asherah-cobhan releases)
     if (!fs.existsSync(libPath)) {
-      console.warn('⚠️  asherah-node: Bun warmup library not found. This may be an older release without Bun support.');
+      console.warn('⚠️  asherah-node: Go warmup library not found. This may be an older release without Bun support.');
       console.warn('⚠️  asherah-node: Package may not work correctly in Bun runtime');
     } else {
       const lib = dlopen(libPath, {
