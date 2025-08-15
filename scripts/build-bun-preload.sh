@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Build script for Bun preload library
-# This creates a minimal Go shared library for Bun runtime initialization
+# Build script for Bun preload library  
+# This creates a minimal C shared library for Bun FFI subsystem initialization
 
 set -e
 
@@ -12,32 +12,35 @@ LIB_DIR="$PRELOAD_DIR/lib"
 
 echo "Building Bun preload library..."
 
-# Check if Go is available
-if ! command -v go &> /dev/null; then
-    echo "Go not found. Skipping Bun preload build."
-    echo "Bun support will not be available until Go is installed."
+# Check if clang/gcc is available
+if ! command -v clang &> /dev/null && ! command -v gcc &> /dev/null; then
+    echo "C compiler not found. Skipping Bun preload build."
+    echo "Bun support will not be available until a C compiler is installed."
     exit 0
 fi
 
-# Navigate to lib directory
+# Navigate to lib directory  
 cd "$LIB_DIR"
 
 # Build the minimal warmup library
-echo "Compiling minimal Go warmup library..."
+echo "Compiling minimal C warmup library..."
 
-# Determine the appropriate file extension for the platform
+# Determine the appropriate file extension and compiler flags for the platform
 case "$(uname)" in
     Darwin*)
         LIB_EXT=".dylib"
-        BUILD_FLAGS="-buildmode=c-shared"
+        COMPILER_FLAGS="-shared -Os -fPIC"
+        COMPILER="clang"
         ;;
     Linux*)
         LIB_EXT=".so"
-        BUILD_FLAGS="-buildmode=c-shared"
+        COMPILER_FLAGS="-shared -Os -fPIC"
+        COMPILER="gcc"
         ;;
     CYGWIN*|MINGW*|MSYS*)
         LIB_EXT=".dll"
-        BUILD_FLAGS="-buildmode=c-shared"
+        COMPILER_FLAGS="-shared -Os"
+        COMPILER="gcc"
         ;;
     *)
         echo "Unsupported platform: $(uname)"
@@ -45,10 +48,15 @@ case "$(uname)" in
         ;;
 esac
 
+# Use clang if available, fallback to gcc
+if command -v clang &> /dev/null; then
+    COMPILER="clang"
+elif command -v gcc &> /dev/null; then
+    COMPILER="gcc"
+fi
+
 # Build the library
-go build $BUILD_FLAGS -o "bun_warmup_minimal$LIB_EXT" bun_warmup_minimal.go
+$COMPILER $COMPILER_FLAGS -o "noop_warmup$LIB_EXT" noop_warmup.c
 
-# Remove the header file (not needed for FFI)
-rm -f bun_warmup_minimal.h
-
-echo "✅ Bun preload library built successfully: bun_warmup_minimal$LIB_EXT"
+echo "✅ Bun preload library built successfully: noop_warmup$LIB_EXT"
+echo "📊 Library size: $(du -h "noop_warmup$LIB_EXT" | cut -f1)"

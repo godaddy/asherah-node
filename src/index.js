@@ -12,14 +12,14 @@ if (typeof Bun !== 'undefined') {
   try {
     const { dlopen, FFIType } = require('bun:ffi');
     
-    // Load minimal Go library to initialize Go runtime for Bun compatibility
-    const libPath = path.join(__dirname, '..', 'asherah-bun-preload', 'lib', 'bun_warmup_minimal.dylib');
+    // Load minimal C library to initialize FFI subsystem for Bun compatibility  
+    const libPath = path.join(__dirname, '..', 'asherah-bun-preload', 'lib', 'noop_warmup.dylib');
     const lib = dlopen(libPath, {
-      MinimalWarmup: { returns: FFIType.int, args: [] }
+      warmup: { returns: FFIType.int, args: [] }
     });
     
-    // Initialize Go runtime
-    lib.symbols.MinimalWarmup();
+    // Initialize FFI subsystem
+    lib.symbols.warmup();
     
     // Optional: Log success in verbose mode
     if (process.env.ASHERAH_BUN_VERBOSE) {
