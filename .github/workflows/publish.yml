@@ -13,8 +13,39 @@ jobs:
       options: --ulimit core=-1 --ulimit memlock=-1:-1
     steps:
     - uses: actions/checkout@v4
+    - name: Install Bun
+      run: |
+        set -e  # Exit on error
+        # GitHub Actions containers set HOME=/github/home
+        export BUN_INSTALL="/github/home/.bun"
+        echo "Installing Bun to $BUN_INSTALL..."
+        curl -fsSL https://bun.sh/install | bash
+        echo "Checking if Bun was installed..."
+        ls -la /github/home/.bun/bin/ || echo "Bun directory not found at /github/home/.bun/bin/"
+        # Try alternative location if primary fails
+        if [ ! -f "/github/home/.bun/bin/bun" ]; then
+          echo "Bun not at /github/home/.bun/bin/bun, checking $HOME/.bun/bin/bun..."
+          ls -la $HOME/.bun/bin/ || echo "Bun not at $HOME/.bun/bin/ either"
+          if [ -f "$HOME/.bun/bin/bun" ]; then
+            cp $HOME/.bun/bin/bun /usr/local/bin/bun
+          else
+            echo "ERROR: Could not find Bun binary after installation"
+            exit 1
+          fi
+        else
+          cp /github/home/.bun/bin/bun /usr/local/bin/bun
+        fi
+        chmod +x /usr/local/bin/bun
+        /usr/local/bin/bun --version
     - name: Install packages
       run: npm install
+    - name: Verify Bun is available
+      run: |
+        echo "Checking Bun availability..."
+        ls -la /usr/local/bin/bun || echo "/usr/local/bin/bun not found"
+        which bun || echo "bun not in PATH"
+        /usr/local/bin/bun --version || echo "Cannot run /usr/local/bin/bun"
+        bun --version || echo "Cannot run bun directly"
     - name: Test
       run: npm test
     - name: Set version to match tag
