@@ -16,8 +16,9 @@
     "test:mocha-debug": "lldb -o run -- node node_modules/mocha/bin/mocha --inspect-brk",
     "test:mocha": "mocha",
     "test": "nyc npm run test:mocha",
+    "test:bun": "bun test/bun-test.js",
     "debug": "nyc npm run test:mocha-debug",
-    "posttest": "npm run lint",
+    "posttest": "npm run lint && npm run test:bun",
     "lint": "eslint src/**.ts --fix",
     "update": "npx npm-check-updates --target latest -u -x mocha && npm i && npm audit fix"
   },
