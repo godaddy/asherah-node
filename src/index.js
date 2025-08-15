@@ -13,9 +13,11 @@ if (typeof Bun !== 'undefined') {
       console.log('✅ asherah-node: Bun FFI initialized');
     }
   } catch (error) {
-    // Always log FFI initialization failures - this will break N-API loading
-    console.error('❌ asherah-node: Bun FFI initialization failed:', error.message);
-    console.error('   N-API modules may fail to load. Ensure Bun version supports FFI.');
+    // FFI initialization failure is fatal under Bun - N-API modules cannot load
+    throw new Error(
+      `asherah-node: Bun FFI initialization failed: ${error.message}\n` +
+      `N-API modules cannot load without FFI support. Please ensure your Bun version supports the 'bun:ffi' module.`
+    );
   }
 }
 
