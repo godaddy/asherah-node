@@ -15,11 +15,11 @@ if (typeof Bun !== 'undefined') {
     // Load minimal Go library to initialize Go runtime for Bun compatibility
     const libPath = path.join(__dirname, '..', 'asherah-bun-preload', 'lib', 'bun_warmup_minimal.dylib');
     const lib = dlopen(libPath, {
-      MinimalWarmup: { returns: FFIType.int, args: [] }
+      Warmup: { returns: FFIType.int, args: [] }
     });
     
     // Initialize Go runtime
-    lib.symbols.MinimalWarmup();
+    lib.symbols.Warmup();
     
     // Optional: Log success in verbose mode
     if (process.env.ASHERAH_BUN_VERBOSE) {
