@@ -10,16 +10,8 @@ const path = require('path');
 // Auto-detect and handle Bun runtime compatibility
 if (typeof Bun !== 'undefined') {
   try {
-    const { dlopen, FFIType } = require('bun:ffi');
-    
-    // Load minimal C library to initialize FFI subsystem for Bun compatibility  
-    const libPath = path.join(__dirname, '..', 'asherah-bun-preload', 'lib', 'noop_warmup.dylib');
-    const lib = dlopen(libPath, {
-      warmup: { returns: FFIType.int, args: [] }
-    });
-    
-    // Initialize FFI subsystem
-    lib.symbols.warmup();
+    // Ultra-minimal FFI initialization - just importing bun:ffi is sufficient
+    require('bun:ffi');
     
     // Optional: Log success in verbose mode
     if (process.env.ASHERAH_BUN_VERBOSE) {
