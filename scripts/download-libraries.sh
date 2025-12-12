@@ -5,6 +5,8 @@ set -e  # Exit on any command failure
 # Global Constants
 CHECK_INTERVAL_SECONDS=$((5 * 60)) # 5 minutes
 MAX_DOWNLOAD_RETRIES=3
+MAX_FILE_DOWNLOAD_RETRIES=5
+DOWNLOAD_TIMEOUT=60  # 1 minute per file
 
 # Function to check if a specific file download is necessary
 function check_download_required {
@@ -52,19 +54,45 @@ function check_download_required {
   return 1  # (download not required)
 }
 
-# Function to download a file
+# Function to download a file with retry logic
 function download_file {
   local url=$1
   local file=$2
   local etag_file="${file}.etag"
+  local retry_count=0
+  local backoff=1
 
-  if ! curl -s -L --fail --etag-save "$etag_file" --etag-compare "$etag_file" -O "$url"; then
-    echo "Failed to download $url" >&2
-    exit 1
-  fi
+  while [[ $retry_count -lt $MAX_FILE_DOWNLOAD_RETRIES ]]; do
+    # Use --show-error to display errors even with -s (silent progress)
+    # Add connection and max-time timeouts to prevent hanging
+    if curl -sS -L --fail \
+           --connect-timeout 30 \
+           --max-time "$DOWNLOAD_TIMEOUT" \
+           --retry 2 \
+           --retry-delay 2 \
+           --etag-save "$etag_file" \
+           --etag-compare "$etag_file" \
+           -O "$url"; then
+      # Explicitly touch the etag file to update its modification time only if successful
+      touch "$etag_file"
+      return 0
+    fi
 
-  # Explicitly touch the etag file to update its modification time only if successful
-  touch "$etag_file"
+    ((retry_count++))
+
+    if [[ $retry_count -lt $MAX_FILE_DOWNLOAD_RETRIES ]]; then
+      echo "Download attempt $retry_count failed for $url, retrying in ${backoff}s..." >&2
+      sleep "$backoff"
+      # Exponential backoff with a cap at 16 seconds
+      backoff=$((backoff * 2))
+      if [[ $backoff -gt 16 ]]; then
+        backoff=16
+      fi
+    fi
+  done
+
+  echo "Failed to download $url after $MAX_FILE_DOWNLOAD_RETRIES attempts" >&2
+  return 1
 }
 
 # Function to verify checksums
@@ -245,15 +273,30 @@ function main {
   local retries=0
   local checksums_verified=false
   while [[ $checksums_verified == false && $retries -lt $MAX_DOWNLOAD_RETRIES ]]; do
+    local download_failed=false
+
     # Per-file touch and download logic
     for i in "${!file_names[@]}"; do
       if check_download_required "${file_names[$i]}" "$no_cache" "$CHECK_INTERVAL_SECONDS"; then
-        download_file "${file_urls[$i]}" "${file_names[$i]}"
+        if ! download_file "${file_urls[$i]}" "${file_names[$i]}"; then
+          echo "Failed to download ${file_names[$i]}" >&2
+          download_failed=true
+          break
+        fi
       else
         interval_str=$(interval_message "$CHECK_INTERVAL_SECONDS")
         echo "${file_names[$i]} is up to date (checked within the last ${interval_str})"
       fi
     done
+
+    # If any download failed, retry the whole batch
+    if [[ $download_failed == true ]]; then
+      echo "Download failed, cleaning up and retrying..."
+      rm -f ./*.a ./*.h ./*.so ./*.dylib ./*.etag
+      ((retries++))
+      sleep 2
+      continue
+    fi
 
     # Verify checksums and copy files
     if verify_checksums "${archive}" "${header}" "${warmup}" "${sums}"; then
@@ -263,12 +306,11 @@ function main {
       echo "Verification failed, re-downloading files..."
       ((retries++))
       # Sleep for a bit before retrying to avoid hammering the server
-      sleep 1
+      sleep 2
     fi
   done
 
   if [[ $checksums_verified == true ]]; then
-    copy_files "${archive}" "${header}"
     echo "Asherah libraries downloaded successfully"
   else
     echo "Failed to download Asherah libraries after $retries retries."
