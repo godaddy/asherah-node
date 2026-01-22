@@ -199,7 +199,10 @@ function assert_buffers_equal(a: Buffer, b: Buffer, message?: string) {
 
 function assert_encrypt_string(partition: string, input: string, encrypted: string) {
     //Ensure that the secret data isn't anywhere in the output of encrypt
-    assert(encrypted.indexOf(input) == -1, "Encrypted data should not contain secret input data");
+    // Note: for empty string, indexOf('') always returns 0, so we need special handling
+    if (input.length > 0) {
+        assert(encrypted.indexOf(input) == -1, "Encrypted data should not contain secret input data");
+    }
 
     //Ensure that the partition name hasn't been corrupted / truncated
     assert(encrypted.indexOf(partition) != -1, "Encrypted data should contain partition name");
