@@ -2,8 +2,15 @@
   "name": "asherah",
   "version": "0.0.0",
   "description": "Asherah envelope encryption and key rotation library",
+  "main": "./dist/asherah.node",
+  "types": "./dist/asherah.d.ts",
   "exports": {
-    "node-addons": "./dist/asherah.node"
+    ".": {
+      "types": "./dist/asherah.d.ts",
+      "require": "./dist/asherah.node",
+      "import": "./dist/asherah.node",
+      "default": "./dist/asherah.node"
+    }
   },
   "repository": {
     "type": "git",
@@ -74,7 +81,6 @@
     "spec": "test/**/*.spec.ts",
     "require": "ts-node/register"
   },
-  "types": "dist/asherah.d.ts",
   "dependencies": {
     "node-addon-api": "^8.3.0"
   }
