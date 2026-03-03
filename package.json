@@ -69,7 +69,7 @@
     "mocha": "^10.0.0",
     "node-api-headers": "^1.5.0",
     "nyc": "^17.1.0",
-    "ts-mocha": "^10.0.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.7.3",
     "winston": "^3.17.0"
   },
@@ -79,7 +79,7 @@
     ],
     "recursive": true,
     "spec": "test/**/*.spec.ts",
-    "require": "ts-node/register"
+    "require": "tsx"
   },
   "dependencies": {
     "node-addon-api": "^8.3.0"

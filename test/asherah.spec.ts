@@ -76,6 +76,68 @@ describe('Asherah', function () {
     register_async_roundtrip_tests(get_string(big_string_size), test_verbose, false, big_string_size + 1);
     register_async_roundtrip_tests(get_string(big_string_size), test_verbose, true, big_string_size + 1);
 
+    it('Round Trip Strings Sync DisableZeroCopy', function () {
+        const config: AsherahConfig = {
+            KMS: 'test-debug-static',
+            Metastore: 'test-debug-memory',
+            ServiceName: 'TestService',
+            ProductID: 'TestProduct',
+            Verbose: true,
+            EnableSessionCaching: false,
+            ExpireAfter: null,
+            CheckInterval: null,
+            ConnectionString: null,
+            ReplicaReadConsistency: null,
+            DynamoDBEndpoint: null,
+            DynamoDBRegion: null,
+            DynamoDBTableName: null,
+            SessionCacheMaxSize: null,
+            SessionCacheDuration: null,
+            RegionMap: null,
+            PreferredRegion: null,
+            EnableRegionSuffix: null,
+            DisableZeroCopy: true
+        };
+        asherah_setup(config);
+        try {
+            test_round_trip_strings(simple_secret);
+        } finally {
+            asherah_shutdown();
+        }
+        assert_asherah_shutdown();
+    });
+
+    it('Round Trip Buffers Async DisableZeroCopy', async function () {
+        const config: AsherahConfig = {
+            KMS: 'test-debug-static',
+            Metastore: 'test-debug-memory',
+            ServiceName: 'TestService',
+            ProductID: 'TestProduct',
+            Verbose: true,
+            EnableSessionCaching: false,
+            ExpireAfter: null,
+            CheckInterval: null,
+            ConnectionString: null,
+            ReplicaReadConsistency: null,
+            DynamoDBEndpoint: null,
+            DynamoDBRegion: null,
+            DynamoDBTableName: null,
+            SessionCacheMaxSize: null,
+            SessionCacheDuration: null,
+            RegionMap: null,
+            PreferredRegion: null,
+            EnableRegionSuffix: null,
+            DisableZeroCopy: true
+        };
+        await asherah_setup(config);
+        try {
+            await test_round_trip_buffers_async(Buffer.from(simple_secret, 'utf8'));
+        } finally {
+            asherah_shutdown();
+        }
+        assert_asherah_shutdown();
+    });
+
     it('Test RegionMap', function () {
         const config: AsherahConfig = {
             KMS: 'aws',
@@ -95,7 +157,8 @@ describe('Asherah', function () {
             SessionCacheDuration: null,
             RegionMap: { "us-west-2": "arn:aws:kms:us-west-2:795066905288:key/3a628d06-9db4-4b1f-9f76-54fc742dc662" },
             PreferredRegion: null,
-            EnableRegionSuffix: null
+            EnableRegionSuffix: null,
+            DisableZeroCopy: null
         };
         asherah_setup(config);
         asherah_shutdown();

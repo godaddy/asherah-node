@@ -43,7 +43,8 @@ When('I encrypt the data', async function () {
         SessionCacheDuration: null,
         RegionMap: null,
         PreferredRegion: null,
-        EnableRegionSuffix: null
+        EnableRegionSuffix: null,
+        DisableZeroCopy: null
     };
     asherah.setup(config);
     encryptedPayloadString = Buffer.from(asherah.encrypt_string('partition', payloadString)).toString('base64');

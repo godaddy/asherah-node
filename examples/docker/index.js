@@ -18,7 +18,8 @@ const config = {
     SessionCacheDuration: null,
     RegionMap: {"us-west-2": "arn:aws:kms:us-west-2:XXXXXXXXX:key/XXXXXXXXXX"},
     PreferredRegion: null,
-    EnableRegionSuffix: null
+    EnableRegionSuffix: null,
+    DisableZeroCopy: null
   };
 
 asherah.setup(config)
