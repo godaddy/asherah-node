@@ -42,7 +42,8 @@ When('I decrypt the encrypted_data', async function () {
         SessionCacheDuration: null,
         RegionMap: null,
         PreferredRegion: null,
-        EnableRegionSuffix: null
+        EnableRegionSuffix: null,
+        DisableZeroCopy: null
     };
     asherah.setup(config);
     decryptedPayload = asherah.decrypt_string('partition', encryptedPayload);

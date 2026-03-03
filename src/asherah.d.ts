@@ -40,6 +40,8 @@ export type AsherahConfig = {
     EnableSessionCaching: boolean | null;
     /** Enable verbose logging output */
     Verbose: boolean | null;
+    /** Disable the zero-copy optimization for the cobhan buffer protocol */
+    DisableZeroCopy: boolean | null;
 };
 
 type LogHookCallback = (level: number, message: string) => void;

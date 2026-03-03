@@ -31,7 +31,8 @@ const config: AsherahConfig = {
     SessionCacheDuration: null,
     RegionMap: {"us-west-2": "arn:aws:kms:us-west-2:XXXXXXXXX:key/XXXXXXXXXX"},
     PreferredRegion: null,
-    EnableRegionSuffix: null
+    EnableRegionSuffix: null,
+    DisableZeroCopy: null
   };
 
 setup(config)
@@ -77,7 +78,8 @@ const config = {
     SessionCacheDuration: null,
     RegionMap: {"us-west-2": "arn:aws:kms:us-west-2:XXXXXXXXX:key/XXXXXXXXXX"},
     PreferredRegion: null,
-    EnableRegionSuffix: null
+    EnableRegionSuffix: null,
+    DisableZeroCopy: null
   };
 
 asherah.setup(config)
@@ -126,7 +128,8 @@ const config = {
     SessionCacheDuration: null,
     RegionMap: {"us-west-2": "arn:aws:kms:us-west-2:XXXXXXXXX:key/XXXXXXXXXX"},
     PreferredRegion: null,
-    EnableRegionSuffix: null
+    EnableRegionSuffix: null,
+    DisableZeroCopy: null
   };
 
 // Read the AWS environment variables from the JSON file
