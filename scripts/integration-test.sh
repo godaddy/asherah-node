@@ -12,7 +12,7 @@ mkdir -p "${GO_DIR}/bin"
 export GOPATH=${GO_DIR}
 export GOBIN=${GO_DIR}/bin
 export GOTOOLCHAIN=local
-PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+PATH=$GOPATH/bin:${GOROOT:-}/bin:$PATH
 
 ### Encrypt with Go
 cd "${ORIG_DIR}/integration/asherah/tests/cross-language/go" || exit 1
