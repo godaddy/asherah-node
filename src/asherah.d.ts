@@ -65,4 +65,3 @@ export declare function set_safety_padding_overhead(safety_padding_overhead: num
 export declare function set_log_hook(logHook: LogHookCallback): void;
 export declare function get_setup_status(): boolean;
 export declare function setenv(environment: string): void;
-export declare function set_canaries_enabled(enabled: boolean): void;

@@ -273,7 +273,6 @@ private:
 
 public:
   static void SetCanariesEnabled(bool enabled) { canaries_enabled_ = enabled; }
-  static bool GetCanariesEnabled() { return canaries_enabled_; }
 
 private:
   static constexpr int32_t canary_constant = static_cast<int32_t>(0xdeadbeef);
