@@ -221,9 +221,15 @@ private:
       canary2_ptr = other.canary2_ptr;
 
       // Reset the other object to prevent it from deallocating the buffer
+      // or dereferencing pointers into memory we now own
       other.cbuffer = nullptr;
       other.allocation_size = 0;
+      other.max_data_size = 0;
       other.ownership = false;
+      other.data_ptr = nullptr;
+      other.data_len_ptr = nullptr;
+      other.canary1_ptr = nullptr;
+      other.canary2_ptr = nullptr;
     } else {
       // Allocate a new buffer and copy the contents
       allocation_size = other.allocation_size;
