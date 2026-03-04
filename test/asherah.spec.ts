@@ -66,6 +66,22 @@ describe('Asherah', function () {
         await bad_encrypt_buffers_empty_async(test_verbose, true, default_max_stack_alloc_item_size);
     });
 
+    it('Bad Empty Partition ID Encrypt Sync', async function () {
+        await bad_empty_partition_id_encrypt_sync(test_verbose, true, default_max_stack_alloc_item_size);
+    });
+
+    it('Bad Empty Partition ID Encrypt Async', async function () {
+        await bad_empty_partition_id_encrypt_async(test_verbose, true, default_max_stack_alloc_item_size);
+    });
+
+    it('Bad Empty Partition ID Decrypt Sync', async function () {
+        await bad_empty_partition_id_decrypt_sync(test_verbose, true, default_max_stack_alloc_item_size);
+    });
+
+    it('Bad Empty Partition ID Decrypt Async', async function () {
+        await bad_empty_partition_id_decrypt_async(test_verbose, true, default_max_stack_alloc_item_size);
+    });
+
     // Test using heap only
     register_sync_roundtrip_tests(simple_secret, test_verbose, false, force_use_heap);
     register_sync_roundtrip_tests(simple_secret, test_verbose, true, force_use_heap);
@@ -474,6 +490,50 @@ async function bad_encrypt_buffers_empty_async(verbose: boolean, session_cache: 
         await assert_throws_async(async () => {
             await test_round_trip_buffers_async(Buffer.from(''));
         }, 'Should throw error if encrypt buffer empty');
+    } finally {
+        await asherah_shutdown_async();
+    }
+}
+
+async function bad_empty_partition_id_encrypt_sync(verbose: boolean, session_cache: boolean, max_stack_alloc_item_size: number): Promise<void> {
+    await asherah_setup_static_memory_async(verbose, session_cache, max_stack_alloc_item_size);
+    try {
+        assert.throws(() => {
+            encrypt_string('', 'test data');
+        }, Error);
+    } finally {
+        await asherah_shutdown_async();
+    }
+}
+
+async function bad_empty_partition_id_encrypt_async(verbose: boolean, session_cache: boolean, max_stack_alloc_item_size: number): Promise<void> {
+    await asherah_setup_static_memory_async(verbose, session_cache, max_stack_alloc_item_size);
+    try {
+        await assert_throws_async(async () => {
+            await encrypt_string_async('', 'test data');
+        }, 'Should throw error if partition ID is empty');
+    } finally {
+        await asherah_shutdown_async();
+    }
+}
+
+async function bad_empty_partition_id_decrypt_sync(verbose: boolean, session_cache: boolean, max_stack_alloc_item_size: number): Promise<void> {
+    await asherah_setup_static_memory_async(verbose, session_cache, max_stack_alloc_item_size);
+    try {
+        assert.throws(() => {
+            decrypt_string('', 'some-encrypted-data');
+        }, Error);
+    } finally {
+        await asherah_shutdown_async();
+    }
+}
+
+async function bad_empty_partition_id_decrypt_async(verbose: boolean, session_cache: boolean, max_stack_alloc_item_size: number): Promise<void> {
+    await asherah_setup_static_memory_async(verbose, session_cache, max_stack_alloc_item_size);
+    try {
+        await assert_throws_async(async () => {
+            await decrypt_string_async('', 'some-encrypted-data');
+        }, 'Should throw error if partition ID is empty');
     } finally {
         await asherah_shutdown_async();
     }
