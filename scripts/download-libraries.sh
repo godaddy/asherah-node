@@ -303,7 +303,8 @@ function main {
       copy_files "${archive}" "${header}"
       checksums_verified=true
     else
-      echo "Verification failed, re-downloading files..."
+      echo "Verification failed, cleaning up and re-downloading files..."
+      rm -f ./*.a ./*.h ./*.so ./*.dylib ./*.etag
       ((retries++))
       # Sleep for a bit before retrying to avoid hammering the server
       sleep 2
