@@ -157,7 +157,7 @@ protected:
       throw std::invalid_argument(
           "Requested data length exceeds maximum allowable size");
     }
-    if (data_len_bytes > allocation_size) {
+    if (data_len_bytes > AllocationSizeToMaxDataSize(allocation_size)) {
       throw std::invalid_argument(
           "Requested data length exceeds allocation size");
     }
