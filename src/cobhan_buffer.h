@@ -80,7 +80,9 @@ public:
   }
 
   ~CobhanBuffer() {
-    verify_canaries();
+    if (cbuffer != nullptr) {
+      verify_canaries();
+    }
     cleanup();
   }
 
@@ -150,14 +152,18 @@ protected:
     }
   }
 
+  [[nodiscard]] bool is_valid() const { return cbuffer != nullptr; }
+
   [[nodiscard]] size_t get_allocation_size() const { return allocation_size; }
+
+  [[nodiscard]] size_t get_max_data_size() const { return max_data_size; }
 
   void set_data_len_bytes(size_t data_len_bytes) {
     if (data_len_bytes > max_int32_size) {
       throw std::invalid_argument(
           "Requested data length exceeds maximum allowable size");
     }
-    if (data_len_bytes > allocation_size) {
+    if (data_len_bytes > max_data_size) {
       throw std::invalid_argument(
           "Requested data length exceeds allocation size");
     }
@@ -179,9 +185,12 @@ private:
     // Second canary value is an int32_t 0xdeadbeef
     canary2_ptr = canary1_ptr + 1;
 
+    // Calculate the maximum data size for this allocation
+    max_data_size = AllocationSizeToMaxDataSize(allocation_size);
+
     // Calculate the data length
     if (data_len_bytes == 0) {
-      data_len_bytes = AllocationSizeToMaxDataSize(allocation_size);
+      data_len_bytes = max_data_size;
     }
 
     if (data_len_bytes > max_int32_size) {
@@ -206,6 +215,7 @@ private:
       // Transfer ownership of the existing buffer
       cbuffer = other.cbuffer;
       allocation_size = other.allocation_size;
+      max_data_size = other.max_data_size;
       ownership = true;
       data_ptr = other.data_ptr;
       data_len_ptr = other.data_len_ptr;
@@ -213,9 +223,15 @@ private:
       canary2_ptr = other.canary2_ptr;
 
       // Reset the other object to prevent it from deallocating the buffer
+      // or dereferencing pointers into memory we now own
       other.cbuffer = nullptr;
       other.allocation_size = 0;
+      other.max_data_size = 0;
       other.ownership = false;
+      other.data_ptr = nullptr;
+      other.data_len_ptr = nullptr;
+      other.canary1_ptr = nullptr;
+      other.canary2_ptr = nullptr;
     } else {
       // Allocate a new buffer and copy the contents
       allocation_size = other.allocation_size;
@@ -241,6 +257,7 @@ private:
 
   char *cbuffer = nullptr;
   size_t allocation_size = 0;
+  size_t max_data_size = 0;
   bool ownership = false;
   int32_t *data_len_ptr = nullptr;
   char *data_ptr = nullptr;

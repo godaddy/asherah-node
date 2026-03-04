@@ -416,7 +416,8 @@ private:
     try {
       NapiUtils::RequireParameterCount(info, 1);
       CobhanBufferNapi env_json(env, info[0]);
-      ::SetEnv(env_json);
+      GoInt32 result = ::SetEnv(env_json);
+      CheckResult(env, result);
     } catch (Napi::Error &e) {
       e.ThrowAsJavaScriptException();
       return;
@@ -433,9 +434,12 @@ private:
       NapiUtils::RequireParameterCount(info, 1);
 
       Napi::Number item_size = info[0].ToNumber();
-      auto new_size = (size_t)item_size.Int32Value();
-
-      maximum_stack_alloc_size = new_size;
+      int32_t value = item_size.Int32Value();
+      if (value < 0) {
+        NapiUtils::ThrowException(env,
+            "set_max_stack_alloc_item_size: value must be non-negative");
+      }
+      maximum_stack_alloc_size = static_cast<size_t>(value);
     } catch (Napi::Error &e) {
       e.ThrowAsJavaScriptException();
       return;
@@ -601,7 +605,7 @@ private:
     auto old_setup_state = setup_state.exchange(0, std::memory_order_acq_rel);
     if (unlikely(old_setup_state == 0)) {
       NapiUtils::ThrowException(
-          env, "EndSetupAsherah: lost race to mark setup_state?!");
+          env, "EndShutdownAsherah: lost race to mark setup_state?!");
     }
   }
 

@@ -37,4 +37,11 @@ export default [
             "@typescript-eslint/no-var-requires": "off",
         },
     },
+    {
+        files: ["test/**/*.ts"],
+        rules: {
+            "@typescript-eslint/no-require-imports": "off",
+            "@typescript-eslint/no-unused-vars": ["error", { "caughtErrors": "none" }],
+        },
+    },
 ];

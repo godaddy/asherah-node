@@ -77,17 +77,14 @@ public:
                                  bool defaultValue = false) {
     auto maybeValue = obj.Get(propertyName);
 
-    if (likely(!maybeValue.IsEmpty())) {
-      Napi::Value value = maybeValue;
-
-      if (value.IsBoolean()) {
-        result = value.As<Napi::Boolean>();
-      } else {
-        // Coerce to boolean
-        result = value.ToBoolean();
-      }
-    } else {
+    if (maybeValue.IsUndefined() || maybeValue.IsNull() ||
+        maybeValue.IsEmpty()) {
       result = defaultValue;
+    } else if (maybeValue.IsBoolean()) {
+      result = maybeValue.As<Napi::Boolean>();
+    } else {
+      // Coerce to boolean
+      result = maybeValue.ToBoolean();
     }
   }
 
@@ -129,13 +126,13 @@ public:
       return value.As<Napi::Buffer<unsigned char>>();
     } else if (unlikely(value.IsUndefined())) {
       ThrowException(env, std::string(func_name) +
-                              ": Expected String but received undefined");
+                              ": Expected Buffer but received undefined");
     } else if (unlikely(value.IsNull())) {
       ThrowException(env, std::string(func_name) +
-                              ": Expected String but received null");
+                              ": Expected Buffer but received null");
     } else {
       ThrowException(env, std::string(func_name) +
-                              ": Expected String but received unknown type");
+                              ": Expected Buffer but received unknown type");
     }
   }
 

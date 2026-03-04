@@ -52,7 +52,7 @@ void LoggerNapi::debug_log(const char *function_name,
       StdErrLogger::debug_log(function_name, message);
     } else {
       call_log_hook(posix_log_level_debug,
-                    system_name + ": " + function_name + ": " + message);
+                    std::string(function_name) + ": " + message);
     }
   }
 }
@@ -64,7 +64,7 @@ void LoggerNapi::debug_log(const char *function_name,
       StdErrLogger::debug_log(function_name, message);
     } else {
       call_log_hook(posix_log_level_debug,
-                    system_name + ": " + function_name + ": " + message);
+                    std::string(function_name) + ": " + message);
     }
   }
 }
@@ -77,7 +77,7 @@ void LoggerNapi::debug_log_alloca(const char *function_name,
       StdErrLogger::debug_log_alloca(function_name, variable_name, length);
     } else {
       call_log_hook(posix_log_level_debug,
-                    system_name + ": " + function_name + ": Calling alloca(" +
+                    std::string(function_name) + ": Calling alloca(" +
                         std::to_string(length) + ") (stack) for " +
                         variable_name);
     }
@@ -90,10 +90,10 @@ void LoggerNapi::debug_log_new(const char *function_name,
     if (unlikely(log_hook.IsEmpty())) {
       StdErrLogger::debug_log_new(function_name, variable_name, length);
     } else {
-      call_log_hook(posix_log_level_debug, system_name + ": " + function_name +
-                                               ": Calling new[" +
-                                               std::to_string(length) +
-                                               "] (heap) for " + variable_name);
+      call_log_hook(posix_log_level_debug,
+                    std::string(function_name) + ": Calling new[" +
+                        std::to_string(length) + "] (heap) for " +
+                        variable_name);
     }
   }
 }
@@ -102,7 +102,9 @@ void LoggerNapi::error_log(const char *function_name,
                            const char *message) const {
   if (likely(!log_hook.IsEmpty())) {
     call_log_hook(posix_log_level_error,
-                  system_name + ": " + function_name + ": " + message);
+                  std::string(function_name) + ": " + message);
+  } else {
+    StdErrLogger::error_log(function_name, message);
   }
 }
 
@@ -110,6 +112,8 @@ void LoggerNapi::error_log(const char *function_name,
                            const std::string &message) const {
   if (likely(!log_hook.IsEmpty())) {
     call_log_hook(posix_log_level_error,
-                  system_name + ": " + function_name + ": " + message);
+                  std::string(function_name) + ": " + message);
+  } else {
+    StdErrLogger::error_log(function_name, message);
   }
 }

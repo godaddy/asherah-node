@@ -15,6 +15,13 @@ import {
     test_round_trip_strings,
     test_round_trip_strings_async
 } from './asherah'
+import {
+    encrypt_async,
+    decrypt_async,
+    encrypt_string_async,
+    decrypt_string_async
+} from '../dist/asherah'
+import { assert } from 'chai';
 import { get_string } from './helpers';
 
 const force_use_heap = 0;
@@ -134,6 +141,58 @@ describe('Asherah', function () {
             await test_round_trip_buffers_async(Buffer.from(simple_secret, 'utf8'));
         } finally {
             asherah_shutdown();
+        }
+        assert_asherah_shutdown();
+    });
+
+    it('Async decrypt buffer survives deferred read', async function () {
+        await asherah_setup_static_memory_async(test_verbose, false);
+        try {
+            const input = Buffer.from(simple_secret, 'utf8');
+            const encrypted = await encrypt_async('partition', input);
+
+            // Get the decrypted buffer back from the async FFI call
+            const decrypted = await decrypt_async('partition', encrypted);
+
+            // Force multiple event loop ticks and GC to give the C++ destructor
+            // every opportunity to wipe the underlying memory
+            for (let i = 0; i < 10; i++) {
+                await new Promise(resolve => setImmediate(resolve));
+            }
+            if (global.gc) {
+                global.gc();
+                await new Promise(resolve => setImmediate(resolve));
+            }
+
+            // Now read the buffer — must still contain the original data
+            assert.deepEqual(decrypted, input, 'Buffer data must survive after event loop ticks and GC');
+        } finally {
+            await asherah_shutdown_async();
+        }
+        assert_asherah_shutdown();
+    });
+
+    it('Async decrypt string survives deferred read', async function () {
+        await asherah_setup_static_memory_async(test_verbose, false);
+        try {
+            const encrypted = await encrypt_string_async('partition', simple_secret);
+
+            // Get the decrypted string back from the async FFI call
+            const decrypted = await decrypt_string_async('partition', encrypted);
+
+            // Force multiple event loop ticks and GC
+            for (let i = 0; i < 10; i++) {
+                await new Promise(resolve => setImmediate(resolve));
+            }
+            if (global.gc) {
+                global.gc();
+                await new Promise(resolve => setImmediate(resolve));
+            }
+
+            // Now read the string — must still match original
+            assert.equal(decrypted, simple_secret, 'String data must survive after event loop ticks and GC');
+        } finally {
+            await asherah_shutdown_async();
         }
         assert_asherah_shutdown();
     });

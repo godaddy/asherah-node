@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 ORIG_DIR=$(pwd)
 
 git -C "${ORIG_DIR}/integration" clone https://github.com/godaddy/asherah.git
