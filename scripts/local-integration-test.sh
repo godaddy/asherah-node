@@ -38,7 +38,6 @@ export TEST_DB_PASSWORD=Password123
 export TEST_DB_PORT=3306
 
 MYSQL_CONTAINER_ID=$($CONTAINER_CMD run --rm -d \
-  --platform linux/amd64 \
   -e MYSQL_HOSTNAME=${MYSQL_HOSTNAME} \
   -e MYSQL_DATABASE=${TEST_DB_NAME} \
   -e MYSQL_USERNAME=${TEST_DB_USER} \
@@ -48,7 +47,7 @@ MYSQL_CONTAINER_ID=$($CONTAINER_CMD run --rm -d \
   --health-interval 10s \
   --health-timeout 5s \
   --health-retries 10 \
-  mysql:5.7)
+  mysql:latest)
 
 if [ $? -ne 0 ]; then
    echo Docker failed to start container
