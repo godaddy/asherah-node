@@ -165,16 +165,11 @@ private:
   Napi::Env env;
 
   void copy_from_string(const Napi::String &napiString) {
-    size_t str_len = NapiUtils::GetUtf8StringLength(env, napiString);
-    // Add one for NULL delimiter due to napi_get_value_string_utf8
-    size_t allocation_size =
-        CobhanBuffer::DataSizeToAllocationSize(str_len) + 1;
-
-    if (allocation_size > get_allocation_size()) {
-      NapiUtils::ThrowException(
-          env,
-          "Buffer allocation size is insufficient to hold the Napi::String.");
-    }
+    // max_data_size is str_len + 1 (the +1 accounts for the NULL delimiter
+    // required by napi_get_value_string_utf8). The allocation was already
+    // sized by the caller via GetUtf8StringLength, so we derive str_len
+    // from max_data_size to avoid a redundant N-API round-trip.
+    size_t str_len = get_max_data_size() - 1;
 
     // Bytes written is the number of bytes copied, excluding the NULL
     size_t bytes_written;

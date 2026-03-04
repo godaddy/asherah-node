@@ -156,6 +156,8 @@ protected:
 
   [[nodiscard]] size_t get_allocation_size() const { return allocation_size; }
 
+  [[nodiscard]] size_t get_max_data_size() const { return max_data_size; }
+
   void set_data_len_bytes(size_t data_len_bytes) {
     if (data_len_bytes > max_int32_size) {
       throw std::invalid_argument(
