@@ -42,6 +42,8 @@ export type AsherahConfig = {
     Verbose: boolean | null;
     /** Disable the zero-copy optimization for the cobhan buffer protocol */
     DisableZeroCopy: boolean | null;
+    /** Enable canary buffer corruption checks (default: false) */
+    EnableCanaries: boolean | null;
 };
 
 type LogHookCallback = (level: number, message: string) => void;

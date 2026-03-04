@@ -546,6 +546,11 @@ private:
     bool verbose;
     NapiUtils::GetBooleanProperty(config_json, "Verbose", verbose, false);
     verbose_flag = verbose;
+
+    bool enable_canaries;
+    NapiUtils::GetBooleanProperty(config_json, "EnableCanaries",
+                                  enable_canaries, false);
+    CobhanBuffer::SetCanariesEnabled(enable_canaries);
   }
 
   void EndSetupAsherah(const Napi::Env &env, GoInt32 result,
