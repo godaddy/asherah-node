@@ -103,7 +103,8 @@ describe('Asherah', function () {
             RegionMap: null,
             PreferredRegion: null,
             EnableRegionSuffix: null,
-            DisableZeroCopy: true
+            DisableZeroCopy: true,
+            EnableCanaries: true
         };
         asherah_setup(config);
         try {
@@ -134,7 +135,8 @@ describe('Asherah', function () {
             RegionMap: null,
             PreferredRegion: null,
             EnableRegionSuffix: null,
-            DisableZeroCopy: true
+            DisableZeroCopy: true,
+            EnableCanaries: true
         };
         await asherah_setup(config);
         try {
@@ -217,7 +219,8 @@ describe('Asherah', function () {
             RegionMap: { "us-west-2": "arn:aws:kms:us-west-2:795066905288:key/3a628d06-9db4-4b1f-9f76-54fc742dc662" },
             PreferredRegion: null,
             EnableRegionSuffix: null,
-            DisableZeroCopy: null
+            DisableZeroCopy: null,
+            EnableCanaries: true
         };
         asherah_setup(config);
         asherah_shutdown();

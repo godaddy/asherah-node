@@ -45,7 +45,8 @@ function get_static_memory_config(verbose: boolean, session_cache: boolean): Ash
         RegionMap: null,
         PreferredRegion: null,
         EnableRegionSuffix: null,
-        DisableZeroCopy: null
+        DisableZeroCopy: null,
+        EnableCanaries: true
     };
 }
 
