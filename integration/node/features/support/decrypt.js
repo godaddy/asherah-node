@@ -52,12 +52,12 @@ When('I decrypt the encrypted_data', async function () {
 });
 
 Then('I should get decrypted_data', async function () {
-    assert(decryptedPayload != null);
+    assert(decryptedPayload !== null && decryptedPayload !== undefined);
     return 'passed';
 });
 
 Then('decrypted_data should be equal to {string}', async function (originalPayload) {
-    assert(decryptedPayload == originalPayload);
+    assert(decryptedPayload === originalPayload);
     return 'passed';
 });
 
