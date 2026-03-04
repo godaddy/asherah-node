@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -euo pipefail
 
 ORIG_DIR=$(pwd)
 
@@ -25,7 +25,7 @@ echo "GOBIN: ${GOBIN}"
 go mod tidy
 
 echo Encrypt with Go
-go test -v -test.run '^TestEncryptFeatures$' -godog.paths="${ORIG_DIR}/integration/node/features/encrypt.feature"
+go test -v -test.run '^TestEncryptFeatures$' -godog.paths="${ORIG_DIR}/integration/node/features/encrypt.feature" || { echo "FAIL: Go encrypt tests failed"; exit 1; }
 
 echo Encrypt and Decrypt with Asherah-Node
 
@@ -34,15 +34,15 @@ echo Installing npm packages
 CXXFLAGS='-DNODE_API_EXPERIMENTAL_NOGC_ENV_OPT_OUT' npm install
 
 echo "Running cucumber-js encrypt.feature"
-./node_modules/.bin/cucumber-js ./features/encrypt.feature
+./node_modules/.bin/cucumber-js ./features/encrypt.feature || { echo "FAIL: cucumber-js encrypt tests failed"; exit 1; }
 
 ### Decrypt with Asherah-Node
 
 echo "Running cucumber-js decrypt.feature"
-./node_modules/.bin/cucumber-js ./features/decrypt.feature
+./node_modules/.bin/cucumber-js ./features/decrypt.feature || { echo "FAIL: cucumber-js decrypt tests failed"; exit 1; }
 
 ### Decrypt with Go
 
 echo Decrypt with Go
 cd "${ORIG_DIR}/integration/asherah/tests/cross-language/go" || exit 1
-go test -v -test.run '^TestDecryptFeatures$' -godog.paths="${ORIG_DIR}/integration/node/features/decrypt.feature"
+go test -v -test.run '^TestDecryptFeatures$' -godog.paths="${ORIG_DIR}/integration/node/features/decrypt.feature" || { echo "FAIL: Go decrypt tests failed"; exit 1; }
