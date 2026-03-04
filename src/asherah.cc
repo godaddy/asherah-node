@@ -11,7 +11,7 @@
 #include <atomic>
 #include <napi.h>
 
-static volatile std::atomic<int32_t> setup_state{0};
+static std::atomic<int32_t> setup_state{0};
 
 class Asherah : public Napi::Addon<Asherah> {
 public:
