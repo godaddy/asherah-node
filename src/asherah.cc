@@ -605,7 +605,7 @@ private:
     auto old_setup_state = setup_state.exchange(0, std::memory_order_acq_rel);
     if (unlikely(old_setup_state == 0)) {
       NapiUtils::ThrowException(
-          env, "EndSetupAsherah: lost race to mark setup_state?!");
+          env, "EndShutdownAsherah: lost race to mark setup_state?!");
     }
   }
 

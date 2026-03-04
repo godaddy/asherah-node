@@ -126,13 +126,13 @@ public:
       return value.As<Napi::Buffer<unsigned char>>();
     } else if (unlikely(value.IsUndefined())) {
       ThrowException(env, std::string(func_name) +
-                              ": Expected String but received undefined");
+                              ": Expected Buffer but received undefined");
     } else if (unlikely(value.IsNull())) {
       ThrowException(env, std::string(func_name) +
-                              ": Expected String but received null");
+                              ": Expected Buffer but received null");
     } else {
       ThrowException(env, std::string(func_name) +
-                              ": Expected String but received unknown type");
+                              ": Expected Buffer but received unknown type");
     }
   }
 
