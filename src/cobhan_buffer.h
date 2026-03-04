@@ -157,7 +157,7 @@ protected:
       throw std::invalid_argument(
           "Requested data length exceeds maximum allowable size");
     }
-    if (data_len_bytes > AllocationSizeToMaxDataSize(allocation_size)) {
+    if (data_len_bytes > max_data_size) {
       throw std::invalid_argument(
           "Requested data length exceeds allocation size");
     }
@@ -179,9 +179,12 @@ private:
     // Second canary value is an int32_t 0xdeadbeef
     canary2_ptr = canary1_ptr + 1;
 
+    // Calculate the maximum data size for this allocation
+    max_data_size = AllocationSizeToMaxDataSize(allocation_size);
+
     // Calculate the data length
     if (data_len_bytes == 0) {
-      data_len_bytes = AllocationSizeToMaxDataSize(allocation_size);
+      data_len_bytes = max_data_size;
     }
 
     if (data_len_bytes > max_int32_size) {
@@ -206,6 +209,7 @@ private:
       // Transfer ownership of the existing buffer
       cbuffer = other.cbuffer;
       allocation_size = other.allocation_size;
+      max_data_size = other.max_data_size;
       ownership = true;
       data_ptr = other.data_ptr;
       data_len_ptr = other.data_len_ptr;
@@ -241,6 +245,7 @@ private:
 
   char *cbuffer = nullptr;
   size_t allocation_size = 0;
+  size_t max_data_size = 0;
   bool ownership = false;
   int32_t *data_len_ptr = nullptr;
   char *data_ptr = nullptr;
