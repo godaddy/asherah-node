@@ -38,7 +38,7 @@ public:
     }
   }
 
-  // Constructor from a Napi::String to an externally allocated buffer
+  // Constructor from a Napi::Buffer to an externally allocated buffer
   CobhanBufferNapi(const Napi::Env &env,
                    const Napi::Buffer<unsigned char> &napiBuffer, char *cbuffer,
                    size_t allocation_size)
@@ -53,7 +53,7 @@ public:
     copy_from_string(napiString);
   }
 
-  // Constructor from a Napi::String to an externally allocated buffer
+  // Constructor from a Napi::Value to an externally allocated buffer
   CobhanBufferNapi(const Napi::Env &env, const Napi::Value &napiValue,
                    char *cbuffer, size_t allocation_size)
       : CobhanBuffer(cbuffer, allocation_size), env(env) {
@@ -191,11 +191,11 @@ private:
 class SensitiveCobhanBufferNapi : public CobhanBufferNapi {
 public:
   using CobhanBufferNapi::CobhanBufferNapi; // Inherit all constructors
-  
+
   // Move constructor - needed for async workers
   SensitiveCobhanBufferNapi(SensitiveCobhanBufferNapi &&other) noexcept
       : CobhanBufferNapi(std::move(other)) {}
-  
+
   // Also allow moving from base class (for async worker initialization)
   SensitiveCobhanBufferNapi(CobhanBufferNapi &&other) noexcept
       : CobhanBufferNapi(std::move(other)) {}

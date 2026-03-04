@@ -94,9 +94,9 @@ public:
                  << ", allocation_size=" << get_allocation_size() << std::endl
                  << ", data_ptr=" << static_cast<void *>(get_data_ptr())
                  << std::endl
-                 << ", canary1=" << static_cast<void *>(canary1_ptr)
+                 << ", canary1=" << static_cast<const void *>(canary1_ptr)
                  << std::endl
-                 << ", canary2=" << static_cast<void *>(canary2_ptr)
+                 << ", canary2=" << static_cast<const void *>(canary2_ptr)
                  << std::endl
                  << ", ownership=" << ownership << std::endl
                  << ", string=[" << debug_string << "]" << std::endl
@@ -130,8 +130,10 @@ public:
 
 protected:
   void verify_canaries() const {
-    if (*canary1_ptr != 0) {
-      std::cerr << "Canary 1 corrupted! Expected: 0, Found: " << *canary1_ptr
+    int32_t c1;
+    std::memcpy(&c1, canary1_ptr, sizeof(int32_t));
+    if (c1 != 0) {
+      std::cerr << "Canary 1 corrupted! Expected: 0, Found: " << c1
                 << std::endl
                 << std::flush;
       std::cerr << "CobhanBuffer: Memory corruption detected: Canary values "
@@ -140,9 +142,11 @@ protected:
                 << std::flush;
       std::terminate();
     }
-    if (*canary2_ptr != canary_constant) {
-      std::cerr << "Canary 2 corrupted! Expected: 0xdeadbeef, Found: "
-                << *canary2_ptr << std::endl
+    int32_t c2;
+    std::memcpy(&c2, canary2_ptr, sizeof(int32_t));
+    if (c2 != canary_constant) {
+      std::cerr << "Canary 2 corrupted! Expected: 0xdeadbeef, Found: " << c2
+                << std::endl
                 << std::flush;
       std::cerr << "CobhanBuffer: Memory corruption detected: Canary values "
                    "are corrupted.  Terminating process."
@@ -179,11 +183,9 @@ private:
     data_len_ptr = reinterpret_cast<int32_t *>(cbuffer);
     // Second int32_t is reserved for future use
     auto reserved_ptr = reinterpret_cast<int32_t *>(cbuffer + sizeof(int32_t));
-    // First canary value is an int32_t 0 which gives us four NULLs
-    canary1_ptr = reinterpret_cast<int32_t *>(cbuffer + allocation_size -
-                                              canary_size_bytes);
-    // Second canary value is an int32_t 0xdeadbeef
-    canary2_ptr = canary1_ptr + 1;
+    // Canary values are written via memcpy to avoid unaligned int32_t* access
+    canary1_ptr = cbuffer + allocation_size - canary_size_bytes;
+    canary2_ptr = canary1_ptr + sizeof(int32_t);
 
     // Calculate the maximum data size for this allocation
     max_data_size = AllocationSizeToMaxDataSize(allocation_size);
@@ -203,9 +205,10 @@ private:
     // Reserved for future use
     *reserved_ptr = 0;
 
-    // Write canary values
-    *canary1_ptr = 0;
-    *canary2_ptr = canary_constant;
+    // Write canary values via memcpy (safe for any alignment)
+    int32_t zero = 0;
+    std::memcpy(canary1_ptr, &zero, sizeof(int32_t));
+    std::memcpy(canary2_ptr, &canary_constant, sizeof(int32_t));
   }
 
   void moveFrom(CobhanBuffer &&other) {
@@ -261,8 +264,8 @@ private:
   bool ownership = false;
   int32_t *data_len_ptr = nullptr;
   char *data_ptr = nullptr;
-  int32_t *canary1_ptr = nullptr;
-  int32_t *canary2_ptr = nullptr;
+  char *canary1_ptr = nullptr;
+  char *canary2_ptr = nullptr;
 
   static constexpr int32_t canary_constant = static_cast<int32_t>(0xdeadbeef);
   static constexpr size_t cobhan_header_size_bytes =
