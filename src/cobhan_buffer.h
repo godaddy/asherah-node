@@ -130,6 +130,9 @@ public:
 
 protected:
   void verify_canaries() const {
+    if (!canaries_enabled_) {
+      return;
+    }
     if (*canary1_ptr != 0) {
       std::cerr << "Canary 1 corrupted! Expected: 0, Found: " << *canary1_ptr
                 << std::endl
@@ -204,8 +207,10 @@ private:
     *reserved_ptr = 0;
 
     // Write canary values
-    *canary1_ptr = 0;
-    *canary2_ptr = canary_constant;
+    if (canaries_enabled_) {
+      *canary1_ptr = 0;
+      *canary2_ptr = canary_constant;
+    }
   }
 
   void moveFrom(CobhanBuffer &&other) {
@@ -264,6 +269,13 @@ private:
   int32_t *canary1_ptr = nullptr;
   int32_t *canary2_ptr = nullptr;
 
+  static inline bool canaries_enabled_ = false;
+
+public:
+  static void SetCanariesEnabled(bool enabled) { canaries_enabled_ = enabled; }
+  static bool GetCanariesEnabled() { return canaries_enabled_; }
+
+private:
   static constexpr int32_t canary_constant = static_cast<int32_t>(0xdeadbeef);
   static constexpr size_t cobhan_header_size_bytes =
       sizeof(int32_t) * 2; // 2x int32_t headers

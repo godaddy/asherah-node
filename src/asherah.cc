@@ -39,6 +39,8 @@ public:
             InstanceMethod("get_setup_status", &Asherah::GetSetupStatus),
             InstanceMethod("set_log_hook", &Asherah::SetLogHook),
             InstanceMethod("setenv", &Asherah::SetEnv),
+            InstanceMethod("set_canaries_enabled",
+                           &Asherah::SetCanariesEnabled),
         });
   }
 
@@ -418,6 +420,22 @@ private:
       CobhanBufferNapi env_json(env, info[0]);
       GoInt32 result = ::SetEnv(env_json);
       CheckResult(env, result);
+    } catch (Napi::Error &e) {
+      e.ThrowAsJavaScriptException();
+      return;
+    } catch (const std::exception &e) {
+      Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
+      return;
+    }
+  }
+
+  void SetCanariesEnabled(const Napi::CallbackInfo &info) {
+    Napi::Env env = info.Env();
+    Napi::HandleScope scope(env);
+    try {
+      NapiUtils::RequireParameterCount(info, 1);
+      bool enabled = info[0].ToBoolean().Value();
+      CobhanBuffer::SetCanariesEnabled(enabled);
     } catch (Napi::Error &e) {
       e.ThrowAsJavaScriptException();
       return;

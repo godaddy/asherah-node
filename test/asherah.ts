@@ -15,7 +15,8 @@ import {
     get_setup_status,
     set_max_stack_alloc_item_size,
     set_log_hook,
-    setenv
+    setenv,
+    set_canaries_enabled
 } from '../dist/asherah'
 
 import { assert } from 'chai';
@@ -75,10 +76,12 @@ function configure_winston_logging(level = 'error') {
 }
 
 export function asherah_setup(config: AsherahConfig) {
+    set_canaries_enabled(true);
     setup(config);
 }
 
 export function asherah_setup_static_memory(verbose = false, session_cache = true, max_stack_alloc_item_size = -1): void {
+    set_canaries_enabled(true);
     configure_winston_logging();
     asherah_set_env();
     setup(get_static_memory_config(verbose, session_cache));
@@ -88,6 +91,7 @@ export function asherah_setup_static_memory(verbose = false, session_cache = tru
 }
 
 export async function asherah_setup_static_memory_async(verbose = false, session_cache = true, max_stack_alloc_item_size = -1): Promise<void> {
+    set_canaries_enabled(true);
     configure_winston_logging();
     asherah_set_env();
     await setup_async(get_static_memory_config(verbose, session_cache));
