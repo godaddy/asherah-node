@@ -206,12 +206,9 @@ public:
       : CobhanBufferNapi(std::move(other)) {}
 
   ~SensitiveCobhanBufferNapi() {
-    // TODO: Fix for async operations - currently breaks async tests
-    // because data gets wiped before async operation completes
-    // Only wipe if we still own data (haven't been moved from)
-    // if (get_data_ptr() != nullptr) {
-    //   secure_wipe_data();
-    // }
+    if (is_valid()) {
+      secure_wipe_data();
+    }
   }
 };
 

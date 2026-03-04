@@ -47,9 +47,9 @@ export type AsherahConfig = {
 type LogHookCallback = (level: number, message: string) => void;
 
 export declare function setup(config: AsherahConfig): void;
-export declare function setup_async(config: AsherahConfig): Promise;
+export declare function setup_async(config: AsherahConfig): Promise<void>;
 export declare function shutdown(): void;
-export declare function shutdown_async(): Promise;
+export declare function shutdown_async(): Promise<void>;
 export declare function decrypt(partitionId: string, dataRowRecord: string): Buffer;
 export declare function decrypt_async(partitionId: string, dataRowRecord: string): Promise<Buffer>;
 export declare function encrypt(partitionId: string, data: Buffer): string;

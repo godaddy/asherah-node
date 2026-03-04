@@ -80,7 +80,9 @@ public:
   }
 
   ~CobhanBuffer() {
-    verify_canaries();
+    if (cbuffer != nullptr) {
+      verify_canaries();
+    }
     cleanup();
   }
 
@@ -149,6 +151,8 @@ protected:
       std::terminate();
     }
   }
+
+  [[nodiscard]] bool is_valid() const { return cbuffer != nullptr; }
 
   [[nodiscard]] size_t get_allocation_size() const { return allocation_size; }
 

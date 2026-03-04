@@ -103,6 +103,8 @@ void LoggerNapi::error_log(const char *function_name,
   if (likely(!log_hook.IsEmpty())) {
     call_log_hook(posix_log_level_error,
                   system_name + ": " + function_name + ": " + message);
+  } else {
+    StdErrLogger::error_log(function_name, message);
   }
 }
 
@@ -111,5 +113,7 @@ void LoggerNapi::error_log(const char *function_name,
   if (likely(!log_hook.IsEmpty())) {
     call_log_hook(posix_log_level_error,
                   system_name + ": " + function_name + ": " + message);
+  } else {
+    StdErrLogger::error_log(function_name, message);
   }
 }

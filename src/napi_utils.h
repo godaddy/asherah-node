@@ -77,17 +77,14 @@ public:
                                  bool defaultValue = false) {
     auto maybeValue = obj.Get(propertyName);
 
-    if (likely(!maybeValue.IsEmpty())) {
-      Napi::Value value = maybeValue;
-
-      if (value.IsBoolean()) {
-        result = value.As<Napi::Boolean>();
-      } else {
-        // Coerce to boolean
-        result = value.ToBoolean();
-      }
-    } else {
+    if (maybeValue.IsUndefined() || maybeValue.IsNull() ||
+        maybeValue.IsEmpty()) {
       result = defaultValue;
+    } else if (maybeValue.IsBoolean()) {
+      result = maybeValue.As<Napi::Boolean>();
+    } else {
+      // Coerce to boolean
+      result = maybeValue.ToBoolean();
     }
   }
 
