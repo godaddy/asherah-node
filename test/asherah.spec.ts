@@ -16,10 +16,17 @@ import {
     test_round_trip_strings_async
 } from './asherah'
 import {
+    encrypt,
     encrypt_async,
+    encrypt_string,
+    decrypt,
     decrypt_async,
+    decrypt_string,
     encrypt_string_async,
-    decrypt_string_async
+    decrypt_string_async,
+    setup,
+    set_safety_padding_overhead,
+    setenv
 } from '../dist/asherah'
 import { assert } from 'chai';
 import { get_string } from './helpers';
@@ -197,6 +204,117 @@ describe('Asherah', function () {
             await asherah_shutdown_async();
         }
         assert_asherah_shutdown();
+    });
+
+    it('Cross-partition decryption failure (sync buffer)', function () {
+        asherah_setup_static_memory(test_verbose, false);
+        try {
+            const encrypted = encrypt('partitionA', Buffer.from(simple_secret, 'utf8'));
+            assert.throws(() => {
+                decrypt('partitionB', encrypted);
+            }, Error);
+        } finally {
+            asherah_shutdown();
+        }
+        assert_asherah_shutdown();
+    });
+
+    it('Cross-partition decryption failure (sync string)', function () {
+        asherah_setup_static_memory(test_verbose, false);
+        try {
+            const encrypted = encrypt_string('partitionA', simple_secret);
+            assert.throws(() => {
+                decrypt_string('partitionB', encrypted);
+            }, Error);
+        } finally {
+            asherah_shutdown();
+        }
+        assert_asherah_shutdown();
+    });
+
+    it('Cross-partition decryption failure (async buffer)', async function () {
+        await asherah_setup_static_memory_async(test_verbose, false);
+        try {
+            const encrypted = await encrypt_async('partitionA', Buffer.from(simple_secret, 'utf8'));
+            try {
+                await decrypt_async('partitionB', encrypted);
+                assert.fail('Decrypting with wrong partition should have thrown');
+            } catch (e: any) {
+                if (e.message && e.message.includes('should have thrown')) {
+                    throw e;
+                }
+                // Expected error
+            }
+        } finally {
+            await asherah_shutdown_async();
+        }
+        assert_asherah_shutdown();
+    });
+
+    it('Cross-partition decryption failure (async string)', async function () {
+        await asherah_setup_static_memory_async(test_verbose, false);
+        try {
+            const encrypted = await encrypt_string_async('partitionA', simple_secret);
+            try {
+                await decrypt_string_async('partitionB', encrypted);
+                assert.fail('Decrypting string with wrong partition should have thrown');
+            } catch (e: any) {
+                if (e.message && e.message.includes('should have thrown')) {
+                    throw e;
+                }
+                // Expected error
+            }
+        } finally {
+            await asherah_shutdown_async();
+        }
+        assert_asherah_shutdown();
+    });
+
+    it('Invalid config: missing ServiceName', function () {
+        const config = {
+            KMS: 'test-debug-static',
+            Metastore: 'test-debug-memory',
+            ProductID: 'TestProduct',
+        };
+        assert.throws(() => {
+            setup(config as any);
+        }, Error);
+    });
+
+    it('Invalid config: missing ProductID', function () {
+        const config = {
+            KMS: 'test-debug-static',
+            Metastore: 'test-debug-memory',
+            ServiceName: 'TestService',
+        };
+        assert.throws(() => {
+            setup(config as any);
+        }, Error);
+    });
+
+    it('set_safety_padding_overhead does not break encrypt/decrypt', function () {
+        asherah_setup_static_memory(test_verbose, false);
+        try {
+            set_safety_padding_overhead(16);
+            test_round_trip_strings(simple_secret);
+            set_safety_padding_overhead(0);
+            test_round_trip_strings(simple_secret);
+        } finally {
+            asherah_shutdown();
+        }
+        assert_asherah_shutdown();
+    });
+
+    it('setenv accepts valid JSON', function () {
+        assert.doesNotThrow(() => {
+            setenv('{"FOO": "BAR"}');
+        });
+    });
+
+    it('setenv rejects invalid JSON', function () {
+        assert.throws(() => {
+            setenv('not valid json');
+        }, Error);
     });
 
     it('Test RegionMap', function () {
